@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=230" />
+  <link rel="manifest" href="./manifest.json?v=242" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=230" />
-  <link rel="stylesheet" href="./css/style.css?v=230" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=242" />
+  <link rel="stylesheet" href="./css/style.css?v=242" />
 </head>
 <body>
   <div class="app">
@@ -173,6 +173,40 @@
           </div>
         </section>
 
+        <section class="app-guide" aria-label="앱 정보와 사용 안내">
+          <div class="app-guide-header">
+            <div>
+              <strong>앱 정보 / 사용 안내</strong>
+              <p>SoloNote를 안전하게 사용하는 방법을 확인하세요.</p>
+            </div>
+            <span class="version-badge">v2.4</span>
+          </div>
+
+          <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" onclick="toggleSoloNoteGuide()">
+            사용 안내 보기
+          </button>
+
+          <div id="guideContent" class="guide-content hidden">
+            <div class="guide-item">
+              <strong>저장 방식</strong>
+              <p>현재 메모는 이 브라우저에 저장됩니다. 다른 브라우저나 다른 기기에서는 자동으로 보이지 않습니다.</p>
+            </div>
+            <div class="guide-item">
+              <strong>백업 / 복원</strong>
+              <p>중요한 메모는 백업하기로 JSON 파일을 저장하세요. 다른 브라우저에서는 복원하기로 가져올 수 있습니다.</p>
+            </div>
+            <div class="guide-item">
+              <strong>프로젝트와 카테고리</strong>
+              <p>프로젝트는 일이 속한 묶음이고, 카테고리는 메모의 종류입니다. 예: 프로젝트 SoloNote 개발 / 카테고리 할 일</p>
+            </div>
+            <div class="guide-item">
+              <strong>체크리스트</strong>
+              <p>메모 안에 할 일을 추가하고, 상세 보기에서 완료 여부를 체크할 수 있습니다.</p>
+            </div>
+          </div>
+        </section>
+
+
       </section>
     </main>
   </div>
@@ -202,14 +236,52 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("./service-worker.js?v=230")
+          .register("./service-worker.js?v=242")
           .catch((error) => console.log("Service Worker registration failed:", error));
       });
     }
   </script>
 
-  <script src="./js/storage.js?v=230"></script>
-  <script src="./js/ui.js?v=230"></script>
-  <script src="./js/app.js?v=230"></script>
+
+  <script>
+    function toggleSoloNoteGuide() {
+      var content = document.getElementById("guideContent");
+      var button = document.getElementById("guideToggleButton");
+
+      if (!content || !button) {
+        return;
+      }
+
+      var isHidden = content.classList.contains("hidden") || content.style.display === "none";
+
+      if (isHidden) {
+        content.classList.remove("hidden");
+        content.style.display = "grid";
+        button.textContent = "사용 안내 접기";
+      } else {
+        content.classList.add("hidden");
+        content.style.display = "none";
+        button.textContent = "사용 안내 보기";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var content = document.getElementById("guideContent");
+      var button = document.getElementById("guideToggleButton");
+
+      if (content) {
+        content.classList.add("hidden");
+        content.style.display = "none";
+      }
+
+      if (button) {
+        button.textContent = "사용 안내 보기";
+      }
+    });
+  </script>
+
+  <script src="./js/storage.js?v=242"></script>
+  <script src="./js/ui.js?v=242"></script>
+  <script src="./js/app.js?v=242"></script>
 </body>
 </html>

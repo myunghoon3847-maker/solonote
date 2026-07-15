@@ -22,6 +22,8 @@ const totalMemoCount = document.querySelector("#totalMemoCount");
 const trashMemoCount = document.querySelector("#trashMemoCount");
 const emptyTrashButton = document.querySelector("#emptyTrashButton");
 const resetAllDataButton = document.querySelector("#resetAllDataButton");
+const guideToggleButton = document.querySelector("#guideToggleButton");
+const guideContent = document.querySelector("#guideContent");
 const taskInput = document.querySelector("#taskInput");
 const addTaskButton = document.querySelector("#addTaskButton");
 const taskDraftList = document.querySelector("#taskDraftList");
@@ -589,6 +591,17 @@ function handleRestoreButtonClick() {
   fileInput.click();
 }
 
+
+function handleGuideToggleClick() {
+  if (!guideToggleButton || !guideContent) {
+    return;
+  }
+
+  const isHidden = guideContent.classList.toggle("hidden");
+  guideToggleButton.textContent = isHidden ? "사용 안내 보기" : "사용 안내 접기";
+}
+
+
 function bindEvents() {
   memoForm.addEventListener("submit", handleFormSubmit);
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
@@ -611,6 +624,8 @@ function bindEvents() {
   emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
 
+  guideToggleButton.addEventListener("click", handleGuideToggleClick);
+
   addTaskButton.addEventListener("click", handleAddTask);
   taskInput.addEventListener("keydown", handleTaskInputKeydown);
   taskDraftList.addEventListener("click", handleTaskDraftListClick);
@@ -625,3 +640,21 @@ function bindEvents() {
 bindEvents();
 renderTaskDraftList();
 refreshScreen();
+
+
+function safeBindGuideToggle() {
+  const button = document.querySelector("#guideToggleButton");
+  const content = document.querySelector("#guideContent");
+
+  if (!button || !content || button.dataset.bound === "true") {
+    return;
+  }
+
+  button.dataset.bound = "true";
+  button.addEventListener("click", () => {
+    const isHidden = content.classList.toggle("hidden");
+    button.textContent = isHidden ? "사용 안내 보기" : "사용 안내 접기";
+  });
+}
+
+safeBindGuideToggle();
