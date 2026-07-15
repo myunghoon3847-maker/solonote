@@ -664,3 +664,56 @@ input[type="file"]#restoreInput {
   min-width: 0;
   background: #ffffff;
 }
+
+
+/* v1.8.1: 검색 / 정렬 / 카테고리 상하 간격 안정화 */
+.search-box {
+  margin-bottom: 10px;
+}
+
+.sort-box {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 0;
+  width: 100%;
+  margin: 0 0 10px;
+}
+
+.sort-box label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.sort-box select {
+  width: 100%;
+  min-width: 0;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  background: #ffffff;
+}
+
+.category-tabs {
+  padding-top: 0;
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 420px) {
+  .search-box {
+    margin-bottom: 8px;
+  }
+
+  .sort-box {
+    margin-bottom: 8px;
+  }
+
+  .category-tabs {
+    gap: 7px;
+    padding-bottom: 9px;
+  }
+}
