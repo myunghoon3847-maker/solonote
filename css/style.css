@@ -643,3 +643,24 @@ input[type="file"]#restoreInput {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v1.8: 정렬 기능 */
+.sort-box {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  margin: 0 0 14px;
+}
+
+.sort-box label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.sort-box select {
+  width: 100%;
+  min-width: 0;
+  background: #ffffff;
+}

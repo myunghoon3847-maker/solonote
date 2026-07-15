@@ -97,6 +97,17 @@
           />
         </div>
 
+        <div class="sort-box">
+          <label for="sortInput">정렬</label>
+          <select id="sortInput">
+            <option value="updatedDesc">최근 수정순</option>
+            <option value="createdDesc">최신 작성순</option>
+            <option value="createdAsc">오래된 작성순</option>
+            <option value="importantFirst">중요 먼저</option>
+            <option value="titleAsc">제목순</option>
+          </select>
+        </div>
+
         <nav id="categoryTabs" class="category-tabs" aria-label="메모 카테고리">
           <button type="button" class="category-tab active" data-category="전체">전체</button>
           <button type="button" class="category-tab" data-category="중요">중요</button>

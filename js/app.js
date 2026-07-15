@@ -1,5 +1,6 @@
 let currentCategory = "전체";
 let currentSearch = "";
+let currentSort = "updatedDesc";
 
 const memoForm = document.querySelector("#memoForm");
 const titleInput = document.querySelector("#titleInput");
@@ -9,13 +10,48 @@ const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
+const sortInput = document.querySelector("#sortInput");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
+
+
+function parseMemoDate(dateString) {
+  const time = new Date(dateString).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function sortMemos(memos) {
+  return [...memos].sort((a, b) => {
+    if (currentSort === "createdDesc") {
+      return parseMemoDate(b.createdAt) - parseMemoDate(a.createdAt);
+    }
+
+    if (currentSort === "createdAsc") {
+      return parseMemoDate(a.createdAt) - parseMemoDate(b.createdAt);
+    }
+
+    if (currentSort === "importantFirst") {
+      const importantCompare = Number(b.isImportant) - Number(a.isImportant);
+
+      if (importantCompare !== 0) {
+        return importantCompare;
+      }
+
+      return parseMemoDate(b.updatedAt || b.createdAt) - parseMemoDate(a.updatedAt || a.createdAt);
+    }
+
+    if (currentSort === "titleAsc") {
+      return String(a.title).localeCompare(String(b.title), "ko-KR");
+    }
+
+    return parseMemoDate(b.updatedAt || b.createdAt) - parseMemoDate(a.updatedAt || a.createdAt);
+  });
+}
 
 function getFilteredMemos() {
   const search = currentSearch.trim().toLowerCase();
 
-  return getMemos().filter((memo) => {
+  const filteredMemos = getMemos().filter((memo) => {
     const isTrashView = currentCategory === "휴지통";
     const isImportantView = currentCategory === "중요";
 
@@ -44,6 +80,8 @@ function getFilteredMemos() {
 
     return matchesCategory && matchesSearch;
   });
+
+  return sortMemos(filteredMemos);
 }
 
 function refreshScreen() {
@@ -106,6 +144,12 @@ function handleCategoryClick(event) {
 
   currentCategory = button.dataset.category;
   setActiveCategory(currentCategory);
+  refreshScreen();
+}
+
+
+function handleSortChange(event) {
+  currentSort = event.target.value;
   refreshScreen();
 }
 
@@ -273,6 +317,7 @@ function bindEvents() {
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
   categoryTabs.addEventListener("click", handleCategoryClick);
   searchInput.addEventListener("input", handleSearchInput);
+  sortInput.addEventListener("change", handleSortChange);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
   document.querySelector("#resetButton").addEventListener("click", cancelEditAndCloseEditor);
