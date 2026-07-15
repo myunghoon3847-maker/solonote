@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=222" />
+  <link rel="manifest" href="./manifest.json?v=223" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=222" />
-  <link rel="stylesheet" href="./css/style.css?v=222" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=223" />
+  <link rel="stylesheet" href="./css/style.css?v=223" />
 </head>
 <body>
   <div class="app">
@@ -182,14 +182,14 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("./service-worker.js?v=222")
+          .register("./service-worker.js?v=223")
           .catch((error) => console.log("Service Worker registration failed:", error));
       });
     }
   </script>
 
-  <script src="./js/storage.js?v=222"></script>
-  <script src="./js/ui.js?v=222"></script>
-  <script src="./js/app.js?v=222"></script>
+  <script src="./js/storage.js?v=223"></script>
+  <script src="./js/ui.js?v=223"></script>
+  <script src="./js/app.js?v=223"></script>
 </body>
 </html>

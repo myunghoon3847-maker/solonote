@@ -1521,3 +1521,21 @@ textarea {
     gap: 14px !important;
   }
 }
+
+
+/* v2.2.3: 모바일 상단 헤더 위쪽 라운드 적용 */
+.app-header {
+  border-radius: 24px !important;
+}
+
+@media (max-width: 760px) {
+  .app-header {
+    border-radius: 24px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-header {
+    border-radius: 22px !important;
+  }
+}
