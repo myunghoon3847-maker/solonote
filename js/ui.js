@@ -25,7 +25,7 @@ function renderMemoList(memos) {
   const memoList = document.querySelector("#memoList");
   const memoCount = document.querySelector("#memoCount");
 
-  memoCount.textContent = getMemos().length;
+  memoCount.textContent = getActiveMemoCount();
 
   if (memos.length === 0) {
     memoList.innerHTML = `
@@ -41,7 +41,7 @@ function renderMemoList(memos) {
     .map((memo) => {
       const safeTitle = escapeHtml(memo.title);
       const safeContent = escapeHtml(memo.content);
-      const safeCategory = escapeHtml(memo.category);
+      const safeCategory = memo.isDeleted ? "휴지통" : escapeHtml(memo.category);
       const date = formatDate(memo.updatedAt || memo.createdAt);
 
       return `
@@ -60,14 +60,34 @@ function renderMemoList(memos) {
 
 function openDetailModal(memo) {
   const modal = document.querySelector("#detailModal");
+  const editButton = document.querySelector("#editMemoButton");
+  const deleteButton = document.querySelector("#deleteMemoButton");
 
-  document.querySelector("#detailCategory").textContent = memo.category;
+  document.querySelector("#detailCategory").textContent = memo.isDeleted ? "휴지통" : memo.category;
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
   document.querySelector("#detailContent").textContent = memo.content;
 
-  document.querySelector("#editMemoButton").dataset.id = memo.id;
-  document.querySelector("#deleteMemoButton").dataset.id = memo.id;
+  editButton.dataset.id = memo.id;
+  deleteButton.dataset.id = memo.id;
+
+  if (memo.isDeleted) {
+    editButton.textContent = "복구하기";
+    editButton.className = "secondary-button";
+    editButton.dataset.mode = "restore";
+
+    deleteButton.textContent = "완전 삭제";
+    deleteButton.className = "danger-button";
+    deleteButton.dataset.mode = "permanent-delete";
+  } else {
+    editButton.textContent = "수정하기";
+    editButton.className = "secondary-button";
+    editButton.dataset.mode = "edit";
+
+    deleteButton.textContent = "삭제하기";
+    deleteButton.className = "danger-button";
+    deleteButton.dataset.mode = "trash";
+  }
 
   modal.classList.remove("hidden");
 }

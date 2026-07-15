@@ -13,8 +13,20 @@ function getFilteredMemos() {
   const search = currentSearch.trim().toLowerCase();
 
   return getMemos().filter((memo) => {
+    const isTrashView = currentCategory === "휴지통";
+
+    if (isTrashView && !memo.isDeleted) {
+      return false;
+    }
+
+    if (!isTrashView && memo.isDeleted) {
+      return false;
+    }
+
     const matchesCategory =
-      currentCategory === "전체" || memo.category === currentCategory;
+      currentCategory === "전체" ||
+      currentCategory === "휴지통" ||
+      memo.category === currentCategory;
 
     const matchesSearch =
       !search ||
@@ -92,22 +104,50 @@ function handleSearchInput(event) {
 }
 
 function handleEditClick() {
-  const memo = findMemoById(this.dataset.id);
+  const memoId = this.dataset.id;
+  const mode = this.dataset.mode;
+  const memo = findMemoById(memoId);
 
-  if (memo) {
-    fillFormForEdit(memo);
+  if (!memo) {
+    return;
   }
+
+  if (mode === "restore") {
+    restoreMemo(memoId);
+    closeDetailModal();
+    currentCategory = "전체";
+    setActiveCategory(currentCategory);
+    refreshScreen();
+    return;
+  }
+
+  fillFormForEdit(memo);
 }
 
 function handleDeleteClick() {
   const memoId = this.dataset.id;
-  const shouldDelete = confirm("정말로 이 메모를 삭제하시겠습니까?");
+  const mode = this.dataset.mode;
 
-  if (!shouldDelete) {
+  if (mode === "permanent-delete") {
+    const shouldDelete = confirm("휴지통에서도 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    permanentlyDeleteMemo(memoId);
+    closeDetailModal();
+    refreshScreen();
     return;
   }
 
-  deleteMemo(memoId);
+  const shouldMoveToTrash = confirm("이 메모를 휴지통으로 이동하시겠습니까?");
+
+  if (!shouldMoveToTrash) {
+    return;
+  }
+
+  moveMemoToTrash(memoId);
   closeDetailModal();
   refreshScreen();
 }
