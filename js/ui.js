@@ -21,6 +21,50 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
+function getTaskProgress(tasks) {
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const doneCount = safeTasks.filter((task) => task.done).length;
+
+  return {
+    done: doneCount,
+    total: safeTasks.length,
+  };
+}
+
+function renderTaskChecklistHtml(memo) {
+  const tasks = Array.isArray(memo.tasks) ? memo.tasks : [];
+
+  if (tasks.length === 0) {
+    return "";
+  }
+
+  const progress = getTaskProgress(tasks);
+
+  return `
+    <section class="detail-checklist">
+      <div class="detail-checklist-header">
+        <strong>체크리스트</strong>
+        <span>${progress.done}/${progress.total} 완료</span>
+      </div>
+
+      <ul class="detail-task-list">
+        ${tasks
+          .map(
+            (task) => `
+              <li class="detail-task-item ${task.done ? "done" : ""}">
+                <button type="button" class="task-toggle-button" data-memo-id="${memo.id}" data-task-id="${task.id}">
+                  <span class="task-checkmark">${task.done ? "✓" : ""}</span>
+                  <span class="task-text">${escapeHtml(task.text)}</span>
+                </button>
+              </li>
+            `
+          )
+          .join("")}
+      </ul>
+    </section>
+  `;
+}
+
 function renderMemoList(memos) {
   const memoList = document.querySelector("#memoList");
   const memoCount = document.querySelector("#memoCount");
@@ -44,6 +88,11 @@ function renderMemoList(memos) {
       const safeCategory = memo.isDeleted ? "휴지통" : escapeHtml(memo.category);
       const date = formatDate(memo.updatedAt || memo.createdAt);
       const importantMark = memo.isImportant ? '<span class="star-mark" aria-label="중요 메모">★</span>' : "";
+      const progress = getTaskProgress(memo.tasks);
+      const taskChip =
+        progress.total > 0
+          ? `<span class="task-progress-chip">체크 ${progress.done}/${progress.total}</span>`
+          : "";
 
       return `
         <button type="button" class="memo-card" data-id="${memo.id}">
@@ -51,6 +100,7 @@ function renderMemoList(memos) {
             <div class="memo-card-badges">
               <span class="category-chip">${safeCategory}</span>
               ${memo.isImportant ? '<span class="important-chip">중요</span>' : ""}
+              ${taskChip}
             </div>
             <span class="memo-date">${date}</span>
           </div>
@@ -66,6 +116,7 @@ function openDetailModal(memo) {
   const modal = document.querySelector("#detailModal");
   const editButton = document.querySelector("#editMemoButton");
   const deleteButton = document.querySelector("#deleteMemoButton");
+  const checklistContainer = document.querySelector("#detailChecklist");
 
   const categoryText = memo.isDeleted
     ? "휴지통"
@@ -77,6 +128,10 @@ function openDetailModal(memo) {
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
   document.querySelector("#detailContent").textContent = memo.content;
+
+  if (checklistContainer) {
+    checklistContainer.innerHTML = renderTaskChecklistHtml(memo);
+  }
 
   editButton.dataset.id = memo.id;
   deleteButton.dataset.id = memo.id;
@@ -144,8 +199,9 @@ function toggleEditor() {
   const isEditing = Boolean(document.querySelector("#editingId").value);
   const hasTitle = Boolean(document.querySelector("#titleInput").value.trim());
   const hasContent = Boolean(document.querySelector("#contentInput").value.trim());
+  const hasTasks = Boolean(document.querySelectorAll("#taskDraftList .task-draft-item").length);
 
-  if (isEditing || hasTitle || hasContent) {
+  if (isEditing || hasTitle || hasContent || hasTasks) {
     const shouldClose = confirm("작성 중인 내용이 있습니다. 작성 영역을 닫으시겠습니까?");
 
     if (!shouldClose) {
@@ -178,6 +234,11 @@ function setEditorMode(mode) {
 function resetForm() {
   document.querySelector("#memoForm").reset();
   document.querySelector("#editingId").value = "";
+
+  if (typeof resetDraftTasks === "function") {
+    resetDraftTasks();
+  }
+
   setEditorMode("create");
 }
 

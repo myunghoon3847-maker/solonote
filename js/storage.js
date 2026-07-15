@@ -1,9 +1,31 @@
 const STORAGE_KEY = "solonote_memos_v1";
 
+function createSafeId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeTask(task) {
+  return {
+    id: task && task.id ? task.id : createSafeId("task"),
+    text: task && typeof task.text === "string" ? task.text : "",
+    done: Boolean(task && task.done),
+  };
+}
+
+function normalizeTasks(tasks) {
+  if (!Array.isArray(tasks)) {
+    return [];
+  }
+
+  return tasks
+    .map(normalizeTask)
+    .filter((task) => task.text.trim().length > 0);
+}
+
 function normalizeMemo(memo) {
   return {
     ...memo,
-    id: memo.id || `memo_imported_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    id: memo.id || createSafeId("memo_imported"),
     title: typeof memo.title === "string" ? memo.title : "제목 없음",
     content: typeof memo.content === "string" ? memo.content : "",
     category: typeof memo.category === "string" ? memo.category : "업무",
@@ -12,6 +34,7 @@ function normalizeMemo(memo) {
     isArchived: memo.isArchived ?? memo.category === "보관",
     isDeleted: memo.isDeleted ?? false,
     isImportant: memo.isImportant ?? false,
+    tasks: normalizeTasks(memo.tasks),
   };
 }
 
@@ -34,10 +57,10 @@ function saveMemos(memos) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(memos.map(normalizeMemo)));
 }
 
-function createMemo({ title, content, category, isImportant }) {
+function createMemo({ title, content, category, isImportant, tasks }) {
   const now = new Date().toISOString();
 
-  return {
+  return normalizeMemo({
     id: `memo_${Date.now()}`,
     title,
     content,
@@ -47,7 +70,8 @@ function createMemo({ title, content, category, isImportant }) {
     isArchived: category === "보관",
     isDeleted: false,
     isImportant: Boolean(isImportant),
-  };
+    tasks,
+  });
 }
 
 function addMemo(memoData) {
@@ -68,13 +92,14 @@ function updateMemo(id, updatedData) {
       return memo;
     }
 
-    return {
+    return normalizeMemo({
       ...memo,
       ...updatedData,
       isArchived: updatedData.category === "보관",
       isImportant: Boolean(updatedData.isImportant),
+      tasks: normalizeTasks(updatedData.tasks),
       updatedAt: new Date().toISOString(),
-    };
+    });
   });
 
   saveMemos(updatedMemos);
@@ -125,6 +150,35 @@ function permanentlyDeleteMemo(id) {
   saveMemos(remainingMemos);
 }
 
+function toggleTaskDone(memoId, taskId) {
+  const memos = getMemos();
+
+  const updatedMemos = memos.map((memo) => {
+    if (memo.id !== memoId) {
+      return memo;
+    }
+
+    return normalizeMemo({
+      ...memo,
+      tasks: memo.tasks.map((task) => {
+        if (task.id !== taskId) {
+          return task;
+        }
+
+        return {
+          ...task,
+          done: !task.done,
+        };
+      }),
+      updatedAt: new Date().toISOString(),
+    });
+  });
+
+  saveMemos(updatedMemos);
+
+  return updatedMemos.find((memo) => memo.id === memoId);
+}
+
 function findMemoById(id) {
   return getMemos().find((memo) => memo.id === id);
 }
@@ -136,7 +190,7 @@ function getActiveMemoCount() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "1.6",
+    backupVersion: "1.9",
     exportedAt: new Date().toISOString(),
     memos: getMemos(),
   };

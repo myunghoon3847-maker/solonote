@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=181" />
+  <link rel="manifest" href="./manifest.json?v=190" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=181" />
-  <link rel="stylesheet" href="./css/style.css?v=181" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=190" />
+  <link rel="stylesheet" href="./css/style.css?v=190" />
 </head>
 <body>
   <div class="app">
@@ -58,7 +58,22 @@
             placeholder="메모 내용을 입력하세요."
           ></textarea>
 
-          <label for="categoryInput">카테고리</label>
+          
+
+          <div class="checklist-editor">
+            <div class="checklist-editor-header">
+              <label for="taskInput">체크리스트</label>
+              <span id="taskCountLabel">0개 항목</span>
+            </div>
+
+            <div class="task-input-row">
+              <input id="taskInput" type="text" placeholder="예: GitHub 업로드하기" autocomplete="off" />
+              <button type="button" id="addTaskButton" class="secondary-button task-add-button">추가</button>
+            </div>
+
+            <ul id="taskDraftList" class="task-draft-list" aria-label="작성 중인 체크리스트"></ul>
+          </div>
+<label for="categoryInput">카테고리</label>
           <select id="categoryInput">
             <option value="업무">업무</option>
             <option value="아이디어">아이디어</option>
@@ -136,6 +151,7 @@
 
       <h2 id="detailTitle"></h2>
       <p id="detailContent"></p>
+      <div id="detailChecklist"></div>
 
       <div class="detail-actions">
         <button type="button" id="editMemoButton" class="secondary-button">수정하기</button>
@@ -148,14 +164,14 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("./service-worker.js?v=181")
+          .register("./service-worker.js?v=190")
           .catch((error) => console.log("Service Worker registration failed:", error));
       });
     }
   </script>
 
-  <script src="./js/storage.js?v=181"></script>
-  <script src="./js/ui.js?v=181"></script>
-  <script src="./js/app.js?v=181"></script>
+  <script src="./js/storage.js?v=190"></script>
+  <script src="./js/ui.js?v=190"></script>
+  <script src="./js/app.js?v=190"></script>
 </body>
 </html>

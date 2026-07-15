@@ -1,6 +1,7 @@
 let currentCategory = "전체";
 let currentSearch = "";
 let currentSort = "updatedDesc";
+let draftTasks = [];
 
 const memoForm = document.querySelector("#memoForm");
 const titleInput = document.querySelector("#titleInput");
@@ -13,7 +14,10 @@ const categoryTabs = document.querySelector("#categoryTabs");
 const sortInput = document.querySelector("#sortInput");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
-
+const taskInput = document.querySelector("#taskInput");
+const addTaskButton = document.querySelector("#addTaskButton");
+const taskDraftList = document.querySelector("#taskDraftList");
+const taskCountLabel = document.querySelector("#taskCountLabel");
 
 function parseMemoDate(dateString) {
   const time = new Date(dateString).getTime();
@@ -73,10 +77,15 @@ function getFilteredMemos() {
       currentCategory === "휴지통" ||
       memo.category === currentCategory;
 
+    const taskText = Array.isArray(memo.tasks)
+      ? memo.tasks.map((task) => task.text).join(" ").toLowerCase()
+      : "";
+
     const matchesSearch =
       !search ||
       memo.title.toLowerCase().includes(search) ||
-      memo.content.toLowerCase().includes(search);
+      memo.content.toLowerCase().includes(search) ||
+      taskText.includes(search);
 
     return matchesCategory && matchesSearch;
   });
@@ -86,6 +95,83 @@ function getFilteredMemos() {
 
 function refreshScreen() {
   renderMemoList(getFilteredMemos());
+}
+
+function createDraftTask(text) {
+  return {
+    id: `task_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    text: text.trim(),
+    done: false,
+  };
+}
+
+function renderTaskDraftList() {
+  if (!taskDraftList || !taskCountLabel) {
+    return;
+  }
+
+  taskCountLabel.textContent = `${draftTasks.length}개 항목`;
+
+  if (draftTasks.length === 0) {
+    taskDraftList.innerHTML = `<li class="task-empty">아직 추가된 할 일이 없습니다.</li>`;
+    return;
+  }
+
+  taskDraftList.innerHTML = draftTasks
+    .map(
+      (task) => `
+        <li class="task-draft-item">
+          <span>${escapeHtml(task.text)}</span>
+          <button type="button" class="task-remove-button" data-task-id="${task.id}">삭제</button>
+        </li>
+      `
+    )
+    .join("");
+}
+
+function resetDraftTasks() {
+  draftTasks = [];
+  renderTaskDraftList();
+}
+
+function loadDraftTasks(tasks) {
+  draftTasks = Array.isArray(tasks) ? tasks.map((task) => ({ ...task })) : [];
+  renderTaskDraftList();
+}
+
+function handleAddTask() {
+  const text = taskInput.value.trim();
+
+  if (!text) {
+    alert("추가할 할 일을 입력해주세요.");
+    taskInput.focus();
+    return;
+  }
+
+  draftTasks.push(createDraftTask(text));
+  taskInput.value = "";
+  renderTaskDraftList();
+  taskInput.focus();
+}
+
+function handleTaskInputKeydown(event) {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  handleAddTask();
+}
+
+function handleTaskDraftListClick(event) {
+  const removeButton = event.target.closest(".task-remove-button");
+
+  if (!removeButton) {
+    return;
+  }
+
+  draftTasks = draftTasks.filter((task) => task.id !== removeButton.dataset.taskId);
+  renderTaskDraftList();
 }
 
 function handleFormSubmit(event) {
@@ -102,18 +188,25 @@ function handleFormSubmit(event) {
     return;
   }
 
-  if (!content) {
-    alert("내용을 입력해주세요.");
+  if (!content && draftTasks.length === 0) {
+    alert("내용을 입력하거나 체크리스트 항목을 추가해주세요.");
     contentInput.focus();
     return;
   }
 
   const editingId = editingIdInput.value;
+  const memoData = {
+    title,
+    content,
+    category,
+    isImportant,
+    tasks: draftTasks.map((task) => ({ ...task })),
+  };
 
   if (editingId) {
-    updateMemo(editingId, { title, content, category, isImportant });
+    updateMemo(editingId, memoData);
   } else {
-    addMemo({ title, content, category, isImportant });
+    addMemo(memoData);
   }
 
   resetForm();
@@ -147,7 +240,6 @@ function handleCategoryClick(event) {
   refreshScreen();
 }
 
-
 function handleSortChange(event) {
   currentSort = event.target.value;
   refreshScreen();
@@ -177,6 +269,7 @@ function handleEditClick() {
   }
 
   fillFormForEdit(memo);
+  loadDraftTasks(memo.tasks);
 }
 
 function handleDeleteClick() {
@@ -207,7 +300,27 @@ function handleDeleteClick() {
   refreshScreen();
 }
 
+function handleDetailTaskToggle(event) {
+  const toggleButton = event.target.closest(".task-toggle-button");
+
+  if (!toggleButton) {
+    return;
+  }
+
+  const memoId = toggleButton.dataset.memoId;
+  const taskId = toggleButton.dataset.taskId;
+  const updatedMemo = toggleTaskDone(memoId, taskId);
+
+  refreshScreen();
+
+  if (updatedMemo) {
+    openDetailModal(updatedMemo);
+  }
+}
+
 function handleModalClick(event) {
+  handleDetailTaskToggle(event);
+
   if (event.target.dataset.close === "true") {
     closeDetailModal();
   }
@@ -248,7 +361,6 @@ function handleBackupClick() {
 
   URL.revokeObjectURL(url);
 }
-
 
 function handleRestoreButtonClick() {
   const fileInput = document.createElement("input");
@@ -311,7 +423,6 @@ function handleRestoreButtonClick() {
   fileInput.click();
 }
 
-
 function bindEvents() {
   memoForm.addEventListener("submit", handleFormSubmit);
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
@@ -329,6 +440,10 @@ function bindEvents() {
   backupButton.addEventListener("click", handleBackupClick);
   restoreButton.addEventListener("click", handleRestoreButtonClick);
 
+  addTaskButton.addEventListener("click", handleAddTask);
+  taskInput.addEventListener("keydown", handleTaskInputKeydown);
+  taskDraftList.addEventListener("click", handleTaskDraftListClick);
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeDetailModal();
@@ -337,4 +452,5 @@ function bindEvents() {
 }
 
 bindEvents();
+renderTaskDraftList();
 refreshScreen();
