@@ -1024,3 +1024,405 @@ input[type="file"]#restoreInput {
     padding: 7px 9px;
   }
 }
+
+
+/* v2.2: 전체 UI/UX 정리 */
+:root {
+  --control-height: 46px;
+  --soft-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.app-header {
+  padding-top: 24px;
+  padding-bottom: 20px;
+}
+
+.app-header h1 {
+  letter-spacing: -0.04em;
+}
+
+.app-header p {
+  line-height: 1.55;
+}
+
+.layout {
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  border-radius: 24px;
+  box-shadow: var(--soft-shadow);
+}
+
+.editor-panel,
+.list-panel {
+  overflow: hidden;
+}
+
+.editor-content {
+  display: grid;
+  gap: 12px;
+}
+
+#memoForm {
+  display: grid;
+  gap: 12px;
+}
+
+#memoForm label {
+  margin-bottom: -4px;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea {
+  min-height: var(--control-height);
+}
+
+textarea {
+  line-height: 1.55;
+}
+
+.checkbox-row {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.checklist-editor {
+  margin-top: 0;
+}
+
+.form-actions,
+.editor-actions {
+  gap: 9px;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button,
+.danger-button,
+.compact-button,
+.backup-button,
+.task-add-button {
+  min-height: 42px;
+}
+
+.backup-actions {
+  margin-bottom: 12px;
+}
+
+.search-box {
+  margin-bottom: 9px;
+}
+
+.project-filter-box,
+.sort-box {
+  margin-bottom: 9px;
+}
+
+.project-filter-box select,
+.sort-box select,
+#searchInput {
+  min-height: 44px;
+}
+
+.category-tabs {
+  gap: 7px;
+  padding-bottom: 9px;
+  margin-bottom: 8px;
+}
+
+.category-tab {
+  min-height: 36px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.memo-list {
+  gap: 10px;
+}
+
+.memo-card {
+  border-radius: 20px;
+  padding: 15px;
+}
+
+.memo-card-top {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.memo-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.category-chip,
+.project-chip,
+.important-chip,
+.task-progress-chip {
+  line-height: 1;
+  max-width: 100%;
+}
+
+.project-chip {
+  overflow-wrap: anywhere;
+}
+
+.memo-date {
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+
+.memo-card h3 {
+  margin-top: 10px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.memo-card p {
+  line-height: 1.55;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.quick-project-box {
+  margin-top: -2px;
+}
+
+.quick-project-list {
+  gap: 6px;
+}
+
+.quick-project-button {
+  line-height: 1.15;
+}
+
+.detail-card {
+  border-radius: 24px;
+}
+
+.detail-meta {
+  line-height: 1.45;
+}
+
+.detail-card h2 {
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+}
+
+#detailContent {
+  line-height: 1.65;
+}
+
+.detail-checklist,
+.checklist-editor {
+  border-radius: 18px;
+}
+
+.task-toggle-button,
+.task-draft-item {
+  border-radius: 14px;
+}
+
+.empty-state {
+  border-radius: 20px;
+  padding: 24px 16px;
+}
+
+@media (max-width: 760px) {
+  .app {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .app-header {
+    border-radius: 0 0 24px 24px;
+    padding: 22px 18px 18px;
+  }
+
+  .app-header h1 {
+    font-size: 26px;
+  }
+
+  .app-header p {
+    font-size: 14px;
+  }
+
+  .layout {
+    gap: 14px;
+  }
+
+  .panel {
+    border-radius: 22px;
+    padding: 16px;
+  }
+
+  .panel-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .panel-header h2 {
+    font-size: 18px;
+  }
+
+  .editor-toggle-button {
+    width: 100%;
+  }
+
+  .editor-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .backup-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .project-filter-box,
+  .sort-box {
+    grid-template-columns: 72px minmax(0, 1fr);
+    column-gap: 8px;
+  }
+
+  .project-filter-box label,
+  .sort-box label {
+    font-size: 12px;
+  }
+
+  .category-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .category-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-tab {
+    flex: 0 0 auto;
+  }
+
+  .memo-card {
+    padding: 14px;
+  }
+
+  .memo-card-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .memo-card h3 {
+    font-size: 16px;
+  }
+
+  .memo-card p {
+    font-size: 13px;
+  }
+
+  .detail-card {
+    width: calc(100% - 24px);
+    max-height: calc(100vh - 32px);
+    padding: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  #memoForm {
+    gap: 10px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 15px;
+  }
+
+  .backup-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .project-filter-box,
+  .sort-box {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .project-filter-box label,
+  .sort-box label {
+    padding-left: 2px;
+  }
+
+  .quick-project-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .memo-card-top {
+    grid-template-columns: 1fr;
+  }
+
+  .memo-date {
+    justify-self: start;
+  }
+
+  .category-chip,
+  .project-chip,
+  .important-chip,
+  .task-progress-chip {
+    font-size: 10.5px;
+    padding: 4px 7px;
+  }
+
+  .task-input-row {
+    grid-template-columns: 1fr;
+  }
+
+  .task-add-button {
+    width: 100%;
+  }
+}
