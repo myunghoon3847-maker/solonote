@@ -250,3 +250,32 @@ function importMemosFromBackup(backupData) {
     totalImportedCount: importedMemos.length,
   };
 }
+
+
+function getDataStats() {
+  const memos = getMemos();
+  const trashCount = memos.filter((memo) => memo.isDeleted).length;
+
+  return {
+    totalCount: memos.length,
+    activeCount: memos.length - trashCount,
+    trashCount,
+  };
+}
+
+function emptyTrash() {
+  const memos = getMemos();
+  const remainingMemos = memos.filter((memo) => !memo.isDeleted);
+  const deletedCount = memos.length - remainingMemos.length;
+
+  saveMemos(remainingMemos);
+
+  return deletedCount;
+}
+
+function resetAllData() {
+  const deletedCount = getMemos().length;
+  localStorage.removeItem(STORAGE_KEY);
+
+  return deletedCount;
+}

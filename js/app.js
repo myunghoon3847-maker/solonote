@@ -18,6 +18,10 @@ const projectFilterInput = document.querySelector("#projectFilterInput");
 const quickProjectList = document.querySelector("#quickProjectList");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
+const totalMemoCount = document.querySelector("#totalMemoCount");
+const trashMemoCount = document.querySelector("#trashMemoCount");
+const emptyTrashButton = document.querySelector("#emptyTrashButton");
+const resetAllDataButton = document.querySelector("#resetAllDataButton");
 const taskInput = document.querySelector("#taskInput");
 const addTaskButton = document.querySelector("#addTaskButton");
 const taskDraftList = document.querySelector("#taskDraftList");
@@ -156,9 +160,98 @@ function refreshProjectFilter() {
   }
 }
 
+
+function refreshDataStats() {
+  if (!totalMemoCount || !trashMemoCount) {
+    return;
+  }
+
+  const stats = getDataStats();
+
+  totalMemoCount.textContent = stats.totalCount;
+  trashMemoCount.textContent = stats.trashCount;
+
+  if (emptyTrashButton) {
+    emptyTrashButton.disabled = stats.trashCount === 0;
+  }
+
+  if (resetAllDataButton) {
+    resetAllDataButton.disabled = stats.totalCount === 0;
+  }
+}
+
+function handleEmptyTrashClick() {
+  const stats = getDataStats();
+
+  if (stats.trashCount === 0) {
+    alert("휴지통에 비울 메모가 없습니다.");
+    return;
+  }
+
+  const shouldEmptyTrash = confirm(
+    `휴지통의 메모 ${stats.trashCount}개를 모두 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
+  );
+
+  if (!shouldEmptyTrash) {
+    return;
+  }
+
+  const deletedCount = emptyTrash();
+
+  if (currentCategory === "휴지통") {
+    currentCategory = "전체";
+    setActiveCategory(currentCategory);
+  }
+
+  closeDetailModal();
+  refreshScreen();
+  alert(`휴지통 메모 ${deletedCount}개를 완전히 삭제했습니다.`);
+}
+
+function handleResetAllDataClick() {
+  const stats = getDataStats();
+
+  if (stats.totalCount === 0) {
+    alert("초기화할 메모가 없습니다.");
+    return;
+  }
+
+  const firstConfirm = confirm(
+    `모든 메모 ${stats.totalCount}개가 삭제됩니다.\n먼저 백업하기를 눌러 백업 파일을 보관하는 것을 추천합니다.\n정말 전체 데이터를 초기화하시겠습니까?`
+  );
+
+  if (!firstConfirm) {
+    return;
+  }
+
+  const secondConfirm = confirm(
+    "마지막 확인입니다.\n전체 데이터 초기화는 되돌릴 수 없습니다.\n정말 삭제하시겠습니까?"
+  );
+
+  if (!secondConfirm) {
+    return;
+  }
+
+  const deletedCount = resetAllData();
+
+  currentCategory = "전체";
+  currentSearch = "";
+  currentProject = "전체";
+  searchInput.value = "";
+  setActiveCategory(currentCategory);
+  resetForm();
+  closeEditor();
+  closeDetailModal();
+  refreshScreen();
+
+  alert(`전체 메모 ${deletedCount}개를 초기화했습니다.`);
+}
+
+
 function refreshScreen() {
   refreshProjectFilter();
   refreshQuickProjects();
+  refreshDataStats();
   renderMemoList(getFilteredMemos());
 }
 
@@ -514,6 +607,9 @@ function bindEvents() {
 
   backupButton.addEventListener("click", handleBackupClick);
   restoreButton.addEventListener("click", handleRestoreButtonClick);
+
+  emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
+  resetAllDataButton.addEventListener("click", handleResetAllDataClick);
 
   addTaskButton.addEventListener("click", handleAddTask);
   taskInput.addEventListener("keydown", handleTaskInputKeydown);

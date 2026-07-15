@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=223" />
+  <link rel="manifest" href="./manifest.json?v=230" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=223" />
-  <link rel="stylesheet" href="./css/style.css?v=223" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=230" />
+  <link rel="stylesheet" href="./css/style.css?v=230" />
 </head>
 <body>
   <div class="app">
@@ -153,6 +153,26 @@
         </nav>
 
         <div id="memoList" class="memo-list"></div>
+
+        <section class="data-management" aria-label="데이터 관리">
+          <div class="data-management-header">
+            <div>
+              <strong>데이터 관리</strong>
+              <p>현재 메모는 이 브라우저에 저장됩니다. 중요한 메모는 백업해두세요.</p>
+            </div>
+          </div>
+
+          <div class="data-stats">
+            <span>전체 메모 <strong id="totalMemoCount">0</strong>개</span>
+            <span>휴지통 <strong id="trashMemoCount">0</strong>개</span>
+          </div>
+
+          <div class="data-actions">
+            <button type="button" id="emptyTrashButton" class="ghost-button data-button">휴지통 비우기</button>
+            <button type="button" id="resetAllDataButton" class="danger-button data-button">전체 데이터 초기화</button>
+          </div>
+        </section>
+
       </section>
     </main>
   </div>
@@ -182,14 +202,14 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("./service-worker.js?v=223")
+          .register("./service-worker.js?v=230")
           .catch((error) => console.log("Service Worker registration failed:", error));
       });
     }
   </script>
 
-  <script src="./js/storage.js?v=223"></script>
-  <script src="./js/ui.js?v=223"></script>
-  <script src="./js/app.js?v=223"></script>
+  <script src="./js/storage.js?v=230"></script>
+  <script src="./js/ui.js?v=230"></script>
+  <script src="./js/app.js?v=230"></script>
 </body>
 </html>
