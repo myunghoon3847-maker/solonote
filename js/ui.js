@@ -65,6 +65,26 @@ function renderTaskChecklistHtml(memo) {
   `;
 }
 
+function renderProjectFilterOptions(projects, currentProject) {
+  const projectFilterInput = document.querySelector("#projectFilterInput");
+
+  if (!projectFilterInput) {
+    return;
+  }
+
+  const selectedValue = currentProject || "전체";
+  const options = [
+    `<option value="전체">전체</option>`,
+    `<option value="프로젝트 없음">프로젝트 없음</option>`,
+    ...projects.map((project) => `<option value="${escapeHtml(project)}">${escapeHtml(project)}</option>`),
+  ];
+
+  projectFilterInput.innerHTML = options.join("");
+
+  const hasSelectedValue = [...projectFilterInput.options].some((option) => option.value === selectedValue);
+  projectFilterInput.value = hasSelectedValue ? selectedValue : "전체";
+}
+
 function renderMemoList(memos) {
   const memoList = document.querySelector("#memoList");
   const memoCount = document.querySelector("#memoCount");
@@ -75,7 +95,7 @@ function renderMemoList(memos) {
     memoList.innerHTML = `
       <div class="empty-state">
         <strong>표시할 메모가 없습니다.</strong>
-        <p>새 메모를 작성하거나 검색어와 카테고리를 확인해보세요.</p>
+        <p>새 메모를 작성하거나 검색어, 프로젝트, 카테고리를 확인해보세요.</p>
       </div>
     `;
     return;
@@ -86,6 +106,7 @@ function renderMemoList(memos) {
       const safeTitle = escapeHtml(memo.title);
       const safeContent = escapeHtml(memo.content);
       const safeCategory = memo.isDeleted ? "휴지통" : escapeHtml(memo.category);
+      const safeProject = memo.project ? escapeHtml(memo.project) : "";
       const date = formatDate(memo.updatedAt || memo.createdAt);
       const importantMark = memo.isImportant ? '<span class="star-mark" aria-label="중요 메모">★</span>' : "";
       const progress = getTaskProgress(memo.tasks);
@@ -93,12 +114,14 @@ function renderMemoList(memos) {
         progress.total > 0
           ? `<span class="task-progress-chip">체크 ${progress.done}/${progress.total}</span>`
           : "";
+      const projectChip = safeProject ? `<span class="project-chip">${safeProject}</span>` : "";
 
       return `
         <button type="button" class="memo-card" data-id="${memo.id}">
           <div class="memo-card-top">
             <div class="memo-card-badges">
               <span class="category-chip">${safeCategory}</span>
+              ${projectChip}
               ${memo.isImportant ? '<span class="important-chip">중요</span>' : ""}
               ${taskChip}
             </div>
@@ -118,13 +141,19 @@ function openDetailModal(memo) {
   const deleteButton = document.querySelector("#deleteMemoButton");
   const checklistContainer = document.querySelector("#detailChecklist");
 
-  const categoryText = memo.isDeleted
-    ? "휴지통"
-    : memo.isImportant
-      ? `★ 중요 · ${memo.category}`
-      : memo.category;
+  const detailParts = [];
 
-  document.querySelector("#detailCategory").textContent = categoryText;
+  if (memo.isImportant && !memo.isDeleted) {
+    detailParts.push("★ 중요");
+  }
+
+  detailParts.push(memo.isDeleted ? "휴지통" : memo.category);
+
+  if (memo.project) {
+    detailParts.push(memo.project);
+  }
+
+  document.querySelector("#detailCategory").textContent = detailParts.join(" · ");
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
   document.querySelector("#detailContent").textContent = memo.content;
@@ -198,10 +227,11 @@ function toggleEditor() {
 
   const isEditing = Boolean(document.querySelector("#editingId").value);
   const hasTitle = Boolean(document.querySelector("#titleInput").value.trim());
+  const hasProject = Boolean(document.querySelector("#projectInput").value.trim());
   const hasContent = Boolean(document.querySelector("#contentInput").value.trim());
   const hasTasks = Boolean(document.querySelectorAll("#taskDraftList .task-draft-item").length);
 
-  if (isEditing || hasTitle || hasContent || hasTasks) {
+  if (isEditing || hasTitle || hasProject || hasContent || hasTasks) {
     const shouldClose = confirm("작성 중인 내용이 있습니다. 작성 영역을 닫으시겠습니까?");
 
     if (!shouldClose) {
@@ -250,6 +280,7 @@ function cancelEditAndCloseEditor() {
 function fillFormForEdit(memo) {
   document.querySelector("#editingId").value = memo.id;
   document.querySelector("#titleInput").value = memo.title;
+  document.querySelector("#projectInput").value = memo.project || "";
   document.querySelector("#contentInput").value = memo.content;
   document.querySelector("#categoryInput").value = memo.category;
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);

@@ -22,6 +22,10 @@ function normalizeTasks(tasks) {
     .filter((task) => task.text.trim().length > 0);
 }
 
+function normalizeProject(project) {
+  return typeof project === "string" ? project.trim() : "";
+}
+
 function normalizeMemo(memo) {
   return {
     ...memo,
@@ -29,6 +33,7 @@ function normalizeMemo(memo) {
     title: typeof memo.title === "string" ? memo.title : "제목 없음",
     content: typeof memo.content === "string" ? memo.content : "",
     category: typeof memo.category === "string" ? memo.category : "업무",
+    project: normalizeProject(memo.project),
     createdAt: memo.createdAt || new Date().toISOString(),
     updatedAt: memo.updatedAt || memo.createdAt || new Date().toISOString(),
     isArchived: memo.isArchived ?? memo.category === "보관",
@@ -57,7 +62,7 @@ function saveMemos(memos) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(memos.map(normalizeMemo)));
 }
 
-function createMemo({ title, content, category, isImportant, tasks }) {
+function createMemo({ title, content, category, project, isImportant, tasks }) {
   const now = new Date().toISOString();
 
   return normalizeMemo({
@@ -65,6 +70,7 @@ function createMemo({ title, content, category, isImportant, tasks }) {
     title,
     content,
     category,
+    project,
     createdAt: now,
     updatedAt: now,
     isArchived: category === "보관",
@@ -97,6 +103,7 @@ function updateMemo(id, updatedData) {
       ...updatedData,
       isArchived: updatedData.category === "보관",
       isImportant: Boolean(updatedData.isImportant),
+      project: normalizeProject(updatedData.project),
       tasks: normalizeTasks(updatedData.tasks),
       updatedAt: new Date().toISOString(),
     });
@@ -187,10 +194,19 @@ function getActiveMemoCount() {
   return getMemos().filter((memo) => !memo.isDeleted).length;
 }
 
+function getProjectOptions() {
+  const projects = getMemos()
+    .filter((memo) => !memo.isDeleted)
+    .map((memo) => normalizeProject(memo.project))
+    .filter(Boolean);
+
+  return [...new Set(projects)].sort((a, b) => a.localeCompare(b, "ko-KR"));
+}
+
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "1.9",
+    backupVersion: "2.0",
     exportedAt: new Date().toISOString(),
     memos: getMemos(),
   };

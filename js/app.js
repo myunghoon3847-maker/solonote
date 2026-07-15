@@ -1,10 +1,12 @@
 let currentCategory = "전체";
 let currentSearch = "";
 let currentSort = "updatedDesc";
+let currentProject = "전체";
 let draftTasks = [];
 
 const memoForm = document.querySelector("#memoForm");
 const titleInput = document.querySelector("#titleInput");
+const projectInput = document.querySelector("#projectInput");
 const contentInput = document.querySelector("#contentInput");
 const categoryInput = document.querySelector("#categoryInput");
 const importantInput = document.querySelector("#importantInput");
@@ -12,6 +14,7 @@ const editingIdInput = document.querySelector("#editingId");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
 const sortInput = document.querySelector("#sortInput");
+const projectFilterInput = document.querySelector("#projectFilterInput");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
 const taskInput = document.querySelector("#taskInput");
@@ -52,6 +55,18 @@ function sortMemos(memos) {
   });
 }
 
+function matchesProjectFilter(memo) {
+  if (currentProject === "전체") {
+    return true;
+  }
+
+  if (currentProject === "프로젝트 없음") {
+    return !memo.project;
+  }
+
+  return memo.project === currentProject;
+}
+
 function getFilteredMemos() {
   const search = currentSearch.trim().toLowerCase();
 
@@ -71,6 +86,10 @@ function getFilteredMemos() {
       return false;
     }
 
+    if (!matchesProjectFilter(memo)) {
+      return false;
+    }
+
     const matchesCategory =
       currentCategory === "전체" ||
       currentCategory === "중요" ||
@@ -81,10 +100,13 @@ function getFilteredMemos() {
       ? memo.tasks.map((task) => task.text).join(" ").toLowerCase()
       : "";
 
+    const projectText = memo.project ? memo.project.toLowerCase() : "";
+
     const matchesSearch =
       !search ||
       memo.title.toLowerCase().includes(search) ||
       memo.content.toLowerCase().includes(search) ||
+      projectText.includes(search) ||
       taskText.includes(search);
 
     return matchesCategory && matchesSearch;
@@ -93,7 +115,16 @@ function getFilteredMemos() {
   return sortMemos(filteredMemos);
 }
 
+function refreshProjectFilter() {
+  renderProjectFilterOptions(getProjectOptions(), currentProject);
+
+  if (projectFilterInput.value !== currentProject) {
+    currentProject = projectFilterInput.value;
+  }
+}
+
 function refreshScreen() {
+  refreshProjectFilter();
   renderMemoList(getFilteredMemos());
 }
 
@@ -178,6 +209,7 @@ function handleFormSubmit(event) {
   event.preventDefault();
 
   const title = titleInput.value.trim();
+  const project = projectInput.value.trim();
   const content = contentInput.value.trim();
   const category = categoryInput.value;
   const isImportant = importantInput.checked;
@@ -197,6 +229,7 @@ function handleFormSubmit(event) {
   const editingId = editingIdInput.value;
   const memoData = {
     title,
+    project,
     content,
     category,
     isImportant,
@@ -237,6 +270,11 @@ function handleCategoryClick(event) {
 
   currentCategory = button.dataset.category;
   setActiveCategory(currentCategory);
+  refreshScreen();
+}
+
+function handleProjectFilterChange(event) {
+  currentProject = event.target.value;
   refreshScreen();
 }
 
@@ -398,6 +436,7 @@ function handleRestoreButtonClick() {
 
         currentCategory = "전체";
         currentSearch = "";
+        currentProject = "전체";
         searchInput.value = "";
         setActiveCategory(currentCategory);
         refreshScreen();
@@ -429,6 +468,7 @@ function bindEvents() {
   categoryTabs.addEventListener("click", handleCategoryClick);
   searchInput.addEventListener("input", handleSearchInput);
   sortInput.addEventListener("change", handleSortChange);
+  projectFilterInput.addEventListener("change", handleProjectFilterChange);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
   document.querySelector("#resetButton").addEventListener("click", cancelEditAndCloseEditor);

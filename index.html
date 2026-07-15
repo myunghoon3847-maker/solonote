@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=190" />
+  <link rel="manifest" href="./manifest.json?v=200" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=190" />
-  <link rel="stylesheet" href="./css/style.css?v=190" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=200" />
+  <link rel="stylesheet" href="./css/style.css?v=200" />
 </head>
 <body>
   <div class="app">
@@ -51,7 +51,10 @@
             autocomplete="off"
           />
 
-          <label for="contentInput">내용</label>
+          
+          <label for="projectInput">프로젝트명</label>
+          <input id="projectInput" type="text" placeholder="예: SoloNote 개발" autocomplete="off" />
+<label for="contentInput">내용</label>
           <textarea
             id="contentInput"
             rows="8"
@@ -112,6 +115,13 @@
           />
         </div>
 
+        <div class="project-filter-box">
+          <label for="projectFilterInput">프로젝트</label>
+          <select id="projectFilterInput">
+            <option value="전체">전체</option>
+          </select>
+        </div>
+
         <div class="sort-box">
           <label for="sortInput">정렬</label>
           <select id="sortInput">
@@ -164,14 +174,14 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("./service-worker.js?v=190")
+          .register("./service-worker.js?v=200")
           .catch((error) => console.log("Service Worker registration failed:", error));
       });
     }
   </script>
 
-  <script src="./js/storage.js?v=190"></script>
-  <script src="./js/ui.js?v=190"></script>
-  <script src="./js/app.js?v=190"></script>
+  <script src="./js/storage.js?v=200"></script>
+  <script src="./js/ui.js?v=200"></script>
+  <script src="./js/app.js?v=200"></script>
 </body>
 </html>

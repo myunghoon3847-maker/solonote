@@ -909,3 +909,47 @@ input[type="file"]#restoreInput {
     width: 100%;
   }
 }
+
+
+/* v2.0: 프로젝트별 메모 묶기 */
+.project-filter-box {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  margin: 0 0 10px;
+}
+
+.project-filter-box label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.project-filter-box select {
+  width: 100%;
+  min-width: 0;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  background: #ffffff;
+}
+
+.project-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 8px;
+}
+
+@media (max-width: 420px) {
+  .project-filter-box {
+    margin-bottom: 8px;
+  }
+}
