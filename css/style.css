@@ -1743,3 +1743,22 @@ textarea {
 #guideContent[style*="display: grid"] {
   display: grid !important;
 }
+
+
+/* v2.5: 개인용 MVP 안정화 */
+.app-guide,
+.data-management {
+  scroll-margin-top: 16px;
+}
+
+.memo-card,
+.detail-panel,
+.form-panel,
+.data-management,
+.app-guide {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
