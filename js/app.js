@@ -15,6 +15,7 @@ const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
 const sortInput = document.querySelector("#sortInput");
 const projectFilterInput = document.querySelector("#projectFilterInput");
+const quickProjectList = document.querySelector("#quickProjectList");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
 const taskInput = document.querySelector("#taskInput");
@@ -115,6 +116,38 @@ function getFilteredMemos() {
   return sortMemos(filteredMemos);
 }
 
+
+function getQuickProjectOptions(limit = 8) {
+  const projectMap = new Map();
+
+  getMemos()
+    .filter((memo) => !memo.isDeleted && memo.project)
+    .sort((a, b) => parseMemoDate(b.updatedAt || b.createdAt) - parseMemoDate(a.updatedAt || a.createdAt))
+    .forEach((memo) => {
+      if (!projectMap.has(memo.project)) {
+        projectMap.set(memo.project, memo.project);
+      }
+    });
+
+  return [...projectMap.values()].slice(0, limit);
+}
+
+function refreshQuickProjects() {
+  renderQuickProjectButtons(getQuickProjectOptions());
+}
+
+function handleQuickProjectClick(event) {
+  const button = event.target.closest(".quick-project-button");
+
+  if (!button) {
+    return;
+  }
+
+  projectInput.value = button.dataset.project || "";
+  projectInput.focus();
+}
+
+
 function refreshProjectFilter() {
   renderProjectFilterOptions(getProjectOptions(), currentProject);
 
@@ -125,6 +158,7 @@ function refreshProjectFilter() {
 
 function refreshScreen() {
   refreshProjectFilter();
+  refreshQuickProjects();
   renderMemoList(getFilteredMemos());
 }
 
@@ -469,6 +503,7 @@ function bindEvents() {
   searchInput.addEventListener("input", handleSearchInput);
   sortInput.addEventListener("change", handleSortChange);
   projectFilterInput.addEventListener("change", handleProjectFilterChange);
+  quickProjectList.addEventListener("click", handleQuickProjectClick);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
   document.querySelector("#resetButton").addEventListener("click", cancelEditAndCloseEditor);

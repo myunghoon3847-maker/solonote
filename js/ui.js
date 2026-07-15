@@ -65,6 +65,36 @@ function renderTaskChecklistHtml(memo) {
   `;
 }
 
+
+function renderQuickProjectButtons(projects) {
+  const quickProjectBox = document.querySelector("#quickProjectBox");
+  const quickProjectList = document.querySelector("#quickProjectList");
+
+  if (!quickProjectBox || !quickProjectList) {
+    return;
+  }
+
+  const safeProjects = Array.isArray(projects) ? projects.filter(Boolean) : [];
+
+  if (safeProjects.length === 0) {
+    quickProjectBox.classList.add("hidden");
+    quickProjectList.innerHTML = "";
+    return;
+  }
+
+  quickProjectBox.classList.remove("hidden");
+  quickProjectList.innerHTML = safeProjects
+    .map(
+      (project) => `
+        <button type="button" class="quick-project-button" data-project="${escapeHtml(project)}">
+          ${escapeHtml(project)}
+        </button>
+      `
+    )
+    .join("");
+}
+
+
 function renderProjectFilterOptions(projects, currentProject) {
   const projectFilterInput = document.querySelector("#projectFilterInput");
 

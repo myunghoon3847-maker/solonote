@@ -953,3 +953,74 @@ input[type="file"]#restoreInput {
     margin-bottom: 8px;
   }
 }
+
+
+/* v2.1: 프로젝트 빠른 선택 */
+.quick-project-box {
+  display: grid;
+  gap: 8px;
+  margin: -4px 0 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.quick-project-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quick-project-header span {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.quick-project-header small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.quick-project-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.quick-project-button {
+  max-width: 100%;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 7px 10px;
+  overflow-wrap: anywhere;
+}
+
+.quick-project-button:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 420px) {
+  .quick-project-box {
+    padding: 11px;
+  }
+
+  .quick-project-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .quick-project-button {
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+}
