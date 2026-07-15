@@ -1426,3 +1426,98 @@ textarea {
     width: 100%;
   }
 }
+
+
+/* v2.2.1: 작성창 기본 접힘 + 상단 여백 조정 */
+.editor-panel.collapsed .editor-content {
+  display: none !important;
+}
+
+.editor-panel.collapsed {
+  padding-bottom: 16px;
+}
+
+.app-header {
+  padding-bottom: 12px;
+  margin-bottom: 0;
+}
+
+.layout {
+  margin-top: -4px;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .app-header {
+    padding-bottom: 10px;
+  }
+
+  .layout {
+    margin-top: -6px;
+    gap: 12px;
+  }
+
+  .editor-panel.collapsed {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-header {
+    padding-bottom: 8px;
+  }
+
+  .layout {
+    margin-top: -8px;
+  }
+}
+
+
+/* v2.2.2: 상단 헤더 / 새 메모 / 저장된 메모 간격 통일 */
+.editor-panel.collapsed .editor-content {
+  display: none !important;
+}
+
+.app-header {
+  margin-bottom: 14px !important;
+}
+
+.layout {
+  margin-top: 0 !important;
+  gap: 14px !important;
+}
+
+.editor-panel.collapsed {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .app-header {
+    margin-bottom: 14px !important;
+    padding-bottom: 14px;
+  }
+
+  .layout {
+    margin-top: 0 !important;
+    gap: 14px !important;
+  }
+
+  .editor-panel.collapsed {
+    padding-top: 14px;
+    padding-bottom: 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-header {
+    margin-bottom: 14px !important;
+    padding-bottom: 12px;
+  }
+
+  .layout {
+    margin-top: 0 !important;
+    gap: 14px !important;
+  }
+}
