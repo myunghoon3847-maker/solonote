@@ -9,6 +9,9 @@ const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
+const backupButton = document.querySelector("#backupButton");
+const restoreButton = document.querySelector("#restoreButton");
+const restoreInput = document.querySelector("#restoreInput");
 
 function getFilteredMemos() {
   const search = currentSearch.trim().toLowerCase();
@@ -167,6 +170,96 @@ function handleModalClick(event) {
   }
 }
 
+function getTodayTextForFileName() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function handleBackupClick() {
+  const backupData = createBackupData();
+  const memoCount = backupData.memos.length;
+
+  if (memoCount === 0) {
+    const shouldBackupEmpty = confirm("저장된 메모가 없습니다. 빈 백업 파일을 생성할까요?");
+
+    if (!shouldBackupEmpty) {
+      return;
+    }
+  }
+
+  const jsonText = JSON.stringify(backupData, null, 2);
+  const blob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const fileName = `solonote-backup-${getTodayTextForFileName()}.json`;
+
+  const downloadLink = document.createElement("a");
+  downloadLink.href = url;
+  downloadLink.download = fileName;
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+function handleRestoreButtonClick() {
+  restoreInput.value = "";
+  restoreInput.click();
+}
+
+function handleRestoreFileChange(event) {
+  const file = event.target.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (!file.name.toLowerCase().endsWith(".json")) {
+    alert("JSON 백업 파일만 복원할 수 있습니다.");
+    return;
+  }
+
+  const shouldRestore = confirm("선택한 백업 파일의 메모를 현재 메모에 추가하시겠습니까? 기존 메모는 유지됩니다.");
+
+  if (!shouldRestore) {
+    restoreInput.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const backupData = JSON.parse(reader.result);
+      const result = importMemosFromBackup(backupData);
+
+      currentCategory = "전체";
+      currentSearch = "";
+      searchInput.value = "";
+      setActiveCategory(currentCategory);
+      refreshScreen();
+
+      alert(`복원 완료: ${result.addedCount}개 추가, ${result.skippedCount}개 중복 제외`);
+    } catch (error) {
+      console.error(error);
+      alert("복원에 실패했습니다. 올바른 SoloNote 백업 파일인지 확인해주세요.");
+    } finally {
+      restoreInput.value = "";
+    }
+  };
+
+  reader.onerror = () => {
+    alert("파일을 읽는 중 문제가 발생했습니다.");
+    restoreInput.value = "";
+  };
+
+  reader.readAsText(file, "utf-8");
+}
+
 function bindEvents() {
   memoForm.addEventListener("submit", handleFormSubmit);
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
@@ -179,6 +272,10 @@ function bindEvents() {
   document.querySelector("#detailModal").addEventListener("click", handleModalClick);
   document.querySelector("#editMemoButton").addEventListener("click", handleEditClick);
   document.querySelector("#deleteMemoButton").addEventListener("click", handleDeleteClick);
+
+  backupButton.addEventListener("click", handleBackupClick);
+  restoreButton.addEventListener("click", handleRestoreButtonClick);
+  restoreInput.addEventListener("change", handleRestoreFileChange);
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
