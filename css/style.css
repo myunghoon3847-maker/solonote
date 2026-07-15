@@ -515,3 +515,51 @@ select:focus {
 
 
 /* v1.3: 휴지통 기능 추가 후 카테고리 탭이 모바일에서 안정적으로 스크롤되도록 유지 */
+
+
+/* v1.4: 중요/즐겨찾기 기능 */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #f9fbff;
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.memo-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.important-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #92400e;
+  background: #fef3c7;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.star-mark {
+  display: inline-block;
+  margin-right: 7px;
+  color: #f59e0b;
+}

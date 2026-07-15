@@ -5,6 +5,7 @@ const memoForm = document.querySelector("#memoForm");
 const titleInput = document.querySelector("#titleInput");
 const contentInput = document.querySelector("#contentInput");
 const categoryInput = document.querySelector("#categoryInput");
+const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
@@ -14,6 +15,7 @@ function getFilteredMemos() {
 
   return getMemos().filter((memo) => {
     const isTrashView = currentCategory === "휴지통";
+    const isImportantView = currentCategory === "중요";
 
     if (isTrashView && !memo.isDeleted) {
       return false;
@@ -23,8 +25,13 @@ function getFilteredMemos() {
       return false;
     }
 
+    if (isImportantView && !memo.isImportant) {
+      return false;
+    }
+
     const matchesCategory =
       currentCategory === "전체" ||
+      currentCategory === "중요" ||
       currentCategory === "휴지통" ||
       memo.category === currentCategory;
 
@@ -47,6 +54,7 @@ function handleFormSubmit(event) {
   const title = titleInput.value.trim();
   const content = contentInput.value.trim();
   const category = categoryInput.value;
+  const isImportant = importantInput.checked;
 
   if (!title) {
     alert("제목을 입력해주세요.");
@@ -63,9 +71,9 @@ function handleFormSubmit(event) {
   const editingId = editingIdInput.value;
 
   if (editingId) {
-    updateMemo(editingId, { title, content, category });
+    updateMemo(editingId, { title, content, category, isImportant });
   } else {
-    addMemo({ title, content, category });
+    addMemo({ title, content, category, isImportant });
   }
 
   resetForm();

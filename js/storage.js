@@ -5,6 +5,7 @@ function normalizeMemo(memo) {
     ...memo,
     isArchived: memo.isArchived ?? memo.category === "보관",
     isDeleted: memo.isDeleted ?? false,
+    isImportant: memo.isImportant ?? false,
   };
 }
 
@@ -27,7 +28,7 @@ function saveMemos(memos) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(memos));
 }
 
-function createMemo({ title, content, category }) {
+function createMemo({ title, content, category, isImportant }) {
   const now = new Date().toISOString();
 
   return {
@@ -39,6 +40,7 @@ function createMemo({ title, content, category }) {
     updatedAt: now,
     isArchived: category === "보관",
     isDeleted: false,
+    isImportant: Boolean(isImportant),
   };
 }
 
@@ -64,6 +66,7 @@ function updateMemo(id, updatedData) {
       ...memo,
       ...updatedData,
       isArchived: updatedData.category === "보관",
+      isImportant: Boolean(updatedData.isImportant),
       updatedAt: new Date().toISOString(),
     };
   });

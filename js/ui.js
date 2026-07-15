@@ -43,14 +43,18 @@ function renderMemoList(memos) {
       const safeContent = escapeHtml(memo.content);
       const safeCategory = memo.isDeleted ? "휴지통" : escapeHtml(memo.category);
       const date = formatDate(memo.updatedAt || memo.createdAt);
+      const importantMark = memo.isImportant ? '<span class="star-mark" aria-label="중요 메모">★</span>' : "";
 
       return `
         <button type="button" class="memo-card" data-id="${memo.id}">
           <div class="memo-card-top">
-            <span class="category-chip">${safeCategory}</span>
+            <div class="memo-card-badges">
+              <span class="category-chip">${safeCategory}</span>
+              ${memo.isImportant ? '<span class="important-chip">중요</span>' : ""}
+            </div>
             <span class="memo-date">${date}</span>
           </div>
-          <h3>${safeTitle}</h3>
+          <h3>${importantMark}${safeTitle}</h3>
           <p>${safeContent}</p>
         </button>
       `;
@@ -63,7 +67,13 @@ function openDetailModal(memo) {
   const editButton = document.querySelector("#editMemoButton");
   const deleteButton = document.querySelector("#deleteMemoButton");
 
-  document.querySelector("#detailCategory").textContent = memo.isDeleted ? "휴지통" : memo.category;
+  const categoryText = memo.isDeleted
+    ? "휴지통"
+    : memo.isImportant
+      ? `★ 중요 · ${memo.category}`
+      : memo.category;
+
+  document.querySelector("#detailCategory").textContent = categoryText;
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
   document.querySelector("#detailContent").textContent = memo.content;
@@ -130,6 +140,7 @@ function fillFormForEdit(memo) {
   document.querySelector("#titleInput").value = memo.title;
   document.querySelector("#contentInput").value = memo.content;
   document.querySelector("#categoryInput").value = memo.category;
+  document.querySelector("#importantInput").checked = Boolean(memo.isImportant);
 
   setEditorMode("edit");
   closeDetailModal();

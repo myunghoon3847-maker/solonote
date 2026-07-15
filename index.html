@@ -57,6 +57,11 @@
             <option value="보관">보관</option>
           </select>
 
+          <label class="checkbox-row" for="importantInput">
+            <input id="importantInput" type="checkbox" />
+            <span>중요 메모로 표시</span>
+          </label>
+
           <button type="submit" id="saveButton" class="primary-button">저장하기</button>
         </form>
       </section>
@@ -79,6 +84,7 @@
 
         <nav id="categoryTabs" class="category-tabs" aria-label="메모 카테고리">
           <button type="button" class="category-tab active" data-category="전체">전체</button>
+          <button type="button" class="category-tab" data-category="중요">중요</button>
           <button type="button" class="category-tab" data-category="업무">업무</button>
           <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
           <button type="button" class="category-tab" data-category="할 일">할 일</button>
