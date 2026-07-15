@@ -112,6 +112,52 @@ function setActiveCategory(category) {
   });
 }
 
+function openEditor() {
+  const editorPanel = document.querySelector(".editor-panel");
+  const toggleButton = document.querySelector("#editorToggleButton");
+
+  editorPanel.classList.remove("collapsed");
+  toggleButton.textContent = "작성 영역 닫기";
+  toggleButton.classList.remove("primary-button");
+  toggleButton.classList.add("ghost-button");
+}
+
+function closeEditor() {
+  const editorPanel = document.querySelector(".editor-panel");
+  const toggleButton = document.querySelector("#editorToggleButton");
+
+  editorPanel.classList.add("collapsed");
+  toggleButton.textContent = "+ 새 메모 작성";
+  toggleButton.classList.remove("ghost-button");
+  toggleButton.classList.add("primary-button");
+}
+
+function toggleEditor() {
+  const editorPanel = document.querySelector(".editor-panel");
+
+  if (editorPanel.classList.contains("collapsed")) {
+    openEditor();
+    document.querySelector("#titleInput").focus();
+    return;
+  }
+
+  const isEditing = Boolean(document.querySelector("#editingId").value);
+  const hasTitle = Boolean(document.querySelector("#titleInput").value.trim());
+  const hasContent = Boolean(document.querySelector("#contentInput").value.trim());
+
+  if (isEditing || hasTitle || hasContent) {
+    const shouldClose = confirm("작성 중인 내용이 있습니다. 작성 영역을 닫으시겠습니까?");
+
+    if (!shouldClose) {
+      return;
+    }
+
+    resetForm();
+  }
+
+  closeEditor();
+}
+
 function setEditorMode(mode) {
   const editorTitle = document.querySelector("#editorTitle");
   const saveButton = document.querySelector("#saveButton");
@@ -135,6 +181,11 @@ function resetForm() {
   setEditorMode("create");
 }
 
+function cancelEditAndCloseEditor() {
+  resetForm();
+  closeEditor();
+}
+
 function fillFormForEdit(memo) {
   document.querySelector("#editingId").value = memo.id;
   document.querySelector("#titleInput").value = memo.title;
@@ -143,6 +194,7 @@ function fillFormForEdit(memo) {
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);
 
   setEditorMode("edit");
+  openEditor();
   closeDetailModal();
 
   document.querySelector(".editor-panel").scrollIntoView({

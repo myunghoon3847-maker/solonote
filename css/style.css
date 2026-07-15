@@ -563,3 +563,44 @@ select:focus {
   margin-right: 7px;
   color: #f59e0b;
 }
+
+
+/* v1.5: 메모 작성 영역 접기 / 펼치기 */
+.editor-title-row {
+  margin-bottom: 0;
+}
+
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.compact-button {
+  width: 100%;
+  padding: 11px 14px;
+}
+
+.editor-content {
+  margin-top: 18px;
+}
+
+.editor-panel.collapsed .editor-content {
+  display: none;
+}
+
+.editor-panel.collapsed {
+  padding-bottom: 20px;
+}
+
+@media (min-width: 841px) {
+  .editor-actions {
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .compact-button {
+    width: auto;
+  }
+}

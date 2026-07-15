@@ -77,6 +77,7 @@ function handleFormSubmit(event) {
   }
 
   resetForm();
+  closeEditor();
   refreshScreen();
 }
 
@@ -172,7 +173,8 @@ function bindEvents() {
   categoryTabs.addEventListener("click", handleCategoryClick);
   searchInput.addEventListener("input", handleSearchInput);
 
-  document.querySelector("#resetButton").addEventListener("click", resetForm);
+  document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
+  document.querySelector("#resetButton").addEventListener("click", cancelEditAndCloseEditor);
   document.querySelector("#closeDetailButton").addEventListener("click", closeDetailModal);
   document.querySelector("#detailModal").addEventListener("click", handleModalClick);
   document.querySelector("#editMemoButton").addEventListener("click", handleEditClick);

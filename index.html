@@ -21,16 +21,19 @@
     </header>
 
     <main class="layout">
-      <section class="panel editor-panel" aria-labelledby="editorTitle">
-        <div class="section-title-row">
+      <section class="panel editor-panel collapsed" aria-labelledby="editorTitle">
+        <div class="section-title-row editor-title-row">
           <div>
             <h2 id="editorTitle">새 메모 작성</h2>
             <p>떠오른 업무, 아이디어, 할 일을 바로 기록하세요.</p>
           </div>
-          <button type="button" id="resetButton" class="ghost-button hidden">수정 취소</button>
+          <div class="editor-actions">
+            <button type="button" id="editorToggleButton" class="primary-button compact-button">+ 새 메모 작성</button>
+            <button type="button" id="resetButton" class="ghost-button compact-button hidden">수정 취소</button>
+          </div>
         </div>
 
-        <form id="memoForm" class="memo-form">
+        <form id="memoForm" class="memo-form editor-content">
           <input type="hidden" id="editingId" />
 
           <label for="titleInput">제목</label>
