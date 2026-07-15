@@ -609,7 +609,10 @@ select:focus {
 
 
 
-/* v1.6.1: 백업 / 복원 버튼 UI 정리 */
+
+
+
+/* v1.6.2: 백업 / 복원 UI 최종 정리 */
 .backup-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -629,8 +632,9 @@ select:focus {
   white-space: nowrap;
 }
 
+.backup-actions input,
 #restoreInput,
-input[type="file"][hidden] {
+input[type="file"]#restoreInput {
   display: none !important;
 }
 
