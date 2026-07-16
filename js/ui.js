@@ -115,6 +115,78 @@ function renderProjectFilterOptions(projects, currentProject) {
   projectFilterInput.value = hasSelectedValue ? selectedValue : "전체";
 }
 
+
+function renderTaskHub(items, view = "open") {
+  const taskHubList = document.querySelector("#taskHubList");
+
+  if (!taskHubList) {
+    return;
+  }
+
+  const safeItems = Array.isArray(items) ? items : [];
+
+  if (safeItems.length === 0) {
+    const title =
+      view === "open"
+        ? "남아 있는 할 일이 없습니다."
+        : "등록된 체크리스트가 없습니다.";
+    const description =
+      view === "open"
+        ? "모든 체크리스트를 완료했거나 아직 할 일을 추가하지 않았습니다."
+        : "메모 작성 화면에서 체크리스트 항목을 추가해보세요.";
+
+    taskHubList.innerHTML = `
+      <div class="task-hub-empty">
+        <strong>${title}</strong>
+        <p>${description}</p>
+      </div>
+    `;
+    return;
+  }
+
+  taskHubList.innerHTML = safeItems
+    .map((item) => {
+      const task = item.task;
+      const safeTaskText = escapeHtml(task.text);
+      const safeMemoTitle = escapeHtml(item.memoTitle);
+      const safeProject = item.project ? escapeHtml(item.project) : "";
+      const safeCategory = escapeHtml(item.category);
+      const date = formatDate(item.updatedAt || item.createdAt);
+      const metaParts = [
+        safeProject ? `프로젝트 ${safeProject}` : "",
+        safeCategory,
+        date,
+      ].filter(Boolean);
+
+      return `
+        <article class="task-hub-item ${task.done ? "done" : ""}">
+          <button
+            type="button"
+            class="task-hub-check-button"
+            data-task-action="toggle"
+            data-memo-id="${item.memoId}"
+            data-task-id="${task.id}"
+            aria-label="${task.done ? "할 일 미완료로 변경" : "할 일 완료 처리"}: ${safeTaskText}"
+          >
+            <span class="task-hub-checkmark" aria-hidden="true">${task.done ? "✓" : ""}</span>
+            <span class="task-hub-task-text">${safeTaskText}</span>
+          </button>
+
+          <button
+            type="button"
+            class="task-hub-memo-link"
+            data-task-action="open-memo"
+            data-memo-id="${item.memoId}"
+          >
+            <strong>${safeMemoTitle}</strong>
+            <span>${metaParts.join(" · ")}</span>
+          </button>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function renderMemoList(memos) {
   const memoList = document.querySelector("#memoList");
   const memoCount = document.querySelector("#memoCount");

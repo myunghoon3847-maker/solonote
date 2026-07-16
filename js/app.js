@@ -47,6 +47,12 @@ const draftRecoveryDescription = document.querySelector("#draftRecoveryDescripti
 const restoreDraftButton = document.querySelector("#restoreDraftButton");
 const discardDraftButton = document.querySelector("#discardDraftButton");
 const draftSaveStatus = document.querySelector("#draftSaveStatus");
+const taskHubToggleButton = document.querySelector("#taskHubToggleButton");
+const taskHubContent = document.querySelector("#taskHubContent");
+const taskHubList = document.querySelector("#taskHubList");
+const taskHubOpenCount = document.querySelector("#taskHubOpenCount");
+const taskHubResultText = document.querySelector("#taskHubResultText");
+const taskHubViewTabs = document.querySelector(".task-hub-view-tabs");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
@@ -64,6 +70,8 @@ let recoverableDraft = null;
 const DRAFT_STORAGE_PREFIX = "solonote_editor_draft_v4";
 const DRAFT_AUTO_SAVE_DELAY_MS = 700;
 const DRAFT_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
+
+let currentTaskHubView = "open";
 
 
 
@@ -939,6 +947,197 @@ async function runCloudAction(action, options = {}) {
   }
 }
 
+
+function getTaskHubItems(view = currentTaskHubView) {
+  const items = [];
+
+  getMemos()
+    .filter((memo) => !memo.isDeleted)
+    .forEach((memo) => {
+      const tasks = Array.isArray(memo.tasks) ? memo.tasks : [];
+
+      tasks.forEach((task, taskIndex) => {
+        if (view === "open" && task.done) {
+          return;
+        }
+
+        items.push({
+          memoId: memo.id,
+          memoTitle: memo.title,
+          project: memo.project,
+          category: memo.category,
+          createdAt: memo.createdAt,
+          updatedAt: memo.updatedAt,
+          taskIndex,
+          task,
+        });
+      });
+    });
+
+  return items.sort((left, right) => {
+    if (left.task.done !== right.task.done) {
+      return Number(left.task.done) - Number(right.task.done);
+    }
+
+    const dateCompare =
+      parseMemoDate(right.updatedAt || right.createdAt) -
+      parseMemoDate(left.updatedAt || left.createdAt);
+
+    if (dateCompare !== 0) {
+      return dateCompare;
+    }
+
+    return left.taskIndex - right.taskIndex;
+  });
+}
+
+function getOpenTaskCount() {
+  return getMemos()
+    .filter((memo) => !memo.isDeleted)
+    .reduce((count, memo) => {
+      const tasks = Array.isArray(memo.tasks) ? memo.tasks : [];
+      return count + tasks.filter((task) => !task.done).length;
+    }, 0);
+}
+
+function refreshTaskHub() {
+  const openCount = getOpenTaskCount();
+  const items = getTaskHubItems();
+
+  if (taskHubOpenCount) {
+    taskHubOpenCount.textContent = String(openCount);
+  }
+
+  if (taskHubResultText) {
+    taskHubResultText.textContent =
+      currentTaskHubView === "open"
+        ? `미완료 ${items.length}개 표시`
+        : `전체 체크리스트 ${items.length}개 표시`;
+  }
+
+  taskHubViewTabs
+    ?.querySelectorAll("[data-task-view]")
+    .forEach((button) => {
+      const isActive = button.dataset.taskView === currentTaskHubView;
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
+
+  renderTaskHub(items, currentTaskHubView);
+}
+
+function handleTaskHubToggle() {
+  if (!taskHubToggleButton || !taskHubContent) {
+    return;
+  }
+
+  const willOpen = taskHubContent.hidden;
+  taskHubContent.hidden = !willOpen;
+  taskHubToggleButton.textContent = willOpen ? "할 일 접기" : "할 일 보기";
+  taskHubToggleButton.setAttribute("aria-expanded", String(willOpen));
+
+  if (willOpen) {
+    refreshTaskHub();
+  }
+}
+
+function handleTaskHubViewClick(event) {
+  const button = event.target.closest("[data-task-view]");
+
+  if (!button) {
+    return;
+  }
+
+  currentTaskHubView = button.dataset.taskView === "all" ? "all" : "open";
+  refreshTaskHub();
+}
+
+async function toggleTaskWithConflictHandling(
+  memoId,
+  taskId,
+  options = {}
+) {
+  const { openDetailAfter = false } = options;
+
+  if (navigator.onLine === false) {
+    setOfflineStatus();
+    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 체크해주세요.");
+    return null;
+  }
+
+  const memo = findMemoById(memoId);
+
+  if (!memo) {
+    return null;
+  }
+
+  try {
+    const updatedMemo = await runCloudAction(
+      () => toggleTaskDone(memoId, taskId, memo.updatedAt),
+      {
+        loadingMessage: "체크리스트 저장 중",
+        successMessage: "체크리스트 저장됨",
+        rethrowConflict: true,
+      }
+    );
+
+    if (updatedMemo && openDetailAfter) {
+      openDetailModal(updatedMemo);
+    }
+
+    return updatedMemo;
+  } catch (error) {
+    if (isMemoConflictError(error) && error.serverMemo) {
+      const latestMemo = replaceMemoInCache(error.serverMemo);
+      refreshScreen();
+
+      if (openDetailAfter) {
+        openDetailModal(latestMemo);
+      }
+
+      setCloudStatus("최신 체크리스트 불러옴", "warning");
+      alert(
+        "다른 기기에서 이 메모가 먼저 변경되어 최신 체크리스트를 불러왔습니다. 다시 체크해주세요."
+      );
+      return null;
+    }
+
+    console.error(error);
+    alert(translateCloudError(error));
+    return null;
+  }
+}
+
+async function handleTaskHubClick(event) {
+  const actionButton = event.target.closest("[data-task-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const memoId = actionButton.dataset.memoId;
+  const action = actionButton.dataset.taskAction;
+
+  if (action === "open-memo") {
+    const memo = findMemoById(memoId);
+
+    if (memo) {
+      openDetailModal(memo);
+    }
+
+    return;
+  }
+
+  if (action !== "toggle") {
+    return;
+  }
+
+  const taskId = actionButton.dataset.taskId;
+  actionButton.disabled = true;
+
+  await toggleTaskWithConflictHandling(memoId, taskId);
+}
+
 function parseMemoDate(dateString) {
   const time = new Date(dateString).getTime();
   return Number.isNaN(time) ? 0 : time;
@@ -1184,6 +1383,7 @@ function refreshScreen() {
   refreshProjectFilter();
   refreshQuickProjects();
   refreshDataStats();
+  refreshTaskHub();
 
   const filteredMemos = getFilteredMemos();
   renderMemoList(filteredMemos);
@@ -1620,50 +1820,15 @@ async function handleDetailTaskToggle(event) {
     return;
   }
 
-  if (navigator.onLine === false) {
-    setOfflineStatus();
-    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 체크해주세요.");
-    return;
-  }
-
   toggleButton.disabled = true;
 
-  const memoId = toggleButton.dataset.memoId;
-  const taskId = toggleButton.dataset.taskId;
-  const memo = findMemoById(memoId);
-
-  if (!memo) {
-    return;
-  }
-
-  try {
-    const updatedMemo = await runCloudAction(
-      () => toggleTaskDone(memoId, taskId, memo.updatedAt),
-      {
-        loadingMessage: "체크리스트 저장 중",
-        successMessage: "체크리스트 저장됨",
-        rethrowConflict: true,
-      }
-    );
-
-    if (updatedMemo) {
-      openDetailModal(updatedMemo);
+  await toggleTaskWithConflictHandling(
+    toggleButton.dataset.memoId,
+    toggleButton.dataset.taskId,
+    {
+      openDetailAfter: true,
     }
-  } catch (error) {
-    if (isMemoConflictError(error) && error.serverMemo) {
-      const latestMemo = replaceMemoInCache(error.serverMemo);
-      refreshScreen();
-      openDetailModal(latestMemo);
-      setCloudStatus("최신 체크리스트 불러옴", "warning");
-      alert(
-        "다른 기기에서 이 메모가 먼저 변경되어 최신 체크리스트를 불러왔습니다. 다시 체크해주세요."
-      );
-      return;
-    }
-
-    console.error(error);
-    alert(translateCloudError(error));
-  }
+  );
 }
 
 function handleModalClick(event) {
@@ -1843,6 +2008,11 @@ function bindEvents() {
   addTaskButton.addEventListener("click", handleAddTask);
   taskInput.addEventListener("keydown", handleTaskInputKeydown);
   taskDraftList.addEventListener("click", handleTaskDraftListClick);
+  taskHubToggleButton.addEventListener("click", handleTaskHubToggle);
+  taskHubViewTabs.addEventListener("click", handleTaskHubViewClick);
+  taskHubList.addEventListener("click", (event) => {
+    void handleTaskHubClick(event);
+  });
 
   window.addEventListener("beforeunload", handleBeforeUnload);
   window.addEventListener("solonote-before-logout", handleBeforeLogout);
@@ -1899,6 +2069,10 @@ if (guideContent) {
 
 if (dataManagementContent) {
   dataManagementContent.hidden = true;
+}
+
+if (taskHubContent) {
+  taskHubContent.hidden = true;
 }
 if (navigator.onLine === false) {
   setOfflineStatus();
