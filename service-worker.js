@@ -1,16 +1,17 @@
-const CACHE_NAME = "solonote-v3-7-1-cache";
+const CACHE_NAME = "solonote-v3-8-cache";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json?v=371",
-  "./css/style.css?v=371",
-  "./js/config.js?v=371",
-  "./js/auth.js?v=371",
-  "./js/storage.js?v=371",
-  "./js/ui.js?v=371",
-  "./js/app.js?v=371",
-  "./icons/icon-192.png?v=371",
+  "./manifest.json?v=380",
+  "./css/style.css?v=380",
+  "./js/config.js?v=380",
+  "./js/auth.js?v=380",
+  "./js/storage.js?v=380",
+  "./js/ui.js?v=380",
+  "./js/app.js?v=380",
+  "./js/pwa.js?v=380",
+  "./icons/icon-192.png?v=380",
   "./icons/icon-512.png"
 ];
 
@@ -18,7 +19,6 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -31,7 +31,14 @@ self.addEventListener("activate", (event) => {
       )
     )
   );
+
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -53,11 +60,16 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((networkResponse) => {
           const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", responseClone));
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.put("./index.html", responseClone)
+          );
           return networkResponse;
         })
         .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match("./index.html"))
+          caches.match(request).then(
+            (cachedResponse) =>
+              cachedResponse || caches.match("./index.html")
+          )
         )
     );
     return;
@@ -68,8 +80,11 @@ self.addEventListener("fetch", (event) => {
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.put(request, responseClone)
+          );
         }
+
         return networkResponse;
       })
       .catch(() => caches.match(request))
