@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=390" />
+  <link rel="manifest" href="./manifest.json?v=391" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=390" />
-  <link rel="stylesheet" href="./css/style.css?v=390" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=391" />
+  <link rel="stylesheet" href="./css/style.css?v=391" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -264,21 +264,13 @@
           <button type="button" id="restoreButton" class="ghost-button backup-button">복원하기</button>
 </div>
 
-        <div class="search-box search-control-row">
+        <div class="search-box">
           <input
             id="searchInput"
             type="search"
             placeholder="제목 또는 내용 검색하기..."
             aria-label="메모 검색"
           />
-          <button
-            type="button"
-            id="clearSearchButton"
-            class="ghost-button search-clear-button"
-            hidden
-          >
-            검색 지우기
-          </button>
         </div>
 
         <div class="project-filter-box">
@@ -314,11 +306,11 @@
           <span id="resultSummary">메모를 불러오고 있습니다.</span>
           <button
             type="button"
-            id="resetFiltersButton"
+            id="showAllMemosButton"
             class="ghost-button compact-button"
             hidden
           >
-            필터 초기화
+            전체 메모 보기
           </button>
         </div>
 
@@ -389,7 +381,7 @@
               <strong>앱 정보 / 사용 안내</strong>
               <p>저장 방식, 백업 방법, 주요 사용법을 확인하세요.</p>
             </div>
-            <span class="version-badge">v3.9</span>
+            <span class="version-badge">v3.9.1</span>
           </div>
 
           <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" aria-expanded="false" aria-controls="guideContent">
@@ -417,7 +409,7 @@
 
             <div class="guide-item">
               <strong>저장 방식</strong>
-              <p>v3.9에서는 작성 중 이탈 방지와 모바일·검색·상세 화면 사용성을 정리했습니다.</p>
+              <p>v3.9.1에서는 검색 화면을 단순화하고 ‘전체 메모 보기’로 쉽게 돌아갈 수 있습니다.</p>
             </div>
             <div class="guide-item">
               <strong>백업 / 복원</strong>
@@ -472,11 +464,11 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=390"></script>
-  <script src="./js/auth.js?v=390"></script>
-  <script src="./js/storage.js?v=390"></script>
-  <script src="./js/ui.js?v=390"></script>
-  <script src="./js/app.js?v=390"></script>
-  <script src="./js/pwa.js?v=390"></script>
+  <script src="./js/config.js?v=391"></script>
+  <script src="./js/auth.js?v=391"></script>
+  <script src="./js/storage.js?v=391"></script>
+  <script src="./js/ui.js?v=391"></script>
+  <script src="./js/app.js?v=391"></script>
+  <script src="./js/pwa.js?v=391"></script>
 </body>
 </html>

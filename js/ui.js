@@ -131,7 +131,7 @@ function renderMemoList(memos) {
             새 메모 작성
           </button>
           <button type="button" class="ghost-button compact-button" data-empty-action="reset">
-            검색·필터 초기화
+            전체 메모 보기
           </button>
         </div>
       </div>

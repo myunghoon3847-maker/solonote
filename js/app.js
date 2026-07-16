@@ -37,8 +37,7 @@ const legacyMigrationMessage = document.querySelector("#legacyMigrationMessage")
 const migrateLegacyButton = document.querySelector("#migrateLegacyButton");
 const cloudRefreshButton = document.querySelector("#cloudRefreshButton");
 const lastSyncTime = document.querySelector("#lastSyncTime");
-const clearSearchButton = document.querySelector("#clearSearchButton");
-const resetFiltersButton = document.querySelector("#resetFiltersButton");
+const showAllMemosButton = document.querySelector("#showAllMemosButton");
 const resultSummary = document.querySelector("#resultSummary");
 const dataManagementToggleButton = document.querySelector("#dataManagementToggleButton");
 const dataManagementContent = document.querySelector("#dataManagementContent");
@@ -123,17 +122,14 @@ function resetMemoFilters() {
 
 function updateFilterControls(filteredMemos) {
   const hasSearch = Boolean(currentSearch.trim());
-  const hasFilter =
+  const hasChangedView =
+    hasSearch ||
     currentCategory !== "전체" ||
     currentProject !== "전체" ||
     currentSort !== "updatedDesc";
 
-  if (clearSearchButton) {
-    clearSearchButton.hidden = !hasSearch;
-  }
-
-  if (resetFiltersButton) {
-    resetFiltersButton.hidden = !(hasSearch || hasFilter);
+  if (showAllMemosButton) {
+    showAllMemosButton.hidden = !hasChangedView;
   }
 
   if (resultSummary) {
@@ -146,13 +142,6 @@ function updateFilterControls(filteredMemos) {
       (currentProject !== "전체" ? ` · 프로젝트: ${currentProject}` : "") +
       (hasSearch ? ` · 검색: “${currentSearch.trim()}”` : "");
   }
-}
-
-function handleClearSearchClick() {
-  currentSearch = "";
-  searchInput.value = "";
-  refreshScreen();
-  searchInput.focus();
 }
 
 function handleDataManagementToggle() {
@@ -1526,8 +1515,7 @@ function bindEvents() {
   migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
-  clearSearchButton.addEventListener("click", handleClearSearchClick);
-  resetFiltersButton.addEventListener("click", resetMemoFilters);
+  showAllMemosButton.addEventListener("click", resetMemoFilters);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
 
