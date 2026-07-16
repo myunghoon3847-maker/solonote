@@ -2121,3 +2121,69 @@ body.is-offline #cloudRefreshButton,
 body.is-offline #migrateLegacyButton {
   opacity: 0.72;
 }
+
+
+/* v3.7: 비밀번호 재설정과 계정 복구 */
+.auth-form-intro {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 2px;
+  padding: 12px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #eff6ff;
+}
+
+.auth-form-intro strong {
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.auth-form-intro p {
+  margin: 0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.auth-link-button {
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.auth-link-button:hover {
+  background: #eff6ff;
+}
+
+.auth-link-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+  outline-offset: 2px;
+}
+
+.auth-message-success {
+  color: #047857;
+}
+
+.auth-message-info {
+  color: #1d4ed8;
+}
+
+#passwordRecoveryForm input {
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 640px) {
+  .auth-form-intro {
+    padding: 11px 12px;
+  }
+}

@@ -1387,6 +1387,15 @@ if (navigator.onLine === false) {
 window.addEventListener("solonote-auth-changed", (event) => {
   const session = event.detail && event.detail.session;
 
+  if (window.solonotePasswordRecoveryActive) {
+    cloudLoadSequence += 1;
+    currentCloudUserId = "";
+    clearMemoCache();
+    refreshScreen();
+    setCloudStatus("비밀번호 재설정 중", "loading");
+    return;
+  }
+
   if (!session) {
     cloudLoadSequence += 1;
     currentCloudUserId = "";
@@ -1417,6 +1426,10 @@ window.addEventListener("solonote-auth-changed", (event) => {
 
     if (error) {
       throw error;
+    }
+
+    if (window.solonotePasswordRecoveryActive) {
+      return;
     }
 
     if (data && data.session) {
