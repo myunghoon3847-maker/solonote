@@ -2495,3 +2495,118 @@ button:focus-visible,
 #showAllMemosButton {
   white-space: nowrap;
 }
+
+
+/* v4.0: 초안 자동 저장 및 복구 */
+.draft-recovery-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 14px 18px 0;
+  padding: 14px 16px;
+  border: 1px solid #fde68a;
+  border-radius: 16px;
+  background: #fffbeb;
+  box-shadow: 0 10px 28px rgba(180, 83, 9, 0.08);
+}
+
+.draft-recovery-banner[hidden] {
+  display: none !important;
+}
+
+.draft-recovery-banner strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #92400e;
+  font-size: 14px;
+}
+
+.draft-recovery-banner p {
+  margin: 0;
+  color: #78716c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.draft-recovery-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.draft-save-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 8px 11px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.draft-save-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+#draftSaveStatus[data-state="saving"] + * {
+  color: inherit;
+}
+
+.draft-save-status:has(#draftSaveStatus[data-state="saving"]) .draft-save-dot {
+  background: #f59e0b;
+  animation: draftPulse 1s ease-in-out infinite;
+}
+
+.draft-save-status:has(#draftSaveStatus[data-state="saved"]) .draft-save-dot,
+.draft-save-status:has(#draftSaveStatus[data-state="restored"]) .draft-save-dot {
+  background: #10b981;
+}
+
+.draft-save-status:has(#draftSaveStatus[data-state="error"]) {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.draft-save-status:has(#draftSaveStatus[data-state="error"]) .draft-save-dot {
+  background: #ef4444;
+}
+
+@keyframes draftPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 640px) {
+  .draft-recovery-banner {
+    align-items: stretch;
+    flex-direction: column;
+    margin: 10px 12px 0;
+  }
+
+  .draft-recovery-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .draft-recovery-actions button {
+    min-height: 44px;
+  }
+}

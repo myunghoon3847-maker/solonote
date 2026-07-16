@@ -42,6 +42,11 @@ const resultSummary = document.querySelector("#resultSummary");
 const dataManagementToggleButton = document.querySelector("#dataManagementToggleButton");
 const dataManagementContent = document.querySelector("#dataManagementContent");
 const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
+const draftRecoveryBanner = document.querySelector("#draftRecoveryBanner");
+const draftRecoveryDescription = document.querySelector("#draftRecoveryDescription");
+const restoreDraftButton = document.querySelector("#restoreDraftButton");
+const discardDraftButton = document.querySelector("#discardDraftButton");
+const draftSaveStatus = document.querySelector("#draftSaveStatus");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
@@ -53,6 +58,12 @@ const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
 let editorCleanSnapshot = "";
 let isEditorDirty = false;
+let draftAutoSaveTimer = null;
+let recoverableDraft = null;
+
+const DRAFT_STORAGE_PREFIX = "solonote_editor_draft_v4";
+const DRAFT_AUTO_SAVE_DELAY_MS = 700;
+const DRAFT_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
 
 
 
@@ -78,6 +89,297 @@ function markEditorClean() {
 
 function updateEditorDirtyState() {
   isEditorDirty = getEditorSnapshot() !== editorCleanSnapshot;
+  scheduleDraftAutoSave();
+}
+
+
+function getDraftStorageKey(userId = currentCloudUserId) {
+  return userId ? `${DRAFT_STORAGE_PREFIX}:${userId}` : "";
+}
+
+function hasDraftContent(draft) {
+  if (!draft) {
+    return false;
+  }
+
+  return Boolean(
+    String(draft.title || "").trim() ||
+    String(draft.project || "").trim() ||
+    String(draft.content || "").trim() ||
+    String(draft.editingId || "").trim() ||
+    (Array.isArray(draft.tasks) && draft.tasks.length > 0)
+  );
+}
+
+function buildLocalEditorDraft() {
+  return {
+    version: "4.0",
+    userId: currentCloudUserId,
+    savedAt: new Date().toISOString(),
+    title: titleInput?.value || "",
+    project: projectInput?.value || "",
+    content: contentInput?.value || "",
+    category: categoryInput?.value || "업무",
+    isImportant: Boolean(importantInput?.checked),
+    editingId: editingIdInput?.value || "",
+    editingUpdatedAt: editingUpdatedAtInput?.value || "",
+    tasks: draftTasks.map((task) => ({
+      id: task.id,
+      text: task.text,
+      done: Boolean(task.done),
+    })),
+  };
+}
+
+function formatDraftSavedTime(dateString) {
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function setDraftSaveStatus(message, state = "ready") {
+  if (!draftSaveStatus) {
+    return;
+  }
+
+  draftSaveStatus.textContent = message;
+  draftSaveStatus.dataset.state = state;
+}
+
+function showDraftRecoveryBanner(draft) {
+  if (!draftRecoveryBanner || !draft) {
+    return;
+  }
+
+  recoverableDraft = draft;
+  draftRecoveryBanner.hidden = false;
+  draftRecoveryBanner.setAttribute("aria-hidden", "false");
+
+  const savedTime = formatDraftSavedTime(draft.savedAt);
+  const typeText = draft.editingId ? "수정 중이던 메모" : "작성 중이던 새 메모";
+
+  if (draftRecoveryDescription) {
+    draftRecoveryDescription.textContent =
+      `${typeText}입니다` +
+      (savedTime ? ` · 마지막 자동 저장 ${savedTime}` : "") +
+      ".";
+  }
+}
+
+function hideDraftRecoveryBanner() {
+  if (!draftRecoveryBanner) {
+    return;
+  }
+
+  draftRecoveryBanner.hidden = true;
+  draftRecoveryBanner.setAttribute("aria-hidden", "true");
+  recoverableDraft = null;
+}
+
+function readLocalEditorDraft(userId = currentCloudUserId) {
+  const storageKey = getDraftStorageKey(userId);
+
+  if (!storageKey) {
+    return null;
+  }
+
+  try {
+    const rawDraft = window.localStorage.getItem(storageKey);
+
+    if (!rawDraft) {
+      return null;
+    }
+
+    const draft = JSON.parse(rawDraft);
+    const savedAt = new Date(draft.savedAt).getTime();
+
+    if (
+      !draft ||
+      draft.userId !== userId ||
+      Number.isNaN(savedAt) ||
+      Date.now() - savedAt > DRAFT_MAX_AGE_MS ||
+      !hasDraftContent(draft)
+    ) {
+      window.localStorage.removeItem(storageKey);
+      return null;
+    }
+
+    return draft;
+  } catch (error) {
+    console.error("초안 불러오기 실패:", error);
+
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch (_) {}
+
+    return null;
+  }
+}
+
+function saveLocalEditorDraft() {
+  if (!currentCloudUserId || !isEditorDirty) {
+    return;
+  }
+
+  const storageKey = getDraftStorageKey();
+
+  if (!storageKey) {
+    return;
+  }
+
+  const draft = buildLocalEditorDraft();
+
+  if (!hasDraftContent(draft)) {
+    clearLocalEditorDraft();
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(draft));
+    recoverableDraft = draft;
+    setDraftSaveStatus(
+      `초안 자동 저장됨 · ${formatDraftSavedTime(draft.savedAt)}`,
+      "saved"
+    );
+  } catch (error) {
+    console.error("초안 자동 저장 실패:", error);
+    setDraftSaveStatus("초안을 자동 저장하지 못했습니다.", "error");
+  }
+}
+
+function scheduleDraftAutoSave() {
+  if (draftAutoSaveTimer) {
+    window.clearTimeout(draftAutoSaveTimer);
+  }
+
+  if (!isEditorDirty || !currentCloudUserId) {
+    return;
+  }
+
+  setDraftSaveStatus("초안 저장 준비 중...", "saving");
+
+  draftAutoSaveTimer = window.setTimeout(() => {
+    draftAutoSaveTimer = null;
+    saveLocalEditorDraft();
+  }, DRAFT_AUTO_SAVE_DELAY_MS);
+}
+
+function clearLocalEditorDraft(userId = currentCloudUserId) {
+  if (draftAutoSaveTimer) {
+    window.clearTimeout(draftAutoSaveTimer);
+    draftAutoSaveTimer = null;
+  }
+
+  const storageKey = getDraftStorageKey(userId);
+
+  if (storageKey) {
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.error("초안 삭제 실패:", error);
+    }
+  }
+
+  hideDraftRecoveryBanner();
+  setDraftSaveStatus(
+    "작성 내용은 이 브라우저에 자동 저장됩니다.",
+    "ready"
+  );
+}
+
+function checkForRecoverableDraft(userId = currentCloudUserId) {
+  if (!userId || window.solonotePasswordRecoveryActive) {
+    return;
+  }
+
+  const draft = readLocalEditorDraft(userId);
+
+  if (draft) {
+    showDraftRecoveryBanner(draft);
+  } else {
+    hideDraftRecoveryBanner();
+  }
+}
+
+function restoreLocalEditorDraft() {
+  const draft = recoverableDraft || readLocalEditorDraft();
+
+  if (!draft) {
+    alert("복구할 초안이 없습니다.");
+    hideDraftRecoveryBanner();
+    return;
+  }
+
+  const originalMemoExists =
+    !draft.editingId || Boolean(findMemoById(draft.editingId));
+
+  titleInput.value = draft.title || "";
+  projectInput.value = draft.project || "";
+  contentInput.value = draft.content || "";
+  categoryInput.value = draft.category || "업무";
+  importantInput.checked = Boolean(draft.isImportant);
+  editingIdInput.value = originalMemoExists ? draft.editingId || "" : "";
+  editingUpdatedAtInput.value = originalMemoExists
+    ? draft.editingUpdatedAt || ""
+    : "";
+
+  loadDraftTasks(
+    Array.isArray(draft.tasks)
+      ? draft.tasks.map((task) => ({
+          id: task.id || createDraftTask(task.text || "").id,
+          text: String(task.text || ""),
+          done: Boolean(task.done),
+        }))
+      : []
+  );
+
+  setEditorMode(editingIdInput.value ? "edit" : "create");
+  openEditor();
+  hideDraftRecoveryBanner();
+
+  editorCleanSnapshot = "";
+  updateEditorDirtyState();
+  setDraftSaveStatus(
+    originalMemoExists
+      ? "자동 저장된 초안을 복구했습니다."
+      : "원본 메모를 찾지 못해 새 메모 초안으로 복구했습니다.",
+    "restored"
+  );
+
+  document.querySelector(".editor-panel")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+
+  window.setTimeout(() => {
+    (titleInput.value.trim() ? contentInput : titleInput)?.focus();
+  }, 250);
+}
+
+function discardLocalEditorDraft() {
+  if (!recoverableDraft && !readLocalEditorDraft()) {
+    hideDraftRecoveryBanner();
+    return;
+  }
+
+  const shouldDiscard = window.confirm(
+    "자동 저장된 초안을 삭제하시겠습니까? 삭제한 초안은 복구할 수 없습니다."
+  );
+
+  if (!shouldDiscard) {
+    return;
+  }
+
+  clearLocalEditorDraft();
 }
 
 function hasUnsavedEditorChanges() {
@@ -103,6 +405,7 @@ function handleBeforeUnload(event) {
     return;
   }
 
+  saveLocalEditorDraft();
   event.preventDefault();
   event.returnValue = "";
 }
@@ -162,6 +465,19 @@ function handleMobileNewMemoClick() {
     return;
   }
 
+  if (readLocalEditorDraft()) {
+    const shouldStartNew = window.confirm(
+      "자동 저장된 초안이 있습니다. 초안을 삭제하고 새 메모를 작성하시겠습니까?"
+    );
+
+    if (!shouldStartNew) {
+      showDraftRecoveryBanner(readLocalEditorDraft());
+      return;
+    }
+
+    clearLocalEditorDraft();
+  }
+
   resetForm();
   openEditor();
   document.querySelector(".editor-panel")?.scrollIntoView({
@@ -180,6 +496,7 @@ function handleCancelEditorClick() {
     return;
   }
 
+  clearLocalEditorDraft();
   cancelEditAndCloseEditor();
 }
 
@@ -193,6 +510,7 @@ function handleBeforeLogout(event) {
     return;
   }
 
+  clearLocalEditorDraft();
   resetForm();
   closeEditor();
 }
@@ -1143,6 +1461,7 @@ async function handleFormSubmit(event) {
     return;
   }
 
+  clearLocalEditorDraft();
   resetForm();
   closeEditor();
   refreshScreen();
@@ -1518,6 +1837,8 @@ function bindEvents() {
   showAllMemosButton.addEventListener("click", resetMemoFilters);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
+  restoreDraftButton.addEventListener("click", restoreLocalEditorDraft);
+  discardDraftButton.addEventListener("click", discardLocalEditorDraft);
 
   addTaskButton.addEventListener("click", handleAddTask);
   taskInput.addEventListener("keydown", handleTaskInputKeydown);
@@ -1563,6 +1884,10 @@ function bindEvents() {
 bindEvents();
 renderTaskDraftList();
 markEditorClean();
+setDraftSaveStatus(
+  "작성 내용은 이 브라우저에 자동 저장됩니다.",
+  "ready"
+);
 clearMemoCache();
 refreshScreen();
 refreshLegacyMigrationPanel();
@@ -1594,14 +1919,20 @@ window.addEventListener("solonote-auth-changed", (event) => {
   }
 
   if (!session) {
+    const previousUserId = currentCloudUserId;
     cloudLoadSequence += 1;
     currentCloudUserId = "";
+    recoverableDraft = null;
+    hideDraftRecoveryBanner();
     clearMemoCache();
     closeDetailModal();
     refreshScreen();
     setCloudStatus("로그인 필요", "error");
     return;
   }
+
+  currentCloudUserId = session.user.id;
+  checkForRecoverableDraft(currentCloudUserId);
 
   void loadCloudMemosForSession(session, {
     reason: "로그인",
@@ -1630,10 +1961,15 @@ window.addEventListener("solonote-auth-changed", (event) => {
     }
 
     if (data && data.session) {
+      currentCloudUserId = data.session.user.id;
+      checkForRecoverableDraft(currentCloudUserId);
+
       await loadCloudMemosForSession(data.session, {
         reason: "앱 시작",
         automatic: false,
       });
+
+      checkForRecoverableDraft(currentCloudUserId);
     }
   } catch (error) {
     console.error(error);

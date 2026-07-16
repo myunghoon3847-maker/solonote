@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=391" />
+  <link rel="manifest" href="./manifest.json?v=400" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=391" />
-  <link rel="stylesheet" href="./css/style.css?v=391" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=400" />
+  <link rel="stylesheet" href="./css/style.css?v=400" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -175,6 +175,28 @@
       </div>
     </section>
 
+    <section
+      id="draftRecoveryBanner"
+      class="draft-recovery-banner"
+      role="status"
+      aria-live="polite"
+      aria-hidden="true"
+      hidden
+    >
+      <div>
+        <strong>저장하지 않은 초안이 있습니다.</strong>
+        <p id="draftRecoveryDescription">이 브라우저에 자동 저장된 내용을 이어서 작성할 수 있습니다.</p>
+      </div>
+      <div class="draft-recovery-actions">
+        <button type="button" id="restoreDraftButton" class="primary-button compact-button">
+          이어서 작성
+        </button>
+        <button type="button" id="discardDraftButton" class="ghost-button compact-button">
+          초안 삭제
+        </button>
+      </div>
+    </section>
+
     <main class="layout">
       <section class="panel editor-panel collapsed" aria-labelledby="editorTitle">
         <div class="section-title-row editor-title-row">
@@ -189,6 +211,11 @@
         </div>
 
         <form id="memoForm" class="memo-form editor-content">
+          <div class="draft-save-status" aria-live="polite">
+            <span class="draft-save-dot" aria-hidden="true"></span>
+            <span id="draftSaveStatus">작성 내용은 이 브라우저에 자동 저장됩니다.</span>
+          </div>
+
           <input type="hidden" id="editingId" />
           <input type="hidden" id="editingUpdatedAt" />
 
@@ -381,7 +408,7 @@
               <strong>앱 정보 / 사용 안내</strong>
               <p>저장 방식, 백업 방법, 주요 사용법을 확인하세요.</p>
             </div>
-            <span class="version-badge">v3.9.1</span>
+            <span class="version-badge">v4.0</span>
           </div>
 
           <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" aria-expanded="false" aria-controls="guideContent">
@@ -409,7 +436,7 @@
 
             <div class="guide-item">
               <strong>저장 방식</strong>
-              <p>v3.9.1에서는 검색 화면을 단순화하고 ‘전체 메모 보기’로 쉽게 돌아갈 수 있습니다.</p>
+              <p>v4.0에서는 저장 전 작성 내용도 브라우저에 자동 보관하고 다시 이어서 작성할 수 있습니다.</p>
             </div>
             <div class="guide-item">
               <strong>백업 / 복원</strong>
@@ -464,11 +491,11 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=391"></script>
-  <script src="./js/auth.js?v=391"></script>
-  <script src="./js/storage.js?v=391"></script>
-  <script src="./js/ui.js?v=391"></script>
-  <script src="./js/app.js?v=391"></script>
-  <script src="./js/pwa.js?v=391"></script>
+  <script src="./js/config.js?v=400"></script>
+  <script src="./js/auth.js?v=400"></script>
+  <script src="./js/storage.js?v=400"></script>
+  <script src="./js/ui.js?v=400"></script>
+  <script src="./js/app.js?v=400"></script>
+  <script src="./js/pwa.js?v=400"></script>
 </body>
 </html>
