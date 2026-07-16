@@ -1,16 +1,16 @@
-const CACHE_NAME = "solonote-v3-4-cache";
+const CACHE_NAME = "solonote-v3-5-cache";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json?v=340",
-  "./css/style.css?v=340",
-  "./js/config.js?v=340",
-  "./js/auth.js?v=340",
-  "./js/storage.js?v=340",
-  "./js/ui.js?v=340",
-  "./js/app.js?v=340",
-  "./icons/icon-192.png?v=340",
+  "./manifest.json?v=350",
+  "./css/style.css?v=350",
+  "./js/config.js?v=350",
+  "./js/auth.js?v=350",
+  "./js/storage.js?v=350",
+  "./js/ui.js?v=350",
+  "./js/app.js?v=350",
+  "./icons/icon-192.png?v=350",
   "./icons/icon-512.png"
 ];
 
@@ -41,7 +41,6 @@ self.addEventListener("fetch", (event) => {
 
   const requestUrl = new URL(event.request.url);
 
-  // Supabase API와 CDN 요청은 캐시에 저장하지 않는다.
   if (requestUrl.origin !== self.location.origin) {
     return;
   }

@@ -30,6 +30,12 @@ const taskDraftList = document.querySelector("#taskDraftList");
 const taskCountLabel = document.querySelector("#taskCountLabel");
 const cloudSyncStatus = document.querySelector("#cloudSyncStatus");
 const saveButton = document.querySelector("#saveButton");
+const legacyMigrationPanel = document.querySelector("#legacyMigrationPanel");
+const legacyMemoCount = document.querySelector("#legacyMemoCount");
+const legacyMigrationMessage = document.querySelector("#legacyMigrationMessage");
+const migrateLegacyButton = document.querySelector("#migrateLegacyButton");
+const cloudRefreshButton = document.querySelector("#cloudRefreshButton");
+const lastSyncTime = document.querySelector("#lastSyncTime");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
@@ -42,6 +48,137 @@ function setCloudStatus(message, state = "ready") {
 
   cloudSyncStatus.textContent = message;
   cloudSyncStatus.dataset.state = state;
+}
+
+
+function formatSyncTime(date = new Date()) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+}
+
+function updateLastSyncTime() {
+  if (lastSyncTime) {
+    lastSyncTime.textContent = formatSyncTime();
+  }
+}
+
+function refreshLegacyMigrationPanel() {
+  if (!legacyMigrationPanel || !legacyMemoCount || !migrateLegacyButton) {
+    return;
+  }
+
+  const count = getLegacyMemoCount();
+  legacyMemoCount.textContent = String(count);
+
+  if (count > 0) {
+    legacyMigrationPanel.dataset.state = "available";
+    migrateLegacyButton.disabled = false;
+    migrateLegacyButton.textContent = "기존 메모를 클라우드로 옮기기";
+
+    if (legacyMigrationMessage) {
+      legacyMigrationMessage.textContent =
+        `이 브라우저에 이전 버전 메모 ${count}개가 남아 있습니다. 중복을 제외하고 클라우드에 추가할 수 있습니다.`;
+    }
+
+    return;
+  }
+
+  legacyMigrationPanel.dataset.state = "empty";
+  migrateLegacyButton.disabled = true;
+  migrateLegacyButton.textContent = "옮길 기존 메모 없음";
+
+  if (legacyMigrationMessage) {
+    legacyMigrationMessage.textContent =
+      "이 브라우저에는 이전할 기존 메모가 없습니다.";
+  }
+}
+
+async function getCurrentSession() {
+  const client = window.solonoteSupabase;
+
+  if (!client) {
+    throw new Error("Supabase 클라이언트가 준비되지 않았습니다.");
+  }
+
+  const { data, error } = await client.auth.getSession();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || !data.session) {
+    throw new Error("로그인 세션이 없습니다. 다시 로그인해주세요.");
+  }
+
+  return data.session;
+}
+
+async function handleCloudRefreshClick() {
+  if (cloudRefreshButton) {
+    cloudRefreshButton.disabled = true;
+    cloudRefreshButton.textContent = "새로고침 중...";
+  }
+
+  try {
+    const session = await getCurrentSession();
+    await loadCloudMemosForSession(session);
+  } catch (error) {
+    console.error(error);
+    alert(translateCloudError(error));
+  } finally {
+    if (cloudRefreshButton) {
+      cloudRefreshButton.disabled = false;
+      cloudRefreshButton.textContent = "클라우드 새로고침";
+    }
+  }
+}
+
+async function handleLegacyMigrationClick() {
+  const count = getLegacyMemoCount();
+
+  if (count === 0) {
+    refreshLegacyMigrationPanel();
+    alert("이 브라우저에는 이전할 기존 메모가 없습니다.");
+    return;
+  }
+
+  const shouldMigrate = confirm(
+    `이 브라우저의 기존 메모 ${count}개를 클라우드에 추가하시겠습니까?\n\n` +
+    "이미 옮겨진 메모는 중복 제외되며, 브라우저 원본은 삭제하지 않습니다."
+  );
+
+  if (!shouldMigrate) {
+    return;
+  }
+
+  migrateLegacyButton.disabled = true;
+  migrateLegacyButton.textContent = "클라우드로 옮기는 중...";
+
+  const result = await runCloudAction(
+    () => importLegacyMemosToCloud(),
+    {
+      loadingMessage: "기존 메모 이전 중",
+      successMessage: "기존 메모 이전 완료",
+    }
+  );
+
+  refreshLegacyMigrationPanel();
+
+  if (!result) {
+    return;
+  }
+
+  updateLastSyncTime();
+
+  alert(
+    `기존 메모 이전 완료\n` +
+    `클라우드에 추가: ${result.addedCount}개\n` +
+    `이미 있어 제외: ${result.skippedCount}개\n\n` +
+    "브라우저의 기존 원본 메모는 그대로 보존되어 있습니다."
+  );
 }
 
 function translateCloudError(error) {
@@ -121,6 +258,8 @@ async function loadCloudMemosForSession(session) {
     }
 
     refreshScreen();
+    refreshLegacyMigrationPanel();
+    updateLastSyncTime();
 
     const legacyCount = getLegacyMemoCount();
     const suffix = legacyCount > 0 ? ` · 기존 브라우저 메모 ${legacyCount}개 보존 중` : "";
@@ -148,6 +287,8 @@ async function runCloudAction(action, options = {}) {
   try {
     const result = await action();
     refreshScreen();
+    refreshLegacyMigrationPanel();
+    updateLastSyncTime();
     setCloudStatus(successMessage, "ready");
     return result;
   } catch (error) {
@@ -854,6 +995,8 @@ function bindEvents() {
 
   emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
+  cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
+  migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
 
@@ -872,6 +1015,7 @@ bindEvents();
 renderTaskDraftList();
 clearMemoCache();
 refreshScreen();
+refreshLegacyMigrationPanel();
 setCloudStatus("클라우드 연결 준비 중", "loading");
 
 window.addEventListener("solonote-auth-changed", (event) => {

@@ -106,6 +106,58 @@ function getLegacyMemoCount() {
   }
 }
 
+
+function getLegacyMemos() {
+  const savedMemos = localStorage.getItem(LEGACY_STORAGE_KEY);
+
+  if (!savedMemos) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(savedMemos);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.map(normalizeMemo);
+  } catch (error) {
+    console.error("기존 브라우저 메모를 읽지 못했습니다.", error);
+    return [];
+  }
+}
+
+function hasLegacyMemoData() {
+  return getLegacyMemos().length > 0;
+}
+
+async function importLegacyMemosToCloud() {
+  const legacyMemos = getLegacyMemos();
+
+  if (legacyMemos.length === 0) {
+    return {
+      addedCount: 0,
+      skippedCount: 0,
+      totalImportedCount: 0,
+      source: "localStorage",
+    };
+  }
+
+  const result = await importMemosFromBackup({
+    app: "SoloNote",
+    backupVersion: "legacy-localStorage",
+    storage: "localStorage",
+    exportedAt: new Date().toISOString(),
+    memos: legacyMemos,
+  });
+
+  return {
+    ...result,
+    source: "localStorage",
+  };
+}
+
 async function getCloudContext() {
   const client = window.solonoteSupabase;
 
@@ -324,7 +376,7 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "3.4",
+    backupVersion: "3.5",
     storage: "supabase",
     exportedAt: new Date().toISOString(),
     memos: memoCache,
