@@ -2610,3 +2610,25 @@ button:focus-visible,
     min-height: 44px;
   }
 }
+
+
+/* v4.0.1: 상단 알림 배너 하단 간격 정리 */
+.pwa-update-banner,
+.draft-recovery-banner {
+  margin-bottom: 14px;
+}
+
+.pwa-update-banner + .draft-recovery-banner {
+  margin-top: 10px;
+}
+
+.pwa-update-banner[hidden] + .draft-recovery-banner {
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .pwa-update-banner,
+  .draft-recovery-banner {
+    margin-bottom: 10px;
+  }
+}
