@@ -1,4 +1,4 @@
-const CACHE_NAME = "solonote-v3-3-cache";
+const CACHE_NAME = "solonote-v3-3-1-cache";
 
 const STATIC_ASSETS = [
   "./",

@@ -38,11 +38,21 @@
   }
 
   function showLoginScreen(message = "") {
-    document.body.classList.remove("auth-pending");
+    document.body.classList.remove("auth-pending", "auth-logged-in");
+    document.body.classList.add("auth-logged-out");
+
     authLoading?.classList.add("hidden");
     loginForm?.classList.remove("hidden");
-    authScreen?.classList.remove("hidden");
-    appShell?.classList.add("hidden");
+
+    if (authScreen) {
+      authScreen.hidden = false;
+      authScreen.setAttribute("aria-hidden", "false");
+    }
+
+    if (appShell) {
+      appShell.hidden = true;
+      appShell.setAttribute("aria-hidden", "true");
+    }
 
     if (signedInEmail) {
       signedInEmail.textContent = "로그인 필요";
@@ -52,11 +62,21 @@
   }
 
   function showApp(session) {
-    document.body.classList.remove("auth-pending");
+    document.body.classList.remove("auth-pending", "auth-logged-out");
+    document.body.classList.add("auth-logged-in");
+
     authLoading?.classList.add("hidden");
     loginForm?.classList.add("hidden");
-    authScreen?.classList.add("hidden");
-    appShell?.classList.remove("hidden");
+
+    if (authScreen) {
+      authScreen.hidden = true;
+      authScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (appShell) {
+      appShell.hidden = false;
+      appShell.setAttribute("aria-hidden", "false");
+    }
 
     const email = session?.user?.email || "로그인된 사용자";
 

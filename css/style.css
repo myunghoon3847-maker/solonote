@@ -1951,3 +1951,33 @@ button {
     max-width: 100%;
   }
 }
+
+
+/* v3.3.1: 로그인 화면과 앱 화면 완전 분리 */
+[hidden] {
+  display: none !important;
+}
+
+body.auth-pending #appShell,
+body.auth-logged-out #appShell,
+#appShell[hidden] {
+  display: none !important;
+}
+
+body.auth-pending #authScreen,
+body.auth-logged-out #authScreen {
+  display: grid !important;
+}
+
+body.auth-logged-in #authScreen,
+#authScreen[hidden] {
+  display: none !important;
+}
+
+body.auth-logged-in #appShell:not([hidden]) {
+  display: block !important;
+}
+
+body.auth-logged-out {
+  overflow: hidden;
+}
