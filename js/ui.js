@@ -160,17 +160,20 @@ function renderTaskHub(items, view = "open") {
 
       return `
         <article class="task-hub-item ${task.done ? "done" : ""}">
-          <button
-            type="button"
-            class="task-hub-check-button"
-            data-task-action="toggle"
-            data-memo-id="${item.memoId}"
-            data-task-id="${task.id}"
-            aria-label="${task.done ? "할 일 미완료로 변경" : "할 일 완료 처리"}: ${safeTaskText}"
-          >
-            <span class="task-hub-checkmark" aria-hidden="true">${task.done ? "✓" : ""}</span>
+          <div class="task-hub-task-main">
+            <button
+              type="button"
+              class="task-hub-check-button"
+              data-task-action="toggle"
+              data-memo-id="${item.memoId}"
+              data-task-id="${task.id}"
+              aria-label="${task.done ? "할 일 미완료로 변경" : "할 일 완료 처리"}: ${safeTaskText}"
+              aria-pressed="${task.done ? "true" : "false"}"
+            >
+              <span class="task-hub-checkmark" aria-hidden="true">${task.done ? "✓" : ""}</span>
+            </button>
             <span class="task-hub-task-text">${safeTaskText}</span>
-          </button>
+          </div>
 
           <button
             type="button"

@@ -33,3 +33,12 @@ https://myunghoon3847-maker.github.io/solonote/?v=410
 ## Supabase 작업
 
 추가 SQL이나 Supabase 설정 변경은 필요하지 않습니다.
+
+
+## v4.1.1 UI 수정
+
+- 통합 할 일의 체크 버튼과 할 일 문구를 분리
+- 체크 네모를 눌렀을 때만 완료·미완료 상태 변경
+- 할 일 문구를 눌러도 체크 상태가 바뀌지 않음
+- 체크 버튼 크기를 PC 32px, 모바일 36px로 제한
+- 키보드 접근성을 위해 체크 버튼의 `aria-pressed` 상태 추가

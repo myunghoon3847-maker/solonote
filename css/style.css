@@ -2914,3 +2914,59 @@ button:focus-visible,
     text-align: center;
   }
 }
+
+
+/* v4.1.1: 통합 할 일 체크 영역 축소 */
+.task-hub-task-main {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 6px;
+}
+
+.task-hub-check-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.task-hub-check-button:hover {
+  background: #eff6ff;
+}
+
+.task-hub-check-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
+.task-hub-task-text {
+  display: block;
+  min-width: 0;
+  padding: 5px 0;
+  overflow-wrap: anywhere;
+  cursor: default;
+  user-select: text;
+}
+
+@media (max-width: 520px) {
+  .task-hub-check-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .task-hub-task-main {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+}
