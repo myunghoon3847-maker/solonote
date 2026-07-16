@@ -295,6 +295,11 @@ function resetForm() {
   document.querySelector("#memoForm").reset();
   document.querySelector("#editingId").value = "";
 
+  const editingUpdatedAt = document.querySelector("#editingUpdatedAt");
+  if (editingUpdatedAt) {
+    editingUpdatedAt.value = "";
+  }
+
   if (typeof resetDraftTasks === "function") {
     resetDraftTasks();
   }
@@ -309,6 +314,12 @@ function cancelEditAndCloseEditor() {
 
 function fillFormForEdit(memo) {
   document.querySelector("#editingId").value = memo.id;
+
+  const editingUpdatedAt = document.querySelector("#editingUpdatedAt");
+  if (editingUpdatedAt) {
+    editingUpdatedAt.value = memo.updatedAt || memo.createdAt || "";
+  }
+
   document.querySelector("#titleInput").value = memo.title;
   document.querySelector("#projectInput").value = memo.project || "";
   document.querySelector("#contentInput").value = memo.content;

@@ -2101,3 +2101,23 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v3.6: 자동 동기화, 오프라인, 충돌 상태 */
+.cloud-sync-status[data-state="offline"] {
+  color: #fed7aa;
+}
+
+.cloud-sync-status[data-state="warning"] {
+  color: #fef08a;
+}
+
+body.is-offline .cloud-sync-status {
+  font-weight: 950;
+}
+
+body.is-offline #saveButton,
+body.is-offline #cloudRefreshButton,
+body.is-offline #migrateLegacyButton {
+  opacity: 0.72;
+}

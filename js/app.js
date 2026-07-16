@@ -11,6 +11,7 @@ const contentInput = document.querySelector("#contentInput");
 const categoryInput = document.querySelector("#categoryInput");
 const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
+const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
 const sortInput = document.querySelector("#sortInput");
@@ -39,6 +40,11 @@ const lastSyncTime = document.querySelector("#lastSyncTime");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
+let activeCloudLoadPromise = null;
+let automaticSyncTimer = null;
+let lastAutomaticSyncRequestAt = 0;
+
+const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
 
 function setCloudStatus(message, state = "ready") {
@@ -48,8 +54,87 @@ function setCloudStatus(message, state = "ready") {
 
   cloudSyncStatus.textContent = message;
   cloudSyncStatus.dataset.state = state;
+  document.body.classList.toggle("is-offline", state === "offline");
 }
 
+
+
+function isNetworkCloudError(error) {
+  const message = String(error && error.message ? error.message : "");
+
+  return (
+    navigator.onLine === false ||
+    /failed to fetch|network|load failed|networkerror/i.test(message)
+  );
+}
+
+function setOfflineStatus() {
+  setCloudStatus("오프라인 · 클라우드 저장 불가", "offline");
+}
+
+function refreshOpenDetailFromCache() {
+  const modal = document.querySelector("#detailModal");
+  const editButton = document.querySelector("#editMemoButton");
+
+  if (!modal || modal.classList.contains("hidden") || !editButton) {
+    return;
+  }
+
+  const memoId = editButton.dataset.id;
+  const memo = memoId ? findMemoById(memoId) : null;
+
+  if (memo) {
+    openDetailModal(memo);
+  } else {
+    closeDetailModal();
+  }
+}
+
+function scheduleAutomaticSync(reason, options = {}) {
+  const {
+    force = false,
+    delay = 250,
+  } = options;
+
+  if (
+    !currentCloudUserId ||
+    navigator.onLine === false ||
+    document.visibilityState === "hidden"
+  ) {
+    return;
+  }
+
+  if (automaticSyncTimer) {
+    clearTimeout(automaticSyncTimer);
+  }
+
+  const elapsed = Date.now() - lastAutomaticSyncRequestAt;
+  const waitTime = force
+    ? delay
+    : Math.max(delay, AUTO_SYNC_MIN_INTERVAL_MS - elapsed);
+
+  automaticSyncTimer = setTimeout(async () => {
+    automaticSyncTimer = null;
+    lastAutomaticSyncRequestAt = Date.now();
+
+    try {
+      const session = await getCurrentSession();
+      await loadCloudMemosForSession(session, {
+        reason,
+        automatic: true,
+      });
+    } catch (error) {
+      console.error(error);
+
+      if (isNetworkCloudError(error)) {
+        setOfflineStatus();
+        return;
+      }
+
+      setCloudStatus("자동 동기화 실패", "error");
+    }
+  }, waitTime);
+}
 
 function formatSyncTime(date = new Date()) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -124,7 +209,10 @@ async function handleCloudRefreshClick() {
 
   try {
     const session = await getCurrentSession();
-    await loadCloudMemosForSession(session);
+    await loadCloudMemosForSession(session, {
+      reason: "수동 새로고침",
+      automatic: false,
+    });
   } catch (error) {
     console.error(error);
     alert(translateCloudError(error));
@@ -185,6 +273,10 @@ function translateCloudError(error) {
   const message = String(error && error.message ? error.message : "");
   const code = String(error && error.code ? error.code : "");
 
+  if (isMemoConflictError(error)) {
+    return "다른 기기에서 이 메모가 먼저 수정되었습니다.";
+  }
+
   if (code === "42P01" || /relation .*memos.* does not exist/i.test(message)) {
     return "Supabase에 memos 테이블이 없습니다. SQL 실행 여부를 확인하세요.";
   }
@@ -234,7 +326,12 @@ function showMemoListError(message) {
   `;
 }
 
-async function loadCloudMemosForSession(session) {
+async function loadCloudMemosForSession(session, options = {}) {
+  const {
+    reason = "클라우드 동기화",
+    automatic = false,
+  } = options;
+
   const userId = session && session.user ? session.user.id : "";
 
   if (!userId) {
@@ -242,37 +339,91 @@ async function loadCloudMemosForSession(session) {
     currentCloudUserId = "";
     refreshScreen();
     setCloudStatus("로그인 필요", "error");
-    return;
+    return null;
+  }
+
+  if (navigator.onLine === false) {
+    setOfflineStatus();
+
+    if (!hasLoadedCloudMemos()) {
+      showMemoListError("인터넷 연결 후 다시 시도해주세요.");
+    }
+
+    return null;
+  }
+
+  if (activeCloudLoadPromise) {
+    return activeCloudLoadPromise;
   }
 
   const sequence = ++cloudLoadSequence;
   currentCloudUserId = userId;
-  setCloudStatus("클라우드 동기화 중", "loading");
-  showMemoListLoading();
 
-  try {
-    await loadMemosFromCloud();
+  activeCloudLoadPromise = (async () => {
+    setCloudStatus(
+      automatic ? `${reason} · 확인 중` : "클라우드 동기화 중",
+      "loading"
+    );
 
-    if (sequence !== cloudLoadSequence || currentCloudUserId !== userId) {
-      return;
+    if (!automatic || !hasLoadedCloudMemos()) {
+      showMemoListLoading();
     }
 
-    refreshScreen();
-    refreshLegacyMigrationPanel();
-    updateLastSyncTime();
+    try {
+      await loadMemosFromCloud();
 
-    const legacyCount = getLegacyMemoCount();
-    const suffix = legacyCount > 0 ? ` · 기존 브라우저 메모 ${legacyCount}개 보존 중` : "";
-    setCloudStatus(`클라우드 연결됨${suffix}`, "ready");
-  } catch (error) {
-    console.error(error);
-    const message = translateCloudError(error);
-    clearMemoCache();
-    refreshProjectFilter();
-    refreshQuickProjects();
-    refreshDataStats();
-    showMemoListError(message);
-    setCloudStatus("클라우드 연결 실패", "error");
+      if (sequence !== cloudLoadSequence || currentCloudUserId !== userId) {
+        return null;
+      }
+
+      refreshScreen();
+      refreshOpenDetailFromCache();
+      refreshLegacyMigrationPanel();
+      updateLastSyncTime();
+
+      const legacyCount = getLegacyMemoCount();
+      const suffix =
+        legacyCount > 0
+          ? ` · 기존 브라우저 메모 ${legacyCount}개 보존 중`
+          : "";
+
+      setCloudStatus(`클라우드 동기화 완료${suffix}`, "ready");
+      return getMemos();
+    } catch (error) {
+      console.error(error);
+      const message = translateCloudError(error);
+
+      if (isNetworkCloudError(error)) {
+        if (hasLoadedCloudMemos()) {
+          refreshScreen();
+          refreshOpenDetailFromCache();
+        } else {
+          showMemoListError(message);
+        }
+
+        setOfflineStatus();
+        return null;
+      }
+
+      if (!hasLoadedCloudMemos()) {
+        clearMemoCache();
+        refreshProjectFilter();
+        refreshQuickProjects();
+        refreshDataStats();
+        showMemoListError(message);
+      } else {
+        refreshScreen();
+      }
+
+      setCloudStatus("클라우드 연결 실패", "error");
+      return null;
+    }
+  })();
+
+  try {
+    return await activeCloudLoadPromise;
+  } finally {
+    activeCloudLoadPromise = null;
   }
 }
 
@@ -280,26 +431,43 @@ async function runCloudAction(action, options = {}) {
   const {
     loadingMessage = "클라우드 저장 중",
     successMessage = "클라우드에 저장됨",
+    rethrowConflict = false,
   } = options;
+
+  if (navigator.onLine === false) {
+    setOfflineStatus();
+    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 다시 저장해주세요.");
+    return null;
+  }
 
   setCloudStatus(loadingMessage, "loading");
 
   try {
     const result = await action();
     refreshScreen();
+    refreshOpenDetailFromCache();
     refreshLegacyMigrationPanel();
     updateLastSyncTime();
     setCloudStatus(successMessage, "ready");
     return result;
   } catch (error) {
+    if (rethrowConflict && isMemoConflictError(error)) {
+      throw error;
+    }
+
     console.error(error);
     const message = translateCloudError(error);
-    setCloudStatus("클라우드 저장 실패", "error");
+
+    if (isNetworkCloudError(error)) {
+      setOfflineStatus();
+    } else {
+      setCloudStatus("클라우드 저장 실패", "error");
+    }
+
     alert(message);
     return null;
   }
 }
-
 
 function parseMemoDate(dateString) {
   const time = new Date(dateString).getTime();
@@ -626,6 +794,114 @@ function handleTaskDraftListClick(event) {
   renderTaskDraftList();
 }
 
+
+function formatConflictTime(dateString) {
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "확인할 수 없음";
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function loadLatestServerMemo(serverMemo) {
+  if (!serverMemo) {
+    return;
+  }
+
+  const latestMemo = replaceMemoInCache(serverMemo);
+  resetForm();
+  closeEditor();
+  refreshScreen();
+  openDetailModal(latestMemo);
+  updateLastSyncTime();
+  setCloudStatus("서버의 최신 내용 불러옴", "ready");
+}
+
+async function saveEditedMemoWithConflictResolution(
+  memoId,
+  memoData,
+  expectedUpdatedAt
+) {
+  try {
+    const savedMemo = await runCloudAction(
+      () => updateMemo(memoId, memoData, expectedUpdatedAt),
+      {
+        loadingMessage: "메모 수정 저장 중",
+        successMessage: "클라우드에 저장됨",
+        rethrowConflict: true,
+      }
+    );
+
+    return {
+      status: savedMemo ? "saved" : "failed",
+      memo: savedMemo,
+    };
+  } catch (error) {
+    if (!isMemoConflictError(error)) {
+      console.error(error);
+      alert(translateCloudError(error));
+      return { status: "failed", memo: null };
+    }
+
+    const serverMemo = error.serverMemo;
+
+    if (!serverMemo) {
+      alert("최신 서버 메모를 확인하지 못했습니다. 클라우드 새로고침 후 다시 시도해주세요.");
+      return { status: "failed", memo: null };
+    }
+
+    setCloudStatus("동시 수정 충돌 감지", "warning");
+
+    const shouldOverwrite = confirm(
+      "다른 기기 또는 브라우저에서 이 메모가 먼저 수정되었습니다.\n\n" +
+      `서버의 최근 수정: ${formatConflictTime(serverMemo.updatedAt)}\n\n` +
+      "[확인] 현재 작성 내용을 서버에 덮어쓰기\n" +
+      "[취소] 현재 작성을 취소하고 서버의 최신 내용 불러오기"
+    );
+
+    if (!shouldOverwrite) {
+      loadLatestServerMemo(serverMemo);
+      return { status: "reloaded", memo: serverMemo };
+    }
+
+    try {
+      const overwrittenMemo = await runCloudAction(
+        () => updateMemo(memoId, memoData, serverMemo.updatedAt),
+        {
+          loadingMessage: "충돌 확인 후 덮어쓰는 중",
+          successMessage: "현재 내용으로 덮어쓰기 완료",
+          rethrowConflict: true,
+        }
+      );
+
+      return {
+        status: overwrittenMemo ? "saved" : "failed",
+        memo: overwrittenMemo,
+      };
+    } catch (secondError) {
+      if (isMemoConflictError(secondError) && secondError.serverMemo) {
+        loadLatestServerMemo(secondError.serverMemo);
+        alert(
+          "덮어쓰는 동안 다른 기기에서 메모가 다시 변경되어 최신 서버 내용을 불러왔습니다."
+        );
+        return { status: "reloaded", memo: secondError.serverMemo };
+      }
+
+      console.error(secondError);
+      alert(translateCloudError(secondError));
+      return { status: "failed", memo: null };
+    }
+  }
+}
+
 async function handleFormSubmit(event) {
   event.preventDefault();
 
@@ -647,7 +923,17 @@ async function handleFormSubmit(event) {
     return;
   }
 
+  if (navigator.onLine === false) {
+    setOfflineStatus();
+    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 저장해주세요.");
+    return;
+  }
+
   const editingId = editingIdInput.value;
+  const expectedUpdatedAt = editingUpdatedAtInput
+    ? editingUpdatedAtInput.value
+    : "";
+
   const memoData = {
     title,
     project,
@@ -659,22 +945,43 @@ async function handleFormSubmit(event) {
 
   if (saveButton) {
     saveButton.disabled = true;
-    saveButton.textContent = editingId ? "수정 저장 중..." : "클라우드 저장 중...";
+    saveButton.textContent = editingId
+      ? "수정 저장 중..."
+      : "클라우드 저장 중...";
   }
 
-  const savedMemo = await runCloudAction(
-    () => (editingId ? updateMemo(editingId, memoData) : addMemo(memoData)),
-    {
-      loadingMessage: editingId ? "메모 수정 저장 중" : "새 메모 저장 중",
-      successMessage: "클라우드에 저장됨",
-    }
-  );
+  let result;
+
+  if (editingId) {
+    result = await saveEditedMemoWithConflictResolution(
+      editingId,
+      memoData,
+      expectedUpdatedAt
+    );
+  } else {
+    const newMemo = await runCloudAction(
+      () => addMemo(memoData),
+      {
+        loadingMessage: "새 메모 저장 중",
+        successMessage: "클라우드에 저장됨",
+      }
+    );
+
+    result = {
+      status: newMemo ? "saved" : "failed",
+      memo: newMemo,
+    };
+  }
 
   if (saveButton) {
     saveButton.disabled = false;
   }
 
-  if (!savedMemo) {
+  if (result.status === "reloaded") {
+    return;
+  }
+
+  if (result.status !== "saved" || !result.memo) {
     setEditorMode(editingId ? "edit" : "create");
     return;
   }
@@ -820,21 +1127,49 @@ async function handleDetailTaskToggle(event) {
     return;
   }
 
+  if (navigator.onLine === false) {
+    setOfflineStatus();
+    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 체크해주세요.");
+    return;
+  }
+
   toggleButton.disabled = true;
 
   const memoId = toggleButton.dataset.memoId;
   const taskId = toggleButton.dataset.taskId;
+  const memo = findMemoById(memoId);
 
-  const updatedMemo = await runCloudAction(
-    () => toggleTaskDone(memoId, taskId),
-    {
-      loadingMessage: "체크리스트 저장 중",
-      successMessage: "체크리스트 저장됨",
+  if (!memo) {
+    return;
+  }
+
+  try {
+    const updatedMemo = await runCloudAction(
+      () => toggleTaskDone(memoId, taskId, memo.updatedAt),
+      {
+        loadingMessage: "체크리스트 저장 중",
+        successMessage: "체크리스트 저장됨",
+        rethrowConflict: true,
+      }
+    );
+
+    if (updatedMemo) {
+      openDetailModal(updatedMemo);
     }
-  );
+  } catch (error) {
+    if (isMemoConflictError(error) && error.serverMemo) {
+      const latestMemo = replaceMemoInCache(error.serverMemo);
+      refreshScreen();
+      openDetailModal(latestMemo);
+      setCloudStatus("최신 체크리스트 불러옴", "warning");
+      alert(
+        "다른 기기에서 이 메모가 먼저 변경되어 최신 체크리스트를 불러왔습니다. 다시 체크해주세요."
+      );
+      return;
+    }
 
-  if (updatedMemo) {
-    openDetailModal(updatedMemo);
+    console.error(error);
+    alert(translateCloudError(error));
   }
 }
 
@@ -1009,6 +1344,33 @@ function bindEvents() {
       closeDetailModal();
     }
   });
+
+  window.addEventListener("online", () => {
+    setCloudStatus("인터넷 재연결 · 동기화 준비", "loading");
+    scheduleAutomaticSync("인터넷 재연결", {
+      force: true,
+      delay: 100,
+    });
+  });
+
+  window.addEventListener("offline", () => {
+    if (automaticSyncTimer) {
+      clearTimeout(automaticSyncTimer);
+      automaticSyncTimer = null;
+    }
+
+    setOfflineStatus();
+  });
+
+  window.addEventListener("focus", () => {
+    scheduleAutomaticSync("앱 화면 복귀");
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      scheduleAutomaticSync("앱 화면 복귀");
+    }
+  });
 }
 
 bindEvents();
@@ -1016,7 +1378,11 @@ renderTaskDraftList();
 clearMemoCache();
 refreshScreen();
 refreshLegacyMigrationPanel();
-setCloudStatus("클라우드 연결 준비 중", "loading");
+if (navigator.onLine === false) {
+  setOfflineStatus();
+} else {
+  setCloudStatus("클라우드 연결 준비 중", "loading");
+}
 
 window.addEventListener("solonote-auth-changed", (event) => {
   const session = event.detail && event.detail.session;
@@ -1031,7 +1397,10 @@ window.addEventListener("solonote-auth-changed", (event) => {
     return;
   }
 
-  void loadCloudMemosForSession(session);
+  void loadCloudMemosForSession(session, {
+    reason: "로그인",
+    automatic: false,
+  });
 });
 
 (async function initializeCloudMemos() {
@@ -1051,7 +1420,10 @@ window.addEventListener("solonote-auth-changed", (event) => {
     }
 
     if (data && data.session) {
-      await loadCloudMemosForSession(data.session);
+      await loadCloudMemosForSession(data.session, {
+        reason: "앱 시작",
+        automatic: false,
+      });
     }
   } catch (error) {
     console.error(error);

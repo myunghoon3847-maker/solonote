@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=351" />
+  <link rel="manifest" href="./manifest.json?v=360" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=351" />
-  <link rel="stylesheet" href="./css/style.css?v=351" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=360" />
+  <link rel="stylesheet" href="./css/style.css?v=360" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -91,6 +91,7 @@
 
         <form id="memoForm" class="memo-form editor-content">
           <input type="hidden" id="editingId" />
+          <input type="hidden" id="editingUpdatedAt" />
 
           <label for="titleInput">제목</label>
           <input
@@ -257,7 +258,7 @@
               <strong>앱 정보 / 사용 안내</strong>
               <p>저장 방식, 백업 방법, 주요 사용법을 확인하세요.</p>
             </div>
-            <span class="version-badge">v3.5.1</span>
+            <span class="version-badge">v3.6</span>
           </div>
 
           <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" onclick="toggleSoloNoteGuide()">
@@ -267,7 +268,7 @@
           <div id="guideContent" class="guide-content hidden">
             <div class="guide-item">
               <strong>저장 방식</strong>
-              <p>v3.5에서는 Supabase 저장과 함께 이전 브라우저 메모를 안전하게 클라우드로 옮길 수 있습니다.</p>
+              <p>v3.6에서는 화면 복귀와 인터넷 재연결 시 자동 동기화하며, 동시 수정 충돌을 감지합니다.</p>
             </div>
             <div class="guide-item">
               <strong>백업 / 복원</strong>
@@ -314,7 +315,7 @@
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("./service-worker.js?v=351")
+          .register("./service-worker.js?v=360")
           .catch((error) => console.log("Service Worker registration failed:", error));
       });
     }
@@ -359,10 +360,10 @@
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=351"></script>
-  <script src="./js/auth.js?v=351"></script>
-  <script src="./js/storage.js?v=351"></script>
-  <script src="./js/ui.js?v=351"></script>
-  <script src="./js/app.js?v=351"></script>
+  <script src="./js/config.js?v=360"></script>
+  <script src="./js/auth.js?v=360"></script>
+  <script src="./js/storage.js?v=360"></script>
+  <script src="./js/ui.js?v=360"></script>
+  <script src="./js/app.js?v=360"></script>
 </body>
 </html>

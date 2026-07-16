@@ -3,6 +3,67 @@ const LEGACY_STORAGE_KEY = "solonote_memos_v1";
 let memoCache = [];
 let cloudMemosLoaded = false;
 
+
+class MemoConflictError extends Error {
+  constructor(serverMemo) {
+    super("다른 기기에서 이 메모가 먼저 수정되었습니다.");
+    this.name = "MemoConflictError";
+    this.serverMemo = serverMemo || null;
+  }
+}
+
+function isMemoConflictError(error) {
+  return Boolean(error && error.name === "MemoConflictError");
+}
+
+function areSameCloudTimestamp(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  const leftTime = new Date(left).getTime();
+  const rightTime = new Date(right).getTime();
+
+  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+    return String(left) === String(right);
+  }
+
+  return leftTime === rightTime;
+}
+
+function replaceMemoInCache(memo) {
+  if (!memo || !memo.id) {
+    return null;
+  }
+
+  const normalizedMemo = normalizeMemo(memo);
+  const exists = memoCache.some((item) => item.id === normalizedMemo.id);
+
+  memoCache = exists
+    ? memoCache.map((item) => (item.id === normalizedMemo.id ? normalizedMemo : item))
+    : [normalizedMemo, ...memoCache];
+
+  sortCacheByUpdatedDate();
+  return normalizedMemo;
+}
+
+async function fetchMemoFromCloud(id) {
+  const { client, user } = await getCloudContext();
+
+  const { data, error } = await client
+    .from("memos")
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? mapDatabaseRowToMemo(data) : null;
+}
+
 function createSafeId(prefix) {
   if (window.crypto && typeof window.crypto.randomUUID === "function") {
     return `${prefix}_${window.crypto.randomUUID()}`;
@@ -249,8 +310,34 @@ async function addMemo(memoData) {
   return newMemo;
 }
 
-async function updateMemo(id, updatedData) {
+async function updateMemo(id, updatedData, expectedUpdatedAt = "") {
   const { client, user } = await getCloudContext();
+
+  let serverRow = null;
+
+  if (expectedUpdatedAt) {
+    const { data, error } = await client
+      .from("memos")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error("이 메모가 다른 기기에서 삭제되었거나 접근할 수 없습니다.");
+    }
+
+    serverRow = data;
+    const serverMemo = mapDatabaseRowToMemo(data);
+
+    if (!areSameCloudTimestamp(serverMemo.updatedAt, expectedUpdatedAt)) {
+      throw new MemoConflictError(serverMemo);
+    }
+  }
 
   const payload = toDatabasePayload(
     {
@@ -263,21 +350,31 @@ async function updateMemo(id, updatedData) {
   delete payload.user_id;
   delete payload.is_deleted;
 
-  const { data, error } = await client
+  let query = client
     .from("memos")
     .update(payload)
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("user_id", user.id);
+
+  if (serverRow && serverRow.updated_at) {
+    query = query.eq("updated_at", serverRow.updated_at);
+  }
+
+  const { data, error } = await query
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
 
+  if (!data) {
+    const latestMemo = await fetchMemoFromCloud(id);
+    throw new MemoConflictError(latestMemo);
+  }
+
   const updatedMemo = mapDatabaseRowToMemo(data);
-  memoCache = memoCache.map((memo) => (memo.id === id ? updatedMemo : memo));
-  sortCacheByUpdatedDate();
+  replaceMemoInCache(updatedMemo);
 
   return updatedMemo;
 }
@@ -328,7 +425,7 @@ async function permanentlyDeleteMemo(id) {
   memoCache = memoCache.filter((memo) => memo.id !== id);
 }
 
-async function toggleTaskDone(memoId, taskId) {
+async function toggleTaskDone(memoId, taskId, expectedUpdatedAt = "") {
   const memo = findMemoById(memoId);
 
   if (!memo) {
@@ -346,14 +443,18 @@ async function toggleTaskDone(memoId, taskId) {
     };
   });
 
-  return updateMemo(memoId, {
-    title: memo.title,
-    content: memo.content,
-    category: memo.category,
-    project: memo.project,
-    isImportant: memo.isImportant,
-    tasks,
-  });
+  return updateMemo(
+    memoId,
+    {
+      title: memo.title,
+      content: memo.content,
+      category: memo.category,
+      project: memo.project,
+      isImportant: memo.isImportant,
+      tasks,
+    },
+    expectedUpdatedAt || memo.updatedAt
+  );
 }
 
 function findMemoById(id) {
@@ -376,7 +477,7 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "3.5",
+    backupVersion: "3.6",
     storage: "supabase",
     exportedAt: new Date().toISOString(),
     memos: memoCache,
