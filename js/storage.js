@@ -395,13 +395,50 @@ function extractMemosFromBackup(backupData) {
   throw new Error("올바른 SoloNote 백업 파일이 아닙니다.");
 }
 
+function normalizeTextForSignature(value) {
+  return String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+$/gm, "")
+    .trim();
+}
+
+function normalizeDateForSignature(value) {
+  if (!value) {
+    return "";
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return normalizeTextForSignature(value);
+  }
+
+  return parsedDate.toISOString();
+}
+
+function normalizeTasksForSignature(tasks) {
+  if (!Array.isArray(tasks)) {
+    return "[]";
+  }
+
+  return JSON.stringify(
+    tasks.map((task) => ({
+      text: normalizeTextForSignature(task && task.text),
+      done: Boolean(task && task.done),
+    }))
+  );
+}
+
 function createMemoSignature(memo) {
   return [
-    memo.title,
-    memo.content,
-    memo.category,
-    memo.project,
-    memo.createdAt,
+    normalizeTextForSignature(memo.title),
+    normalizeTextForSignature(memo.content),
+    normalizeTextForSignature(memo.category),
+    normalizeTextForSignature(memo.project),
+    normalizeDateForSignature(memo.createdAt),
+    String(Boolean(memo.isImportant)),
+    String(Boolean(memo.isDeleted)),
+    normalizeTasksForSignature(memo.tasks),
   ].join("\u241f");
 }
 
@@ -409,12 +446,15 @@ async function importMemosFromBackup(backupData) {
   const importedMemos = extractMemosFromBackup(backupData).map(normalizeMemo);
   const { client, user } = await getCloudContext();
 
-  const existingSignatures = new Set(memoCache.map(createMemoSignature));
+  const existingSignatures = new Set(
+    memoCache.map((memo) => createMemoSignature(normalizeMemo(memo)))
+  );
   const memosToInsert = [];
   let skippedCount = 0;
 
   importedMemos.forEach((memo) => {
-    const signature = createMemoSignature(memo);
+    const normalizedMemo = normalizeMemo(memo);
+    const signature = createMemoSignature(normalizedMemo);
 
     if (existingSignatures.has(signature)) {
       skippedCount += 1;
@@ -423,9 +463,9 @@ async function importMemosFromBackup(backupData) {
 
     existingSignatures.add(signature);
     memosToInsert.push({
-      ...toDatabasePayload(memo, user.id),
-      created_at: memo.createdAt,
-      updated_at: memo.updatedAt,
+      ...toDatabasePayload(normalizedMemo, user.id),
+      created_at: normalizedMemo.createdAt,
+      updated_at: normalizedMemo.updatedAt,
     });
   });
 
