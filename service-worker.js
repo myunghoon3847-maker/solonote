@@ -1,10 +1,12 @@
-const CACHE_NAME = "solonote-v2-5-cache";
+const CACHE_NAME = "solonote-v3-3-cache";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./css/style.css",
+  "./js/config.js",
+  "./js/auth.js",
   "./js/storage.js",
   "./js/ui.js",
   "./js/app.js",
@@ -37,6 +39,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const requestUrl = new URL(event.request.url);
+
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
   const request = event.request;
 
   if (request.mode === "navigate" || request.destination === "document") {
@@ -47,7 +55,9 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", responseClone));
           return networkResponse;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match("./index.html")))
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match("./index.html"))
+        )
     );
     return;
   }
