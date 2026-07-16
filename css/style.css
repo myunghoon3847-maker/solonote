@@ -2187,3 +2187,25 @@ body.is-offline #migrateLegacyButton {
     padding: 11px 12px;
   }
 }
+
+
+/* v3.7.1: 인증 화면 단계별 폼 표시 오류 수정 */
+#authScreen .hidden,
+#loginForm.hidden,
+#resetRequestForm.hidden,
+#passwordRecoveryForm.hidden,
+[hidden] {
+  display: none !important;
+}
+
+#authScreen form:not(.hidden) {
+  display: grid;
+}
+
+body.auth-logged-out #appShell {
+  display: none !important;
+}
+
+body.auth-logged-in #authScreen {
+  display: none !important;
+}

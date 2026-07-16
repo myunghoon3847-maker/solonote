@@ -109,11 +109,21 @@
     button.textContent = isBusy ? busyText : normalText;
   }
 
+  function setElementVisible(element, isVisible) {
+    if (!element) {
+      return;
+    }
+
+    element.classList.toggle("hidden", !isVisible);
+    element.hidden = !isVisible;
+    element.setAttribute("aria-hidden", String(!isVisible));
+  }
+
   function hideAuthForms() {
-    authLoading?.classList.add("hidden");
-    loginForm?.classList.add("hidden");
-    resetRequestForm?.classList.add("hidden");
-    passwordRecoveryForm?.classList.add("hidden");
+    setElementVisible(authLoading, false);
+    setElementVisible(loginForm, false);
+    setElementVisible(resetRequestForm, false);
+    setElementVisible(passwordRecoveryForm, false);
   }
 
   function showAuthContainer() {
@@ -151,7 +161,7 @@
 
     showAuthContainer();
     hideAuthForms();
-    loginForm?.classList.remove("hidden");
+    setElementVisible(loginForm, true);
 
     setAuthCopy(
       "SoloNote",
@@ -177,7 +187,7 @@
 
     showAuthContainer();
     hideAuthForms();
-    resetRequestForm?.classList.remove("hidden");
+    setElementVisible(resetRequestForm, true);
 
     setAuthCopy(
       "비밀번호 재설정",
@@ -201,7 +211,7 @@
 
     showAuthContainer();
     hideAuthForms();
-    passwordRecoveryForm?.classList.remove("hidden");
+    setElementVisible(passwordRecoveryForm, true);
 
     setAuthCopy(
       "새 비밀번호 설정",
@@ -481,6 +491,9 @@
   }
 
   async function initializeAuth() {
+    hideAuthForms();
+    setElementVisible(authLoading, true);
+
     if (!window.supabase || typeof window.supabase.createClient !== "function") {
       showLoginScreen(
         "Supabase 로그인 라이브러리를 불러오지 못했습니다. 인터넷 연결 후 새로고침하세요.",

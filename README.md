@@ -36,3 +36,11 @@ https://myunghoon3847-maker.github.io/solonote/
 ```text
 https://myunghoon3847-maker.github.io/solonote/?v=370
 ```
+
+
+## v3.7.1 수정 사항
+
+- 로그인 화면에서 비밀번호 재설정 폼이 미리 펼쳐지던 문제 수정
+- 로그인, 이메일 재설정 요청, 새 비밀번호 설정 폼 중 한 화면만 표시
+- `.hidden` 스타일을 `display: none !important`로 강화
+- JavaScript에서 class와 HTML `hidden` 속성을 함께 제어
