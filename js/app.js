@@ -28,6 +28,137 @@ const taskInput = document.querySelector("#taskInput");
 const addTaskButton = document.querySelector("#addTaskButton");
 const taskDraftList = document.querySelector("#taskDraftList");
 const taskCountLabel = document.querySelector("#taskCountLabel");
+const cloudSyncStatus = document.querySelector("#cloudSyncStatus");
+const saveButton = document.querySelector("#saveButton");
+
+let currentCloudUserId = "";
+let cloudLoadSequence = 0;
+
+
+function setCloudStatus(message, state = "ready") {
+  if (!cloudSyncStatus) {
+    return;
+  }
+
+  cloudSyncStatus.textContent = message;
+  cloudSyncStatus.dataset.state = state;
+}
+
+function translateCloudError(error) {
+  const message = String(error && error.message ? error.message : "");
+  const code = String(error && error.code ? error.code : "");
+
+  if (code === "42P01" || /relation .*memos.* does not exist/i.test(message)) {
+    return "Supabase에 memos 테이블이 없습니다. SQL 실행 여부를 확인하세요.";
+  }
+
+  if (code === "42501" || /row-level security|permission denied/i.test(message)) {
+    return "Supabase RLS 정책 또는 테이블 권한을 확인하세요.";
+  }
+
+  if (/failed to fetch|network|load failed/i.test(message)) {
+    return "인터넷 연결 또는 Supabase 연결 상태를 확인하세요.";
+  }
+
+  if (/로그인 세션/i.test(message)) {
+    return message;
+  }
+
+  return message || "클라우드 처리 중 오류가 발생했습니다.";
+}
+
+function showMemoListLoading(message = "클라우드 메모를 불러오고 있습니다.") {
+  const memoList = document.querySelector("#memoList");
+
+  if (!memoList) {
+    return;
+  }
+
+  memoList.innerHTML = `
+    <div class="empty-state cloud-loading-state">
+      <strong>${escapeHtml(message)}</strong>
+      <p>잠시만 기다려주세요.</p>
+    </div>
+  `;
+}
+
+function showMemoListError(message) {
+  const memoList = document.querySelector("#memoList");
+
+  if (!memoList) {
+    return;
+  }
+
+  memoList.innerHTML = `
+    <div class="empty-state cloud-error-state">
+      <strong>클라우드 메모를 불러오지 못했습니다.</strong>
+      <p>${escapeHtml(message)}</p>
+    </div>
+  `;
+}
+
+async function loadCloudMemosForSession(session) {
+  const userId = session && session.user ? session.user.id : "";
+
+  if (!userId) {
+    clearMemoCache();
+    currentCloudUserId = "";
+    refreshScreen();
+    setCloudStatus("로그인 필요", "error");
+    return;
+  }
+
+  const sequence = ++cloudLoadSequence;
+  currentCloudUserId = userId;
+  setCloudStatus("클라우드 동기화 중", "loading");
+  showMemoListLoading();
+
+  try {
+    await loadMemosFromCloud();
+
+    if (sequence !== cloudLoadSequence || currentCloudUserId !== userId) {
+      return;
+    }
+
+    refreshScreen();
+
+    const legacyCount = getLegacyMemoCount();
+    const suffix = legacyCount > 0 ? ` · 기존 브라우저 메모 ${legacyCount}개 보존 중` : "";
+    setCloudStatus(`클라우드 연결됨${suffix}`, "ready");
+  } catch (error) {
+    console.error(error);
+    const message = translateCloudError(error);
+    clearMemoCache();
+    refreshProjectFilter();
+    refreshQuickProjects();
+    refreshDataStats();
+    showMemoListError(message);
+    setCloudStatus("클라우드 연결 실패", "error");
+  }
+}
+
+async function runCloudAction(action, options = {}) {
+  const {
+    loadingMessage = "클라우드 저장 중",
+    successMessage = "클라우드에 저장됨",
+  } = options;
+
+  setCloudStatus(loadingMessage, "loading");
+
+  try {
+    const result = await action();
+    refreshScreen();
+    setCloudStatus(successMessage, "ready");
+    return result;
+  } catch (error) {
+    console.error(error);
+    const message = translateCloudError(error);
+    setCloudStatus("클라우드 저장 실패", "error");
+    alert(message);
+    return null;
+  }
+}
+
 
 function parseMemoDate(dateString) {
   const time = new Date(dateString).getTime();
@@ -182,7 +313,7 @@ function refreshDataStats() {
   }
 }
 
-function handleEmptyTrashClick() {
+async function handleEmptyTrashClick() {
   const stats = getDataStats();
 
   if (stats.trashCount === 0) {
@@ -191,14 +322,24 @@ function handleEmptyTrashClick() {
   }
 
   const shouldEmptyTrash = confirm(
-    `휴지통의 메모 ${stats.trashCount}개를 모두 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
+    `클라우드 휴지통의 메모 ${stats.trashCount}개를 모두 완전히 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
   );
 
   if (!shouldEmptyTrash) {
     return;
   }
 
-  const deletedCount = emptyTrash();
+  const deletedCount = await runCloudAction(
+    () => emptyTrash(),
+    {
+      loadingMessage: "휴지통 삭제 중",
+      successMessage: "휴지통 비우기 완료",
+    }
+  );
+
+  if (deletedCount === null) {
+    return;
+  }
 
   if (currentCategory === "휴지통") {
     currentCategory = "전체";
@@ -207,19 +348,19 @@ function handleEmptyTrashClick() {
 
   closeDetailModal();
   refreshScreen();
-  alert(`휴지통 메모 ${deletedCount}개를 완전히 삭제했습니다.`);
+  alert(`클라우드 휴지통 메모 ${deletedCount}개를 완전히 삭제했습니다.`);
 }
 
-function handleResetAllDataClick() {
+async function handleResetAllDataClick() {
   const stats = getDataStats();
 
   if (stats.totalCount === 0) {
-    alert("초기화할 메모가 없습니다.");
+    alert("삭제할 클라우드 메모가 없습니다.");
     return;
   }
 
   const firstConfirm = confirm(
-    `모든 메모 ${stats.totalCount}개가 삭제됩니다.\n먼저 백업하기를 눌러 백업 파일을 보관하는 것을 추천합니다.\n정말 전체 데이터를 초기화하시겠습니까?`
+    `클라우드에 저장된 모든 메모 ${stats.totalCount}개가 삭제됩니다.\n먼저 백업하기를 눌러 JSON 파일을 보관하는 것을 추천합니다.\n정말 전체 클라우드 데이터를 삭제하시겠습니까?`
   );
 
   if (!firstConfirm) {
@@ -227,14 +368,24 @@ function handleResetAllDataClick() {
   }
 
   const secondConfirm = confirm(
-    "마지막 확인입니다.\n전체 데이터 초기화는 되돌릴 수 없습니다.\n정말 삭제하시겠습니까?"
+    "마지막 확인입니다.\n전체 클라우드 데이터 삭제는 되돌릴 수 없습니다.\n정말 삭제하시겠습니까?"
   );
 
   if (!secondConfirm) {
     return;
   }
 
-  const deletedCount = resetAllData();
+  const deletedCount = await runCloudAction(
+    () => resetAllData(),
+    {
+      loadingMessage: "전체 클라우드 데이터 삭제 중",
+      successMessage: "클라우드 데이터 삭제 완료",
+    }
+  );
+
+  if (deletedCount === null) {
+    return;
+  }
 
   currentCategory = "전체";
   currentSearch = "";
@@ -246,7 +397,7 @@ function handleResetAllDataClick() {
   closeDetailModal();
   refreshScreen();
 
-  alert(`전체 메모 ${deletedCount}개를 초기화했습니다.`);
+  alert(`클라우드 메모 ${deletedCount}개를 삭제했습니다.`);
 }
 
 
@@ -334,7 +485,7 @@ function handleTaskDraftListClick(event) {
   renderTaskDraftList();
 }
 
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
 
   const title = titleInput.value.trim();
@@ -365,10 +516,26 @@ function handleFormSubmit(event) {
     tasks: draftTasks.map((task) => ({ ...task })),
   };
 
-  if (editingId) {
-    updateMemo(editingId, memoData);
-  } else {
-    addMemo(memoData);
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = editingId ? "수정 저장 중..." : "클라우드 저장 중...";
+  }
+
+  const savedMemo = await runCloudAction(
+    () => (editingId ? updateMemo(editingId, memoData) : addMemo(memoData)),
+    {
+      loadingMessage: editingId ? "메모 수정 저장 중" : "새 메모 저장 중",
+      successMessage: "클라우드에 저장됨",
+    }
+  );
+
+  if (saveButton) {
+    saveButton.disabled = false;
+  }
+
+  if (!savedMemo) {
+    setEditorMode(editingId ? "edit" : "create");
+    return;
   }
 
   resetForm();
@@ -417,7 +584,7 @@ function handleSearchInput(event) {
   refreshScreen();
 }
 
-function handleEditClick() {
+async function handleEditClick() {
   const memoId = this.dataset.id;
   const mode = this.dataset.mode;
   const memo = findMemoById(memoId);
@@ -427,7 +594,18 @@ function handleEditClick() {
   }
 
   if (mode === "restore") {
-    restoreMemo(memoId);
+    const restoredMemo = await runCloudAction(
+      () => restoreMemo(memoId),
+      {
+        loadingMessage: "메모 복구 중",
+        successMessage: "메모 복구 완료",
+      }
+    );
+
+    if (!restoredMemo) {
+      return;
+    }
+
     closeDetailModal();
     currentCategory = "전체";
     setActiveCategory(currentCategory);
@@ -439,46 +617,80 @@ function handleEditClick() {
   loadDraftTasks(memo.tasks);
 }
 
-function handleDeleteClick() {
+async function handleDeleteClick() {
   const memoId = this.dataset.id;
   const mode = this.dataset.mode;
 
   if (mode === "permanent-delete") {
-    const shouldDelete = confirm("휴지통에서도 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.");
+    const shouldDelete = confirm(
+      "클라우드 휴지통에서도 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+    );
 
     if (!shouldDelete) {
       return;
     }
 
-    permanentlyDeleteMemo(memoId);
+    const result = await runCloudAction(
+      async () => {
+        await permanentlyDeleteMemo(memoId);
+        return true;
+      },
+      {
+        loadingMessage: "메모 완전 삭제 중",
+        successMessage: "메모 완전 삭제 완료",
+      }
+    );
+
+    if (!result) {
+      return;
+    }
+
     closeDetailModal();
     refreshScreen();
     return;
   }
 
-  const shouldMoveToTrash = confirm("이 메모를 휴지통으로 이동하시겠습니까?");
+  const shouldMoveToTrash = confirm("이 메모를 클라우드 휴지통으로 이동하시겠습니까?");
 
   if (!shouldMoveToTrash) {
     return;
   }
 
-  moveMemoToTrash(memoId);
+  const movedMemo = await runCloudAction(
+    () => moveMemoToTrash(memoId),
+    {
+      loadingMessage: "휴지통으로 이동 중",
+      successMessage: "휴지통으로 이동됨",
+    }
+  );
+
+  if (!movedMemo) {
+    return;
+  }
+
   closeDetailModal();
   refreshScreen();
 }
 
-function handleDetailTaskToggle(event) {
+async function handleDetailTaskToggle(event) {
   const toggleButton = event.target.closest(".task-toggle-button");
 
   if (!toggleButton) {
     return;
   }
 
+  toggleButton.disabled = true;
+
   const memoId = toggleButton.dataset.memoId;
   const taskId = toggleButton.dataset.taskId;
-  const updatedMemo = toggleTaskDone(memoId, taskId);
 
-  refreshScreen();
+  const updatedMemo = await runCloudAction(
+    () => toggleTaskDone(memoId, taskId),
+    {
+      loadingMessage: "체크리스트 저장 중",
+      successMessage: "체크리스트 저장됨",
+    }
+  );
 
   if (updatedMemo) {
     openDetailModal(updatedMemo);
@@ -486,7 +698,7 @@ function handleDetailTaskToggle(event) {
 }
 
 function handleModalClick(event) {
-  handleDetailTaskToggle(event);
+  void handleDetailTaskToggle(event);
 
   if (event.target.dataset.close === "true") {
     closeDetailModal();
@@ -549,7 +761,9 @@ function handleRestoreButtonClick() {
       return;
     }
 
-    const shouldRestore = confirm("선택한 백업 파일의 메모를 현재 메모에 추가하시겠습니까? 기존 메모는 유지됩니다.");
+    const shouldRestore = confirm(
+      "선택한 백업 파일의 메모를 현재 클라우드 메모에 추가하시겠습니까? 기존 클라우드 메모는 유지됩니다."
+    );
 
     if (!shouldRestore) {
       fileInput.remove();
@@ -558,10 +772,21 @@ function handleRestoreButtonClick() {
 
     const reader = new FileReader();
 
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const backupData = JSON.parse(reader.result);
-        const result = importMemosFromBackup(backupData);
+
+        const result = await runCloudAction(
+          () => importMemosFromBackup(backupData),
+          {
+            loadingMessage: "백업 메모를 클라우드로 가져오는 중",
+            successMessage: "클라우드 복원 완료",
+          }
+        );
+
+        if (!result) {
+          return;
+        }
 
         currentCategory = "전체";
         currentSearch = "";
@@ -570,10 +795,16 @@ function handleRestoreButtonClick() {
         setActiveCategory(currentCategory);
         refreshScreen();
 
-        alert(`복원 완료: ${result.addedCount}개 추가, ${result.skippedCount}개 중복 제외`);
+        alert(
+          `클라우드 복원 완료: ${result.addedCount}개 추가, ${result.skippedCount}개 중복 제외`
+        );
       } catch (error) {
         console.error(error);
-        alert("복원에 실패했습니다. 올바른 SoloNote 백업 파일인지 확인해주세요.");
+        alert(
+          error instanceof SyntaxError
+            ? "JSON 파일 형식이 올바르지 않습니다."
+            : translateCloudError(error)
+        );
       } finally {
         fileInput.remove();
       }
@@ -639,7 +870,52 @@ function bindEvents() {
 
 bindEvents();
 renderTaskDraftList();
+clearMemoCache();
 refreshScreen();
+setCloudStatus("클라우드 연결 준비 중", "loading");
+
+window.addEventListener("solonote-auth-changed", (event) => {
+  const session = event.detail && event.detail.session;
+
+  if (!session) {
+    cloudLoadSequence += 1;
+    currentCloudUserId = "";
+    clearMemoCache();
+    closeDetailModal();
+    refreshScreen();
+    setCloudStatus("로그인 필요", "error");
+    return;
+  }
+
+  void loadCloudMemosForSession(session);
+});
+
+(async function initializeCloudMemos() {
+  const client = window.solonoteSupabase;
+
+  if (!client) {
+    setCloudStatus("Supabase 연결 실패", "error");
+    showMemoListError("Supabase 클라이언트가 준비되지 않았습니다.");
+    return;
+  }
+
+  try {
+    const { data, error } = await client.auth.getSession();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data && data.session) {
+      await loadCloudMemosForSession(data.session);
+    }
+  } catch (error) {
+    console.error(error);
+    const message = translateCloudError(error);
+    setCloudStatus("클라우드 연결 실패", "error");
+    showMemoListError(message);
+  }
+})();
 
 
 function safeBindGuideToggle() {

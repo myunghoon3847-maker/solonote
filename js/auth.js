@@ -15,6 +15,15 @@
 
   let client = null;
 
+  function notifyAuthChange(session) {
+    window.solonoteCurrentSession = session || null;
+    window.dispatchEvent(
+      new CustomEvent("solonote-auth-changed", {
+        detail: { session: session || null },
+      })
+    );
+  }
+
   function setMessage(message = "", type = "") {
     if (!authMessage) {
       return;
@@ -59,6 +68,7 @@
     }
 
     setMessage(message, message ? "error" : "");
+    notifyAuthChange(null);
   }
 
   function showApp(session) {
@@ -90,6 +100,7 @@
     }
 
     setMessage("");
+    notifyAuthChange(session);
   }
 
   function translateAuthError(error) {

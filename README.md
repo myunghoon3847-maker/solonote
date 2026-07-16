@@ -1,42 +1,35 @@
-# SoloNote v3.3
+# SoloNote v3.4
 
-SoloNote v3.3은 Supabase Auth를 이용한 **혼자 쓰는 로그인 기능 실험판**입니다.
+SoloNote v3.4는 로그인한 사용자의 메모를 Supabase `memos` 테이블에 저장하는 클라우드 버전입니다.
 
-## 연결된 Supabase 프로젝트
+## v3.4 핵심 변경
 
-- Project URL: `https://nxobwqvsqvowimherzlo.supabase.co`
-- 키 종류: publishable key
-- Secret key, service_role key, 로그인 비밀번호는 포함하지 않음
+- 로그인 후 Supabase에서 내 메모 불러오기
+- 새 메모 클라우드 저장
+- 메모 수정 클라우드 저장
+- 중요 표시 저장
+- 체크리스트 완료 상태 저장
+- 휴지통 이동과 복구
+- 완전 삭제
+- 휴지통 전체 비우기
+- 전체 클라우드 데이터 삭제
+- 클라우드 메모 JSON 백업
+- JSON 백업 파일을 클라우드에 복원
+- 클라우드 연결/저장 상태 표시
 
-## v3.3 추가 기능
+## 기존 localStorage 데이터
 
-- 이메일 + 비밀번호 로그인
-- 기존 로그인 세션 유지
-- 로그아웃
-- 로그인하지 않은 상태에서는 SoloNote 화면 숨김
-- 로그인 이메일 표시
-- 로그인 오류 안내
-- 외부 Supabase 요청을 PWA 캐시에서 제외
+기존 브라우저 `localStorage` 메모는 삭제하지 않습니다.
 
-## 매우 중요한 현재 상태
+v3.4 화면은 Supabase 클라우드 메모만 표시합니다. 기존 브라우저 메모를 옮기려면 이전 버전에서 JSON 백업을 만든 후 v3.4의 `복원하기`를 사용합니다.
 
-v3.3에서는 **로그인만 Supabase에 연결**되어 있습니다.
+## 보안 구조
 
-메모 작성, 수정, 삭제, 체크리스트, 백업 기능의 데이터는 아직 브라우저 `localStorage`에 저장됩니다. 따라서 같은 계정으로 다른 기기에서 로그인해도 메모는 아직 자동 동기화되지 않습니다.
-
-메모 DB 저장과 기기 간 동기화는 다음 단계인 v3.4에서 연결합니다.
+브라우저에는 Project URL과 publishable key만 들어갑니다.
+데이터 접근은 Supabase 로그인 세션과 `memos` 테이블의 RLS 정책으로 제한합니다.
 
 ## 테스트 주소
 
 ```text
-https://myunghoon3847-maker.github.io/solonote/?v=330
+https://myunghoon3847-maker.github.io/solonote/?v=340
 ```
-
-
-## v3.3.1 수정 사항
-
-- 로그아웃 상태에서 로그인 화면 아래에 메모 앱이 보이던 문제 수정
-- `hidden` HTML 속성과 로그인 상태 전용 body 클래스를 함께 사용
-- 로그인 전에는 앱 화면을 강제로 숨김
-- 로그인 후에는 로그인 화면을 강제로 숨김
-- PWA 캐시 버전을 v3.3.1로 변경

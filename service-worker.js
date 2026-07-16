@@ -1,16 +1,16 @@
-const CACHE_NAME = "solonote-v3-3-1-cache";
+const CACHE_NAME = "solonote-v3-4-cache";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json",
-  "./css/style.css",
-  "./js/config.js",
-  "./js/auth.js",
-  "./js/storage.js",
-  "./js/ui.js",
-  "./js/app.js",
-  "./icons/icon-192.png",
+  "./manifest.json?v=340",
+  "./css/style.css?v=340",
+  "./js/config.js?v=340",
+  "./js/auth.js?v=340",
+  "./js/storage.js?v=340",
+  "./js/ui.js?v=340",
+  "./js/app.js?v=340",
+  "./icons/icon-192.png?v=340",
   "./icons/icon-512.png"
 ];
 
@@ -41,6 +41,7 @@ self.addEventListener("fetch", (event) => {
 
   const requestUrl = new URL(event.request.url);
 
+  // Supabase API와 CDN 요청은 캐시에 저장하지 않는다.
   if (requestUrl.origin !== self.location.origin) {
     return;
   }
@@ -63,18 +64,14 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+    fetch(request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(request))
   );
 });

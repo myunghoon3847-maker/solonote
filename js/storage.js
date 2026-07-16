@@ -1,12 +1,19 @@
-const STORAGE_KEY = "solonote_memos_v1";
+const LEGACY_STORAGE_KEY = "solonote_memos_v1";
+
+let memoCache = [];
+let cloudMemosLoaded = false;
 
 function createSafeId(prefix) {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return `${prefix}_${window.crypto.randomUUID()}`;
+  }
+
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 function normalizeTask(task) {
   return {
-    id: task && task.id ? task.id : createSafeId("task"),
+    id: task && task.id ? String(task.id) : createSafeId("task"),
     text: task && typeof task.text === "string" ? task.text : "",
     done: Boolean(task && task.done),
   };
@@ -27,175 +34,286 @@ function normalizeProject(project) {
 }
 
 function normalizeMemo(memo) {
+  const now = new Date().toISOString();
+
   return {
     ...memo,
-    id: memo.id || createSafeId("memo_imported"),
-    title: typeof memo.title === "string" ? memo.title : "제목 없음",
-    content: typeof memo.content === "string" ? memo.content : "",
-    category: typeof memo.category === "string" ? memo.category : "업무",
-    project: normalizeProject(memo.project),
-    createdAt: memo.createdAt || new Date().toISOString(),
-    updatedAt: memo.updatedAt || memo.createdAt || new Date().toISOString(),
-    isArchived: memo.isArchived ?? memo.category === "보관",
-    isDeleted: memo.isDeleted ?? false,
-    isImportant: memo.isImportant ?? false,
-    tasks: normalizeTasks(memo.tasks),
+    id: memo && memo.id ? String(memo.id) : createSafeId("memo"),
+    title: memo && typeof memo.title === "string" ? memo.title : "제목 없음",
+    content: memo && typeof memo.content === "string" ? memo.content : "",
+    category: memo && typeof memo.category === "string" ? memo.category : "업무",
+    project: normalizeProject(memo && memo.project),
+    createdAt: (memo && (memo.createdAt || memo.created_at)) || now,
+    updatedAt:
+      (memo && (memo.updatedAt || memo.updated_at || memo.createdAt || memo.created_at)) ||
+      now,
+    isArchived:
+      memo && memo.isArchived !== undefined
+        ? Boolean(memo.isArchived)
+        : Boolean(memo && memo.category === "보관"),
+    isDeleted:
+      memo && memo.isDeleted !== undefined
+        ? Boolean(memo.isDeleted)
+        : Boolean(memo && memo.is_deleted),
+    isImportant:
+      memo && memo.isImportant !== undefined
+        ? Boolean(memo.isImportant)
+        : Boolean(memo && memo.is_important),
+    tasks: normalizeTasks(memo && memo.tasks),
   };
 }
 
-function getMemos() {
-  const savedMemos = localStorage.getItem(STORAGE_KEY);
-
-  if (!savedMemos) {
-    return [];
-  }
-
-  try {
-    return JSON.parse(savedMemos).map(normalizeMemo);
-  } catch (error) {
-    console.error("메모 데이터를 불러오지 못했습니다.", error);
-    return [];
-  }
-}
-
-function saveMemos(memos) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(memos.map(normalizeMemo)));
-}
-
-function createMemo({ title, content, category, project, isImportant, tasks }) {
-  const now = new Date().toISOString();
-
+function mapDatabaseRowToMemo(row) {
   return normalizeMemo({
-    id: `memo_${Date.now()}`,
-    title,
-    content,
-    category,
-    project,
-    createdAt: now,
-    updatedAt: now,
-    isArchived: category === "보관",
-    isDeleted: false,
-    isImportant: Boolean(isImportant),
-    tasks,
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    category: row.category,
+    project: row.project,
+    isImportant: row.is_important,
+    isDeleted: row.is_deleted,
+    tasks: row.tasks,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   });
 }
 
-function addMemo(memoData) {
-  const memos = getMemos();
-  const newMemo = createMemo(memoData);
+function getMemos() {
+  return memoCache;
+}
 
-  memos.unshift(newMemo);
-  saveMemos(memos);
+function clearMemoCache() {
+  memoCache = [];
+  cloudMemosLoaded = false;
+}
+
+function hasLoadedCloudMemos() {
+  return cloudMemosLoaded;
+}
+
+function getLegacyMemoCount() {
+  const savedMemos = localStorage.getItem(LEGACY_STORAGE_KEY);
+
+  if (!savedMemos) {
+    return 0;
+  }
+
+  try {
+    const parsed = JSON.parse(savedMemos);
+    return Array.isArray(parsed) ? parsed.length : 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+async function getCloudContext() {
+  const client = window.solonoteSupabase;
+
+  if (!client) {
+    throw new Error("Supabase 클라이언트가 준비되지 않았습니다.");
+  }
+
+  const { data, error } = await client.auth.getSession();
+
+  if (error) {
+    throw error;
+  }
+
+  const session = data && data.session;
+
+  if (!session || !session.user) {
+    throw new Error("로그인 세션이 없습니다. 다시 로그인해주세요.");
+  }
+
+  return {
+    client,
+    session,
+    user: session.user,
+  };
+}
+
+function toDatabasePayload(memoData, userId) {
+  return {
+    user_id: userId,
+    title: typeof memoData.title === "string" ? memoData.title : "",
+    content: typeof memoData.content === "string" ? memoData.content : "",
+    category: typeof memoData.category === "string" ? memoData.category : "업무",
+    project: normalizeProject(memoData.project),
+    is_important: Boolean(memoData.isImportant),
+    is_deleted: Boolean(memoData.isDeleted),
+    tasks: normalizeTasks(memoData.tasks),
+  };
+}
+
+function sortCacheByUpdatedDate() {
+  memoCache.sort((a, b) => {
+    return new Date(b.updatedAt || b.createdAt).getTime() -
+      new Date(a.updatedAt || a.createdAt).getTime();
+  });
+}
+
+async function loadMemosFromCloud() {
+  const { client } = await getCloudContext();
+
+  const { data, error } = await client
+    .from("memos")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  memoCache = (data || []).map(mapDatabaseRowToMemo);
+  cloudMemosLoaded = true;
+
+  return memoCache;
+}
+
+async function addMemo(memoData) {
+  const { client, user } = await getCloudContext();
+
+  const payload = toDatabasePayload(
+    {
+      ...memoData,
+      isDeleted: false,
+    },
+    user.id
+  );
+
+  const { data, error } = await client
+    .from("memos")
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const newMemo = mapDatabaseRowToMemo(data);
+  memoCache.unshift(newMemo);
 
   return newMemo;
 }
 
-function updateMemo(id, updatedData) {
-  const memos = getMemos();
+async function updateMemo(id, updatedData) {
+  const { client, user } = await getCloudContext();
 
-  const updatedMemos = memos.map((memo) => {
-    if (memo.id !== id) {
-      return memo;
-    }
-
-    return normalizeMemo({
-      ...memo,
+  const payload = toDatabasePayload(
+    {
       ...updatedData,
-      isArchived: updatedData.category === "보관",
-      isImportant: Boolean(updatedData.isImportant),
-      project: normalizeProject(updatedData.project),
-      tasks: normalizeTasks(updatedData.tasks),
-      updatedAt: new Date().toISOString(),
-    });
-  });
+      isDeleted: Boolean(updatedData.isDeleted),
+    },
+    user.id
+  );
 
-  saveMemos(updatedMemos);
+  delete payload.user_id;
+  delete payload.is_deleted;
 
-  return updatedMemos.find((memo) => memo.id === id);
+  const { data, error } = await client
+    .from("memos")
+    .update(payload)
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const updatedMemo = mapDatabaseRowToMemo(data);
+  memoCache = memoCache.map((memo) => (memo.id === id ? updatedMemo : memo));
+  sortCacheByUpdatedDate();
+
+  return updatedMemo;
 }
 
-function moveMemoToTrash(id) {
-  const memos = getMemos();
+async function setMemoDeletedState(id, isDeleted) {
+  const { client, user } = await getCloudContext();
 
-  const updatedMemos = memos.map((memo) => {
-    if (memo.id !== id) {
-      return memo;
+  const { data, error } = await client
+    .from("memos")
+    .update({ is_deleted: Boolean(isDeleted) })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const updatedMemo = mapDatabaseRowToMemo(data);
+  memoCache = memoCache.map((memo) => (memo.id === id ? updatedMemo : memo));
+  sortCacheByUpdatedDate();
+
+  return updatedMemo;
+}
+
+async function moveMemoToTrash(id) {
+  return setMemoDeletedState(id, true);
+}
+
+async function restoreMemo(id) {
+  return setMemoDeletedState(id, false);
+}
+
+async function permanentlyDeleteMemo(id) {
+  const { client, user } = await getCloudContext();
+
+  const { error } = await client
+    .from("memos")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw error;
+  }
+
+  memoCache = memoCache.filter((memo) => memo.id !== id);
+}
+
+async function toggleTaskDone(memoId, taskId) {
+  const memo = findMemoById(memoId);
+
+  if (!memo) {
+    return null;
+  }
+
+  const tasks = memo.tasks.map((task) => {
+    if (task.id !== taskId) {
+      return task;
     }
 
     return {
-      ...memo,
-      isDeleted: true,
-      updatedAt: new Date().toISOString(),
+      ...task,
+      done: !task.done,
     };
   });
 
-  saveMemos(updatedMemos);
-}
-
-function restoreMemo(id) {
-  const memos = getMemos();
-
-  const updatedMemos = memos.map((memo) => {
-    if (memo.id !== id) {
-      return memo;
-    }
-
-    return {
-      ...memo,
-      isDeleted: false,
-      updatedAt: new Date().toISOString(),
-    };
+  return updateMemo(memoId, {
+    title: memo.title,
+    content: memo.content,
+    category: memo.category,
+    project: memo.project,
+    isImportant: memo.isImportant,
+    tasks,
   });
-
-  saveMemos(updatedMemos);
-}
-
-function permanentlyDeleteMemo(id) {
-  const memos = getMemos();
-  const remainingMemos = memos.filter((memo) => memo.id !== id);
-
-  saveMemos(remainingMemos);
-}
-
-function toggleTaskDone(memoId, taskId) {
-  const memos = getMemos();
-
-  const updatedMemos = memos.map((memo) => {
-    if (memo.id !== memoId) {
-      return memo;
-    }
-
-    return normalizeMemo({
-      ...memo,
-      tasks: memo.tasks.map((task) => {
-        if (task.id !== taskId) {
-          return task;
-        }
-
-        return {
-          ...task,
-          done: !task.done,
-        };
-      }),
-      updatedAt: new Date().toISOString(),
-    });
-  });
-
-  saveMemos(updatedMemos);
-
-  return updatedMemos.find((memo) => memo.id === memoId);
 }
 
 function findMemoById(id) {
-  return getMemos().find((memo) => memo.id === id);
+  return memoCache.find((memo) => memo.id === id);
 }
 
 function getActiveMemoCount() {
-  return getMemos().filter((memo) => !memo.isDeleted).length;
+  return memoCache.filter((memo) => !memo.isDeleted).length;
 }
 
 function getProjectOptions() {
-  const projects = getMemos()
+  const projects = memoCache
     .filter((memo) => !memo.isDeleted)
     .map((memo) => normalizeProject(memo.project))
     .filter(Boolean);
@@ -206,9 +324,10 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "2.0",
+    backupVersion: "3.4",
+    storage: "supabase",
     exportedAt: new Date().toISOString(),
-    memos: getMemos(),
+    memos: memoCache,
   };
 }
 
@@ -224,58 +343,119 @@ function extractMemosFromBackup(backupData) {
   throw new Error("올바른 SoloNote 백업 파일이 아닙니다.");
 }
 
-function importMemosFromBackup(backupData) {
-  const importedMemos = extractMemosFromBackup(backupData).map(normalizeMemo);
-  const currentMemos = getMemos();
-  const currentIds = new Set(currentMemos.map((memo) => memo.id));
+function createMemoSignature(memo) {
+  return [
+    memo.title,
+    memo.content,
+    memo.category,
+    memo.project,
+    memo.createdAt,
+  ].join("\u241f");
+}
 
-  const newMemos = [];
+async function importMemosFromBackup(backupData) {
+  const importedMemos = extractMemosFromBackup(backupData).map(normalizeMemo);
+  const { client, user } = await getCloudContext();
+
+  const existingSignatures = new Set(memoCache.map(createMemoSignature));
+  const memosToInsert = [];
   let skippedCount = 0;
 
   importedMemos.forEach((memo) => {
-    if (currentIds.has(memo.id)) {
+    const signature = createMemoSignature(memo);
+
+    if (existingSignatures.has(signature)) {
       skippedCount += 1;
       return;
     }
 
-    newMemos.push(memo);
-    currentIds.add(memo.id);
+    existingSignatures.add(signature);
+    memosToInsert.push({
+      ...toDatabasePayload(memo, user.id),
+      created_at: memo.createdAt,
+      updated_at: memo.updatedAt,
+    });
   });
 
-  saveMemos([...newMemos, ...currentMemos]);
+  if (memosToInsert.length === 0) {
+    return {
+      addedCount: 0,
+      skippedCount,
+      totalImportedCount: importedMemos.length,
+    };
+  }
+
+  const { data, error } = await client
+    .from("memos")
+    .insert(memosToInsert)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  const addedMemos = (data || []).map(mapDatabaseRowToMemo);
+  memoCache = [...addedMemos, ...memoCache];
+  sortCacheByUpdatedDate();
 
   return {
-    addedCount: newMemos.length,
+    addedCount: addedMemos.length,
     skippedCount,
     totalImportedCount: importedMemos.length,
   };
 }
 
-
 function getDataStats() {
-  const memos = getMemos();
-  const trashCount = memos.filter((memo) => memo.isDeleted).length;
+  const trashCount = memoCache.filter((memo) => memo.isDeleted).length;
 
   return {
-    totalCount: memos.length,
-    activeCount: memos.length - trashCount,
+    totalCount: memoCache.length,
+    activeCount: memoCache.length - trashCount,
     trashCount,
   };
 }
 
-function emptyTrash() {
-  const memos = getMemos();
-  const remainingMemos = memos.filter((memo) => !memo.isDeleted);
-  const deletedCount = memos.length - remainingMemos.length;
+async function emptyTrash() {
+  const { client, user } = await getCloudContext();
+  const deletedCount = memoCache.filter((memo) => memo.isDeleted).length;
 
-  saveMemos(remainingMemos);
+  if (deletedCount === 0) {
+    return 0;
+  }
+
+  const { error } = await client
+    .from("memos")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("is_deleted", true);
+
+  if (error) {
+    throw error;
+  }
+
+  memoCache = memoCache.filter((memo) => !memo.isDeleted);
 
   return deletedCount;
 }
 
-function resetAllData() {
-  const deletedCount = getMemos().length;
-  localStorage.removeItem(STORAGE_KEY);
+async function resetAllData() {
+  const { client, user } = await getCloudContext();
+  const deletedCount = memoCache.length;
+
+  if (deletedCount === 0) {
+    return 0;
+  }
+
+  const { error } = await client
+    .from("memos")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw error;
+  }
+
+  memoCache = [];
 
   return deletedCount;
 }
