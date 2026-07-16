@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=412" />
+  <link rel="manifest" href="./manifest.json?v=420" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=412" />
-  <link rel="stylesheet" href="./css/style.css?v=412" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=420" />
+  <link rel="stylesheet" href="./css/style.css?v=420" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -126,50 +126,46 @@
 
   <div id="appShell" class="app" hidden aria-hidden="true">
     <header class="app-header">
-      <div>
-        <p class="eyebrow">1인 업무노트</p>
-        <h1>SoloNote</h1>
-        <p class="subtitle">혼자 일하는 사람을 위한 업무 · 아이디어 · 할 일 기록장</p>
-      </div>
-      <div class="header-side">
-        <div class="account-box">
-          <span id="signedInEmail" class="signed-in-email">로그인됨</span>
-          <span id="cloudSyncStatus" class="cloud-sync-status" data-state="loading">클라우드 연결 준비 중</span>
-          <div class="header-account-actions">
-            <button
-              type="button"
-              id="installAppButton"
-              class="header-install-button"
-              hidden
-            >
-              앱 설치
-            </button>
-            <button type="button" id="logoutButton" class="header-logout-button">로그아웃</button>
-          </div>
+      <div class="header-inner">
+        <div class="brand-block">
+          <h1>SoloNote</h1>
+          <p><span id="memoCount">0</span>개 메모</p>
         </div>
-        <div class="header-badge">
-          <span id="memoCount">0</span>
-          <small>개의 메모</small>
+
+        <div class="header-actions">
+          <span id="cloudSyncStatus" class="cloud-sync-status" data-state="loading">
+            연결 준비 중
+          </span>
+          <button
+            type="button"
+            id="appMenuButton"
+            class="icon-button menu-button"
+            aria-label="메뉴 열기"
+            aria-expanded="false"
+            aria-controls="appMenuPanel"
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
         </div>
       </div>
     </header>
 
     <section
       id="pwaUpdateBanner"
-      class="pwa-update-banner"
+      class="status-banner pwa-update-banner"
       role="status"
       aria-live="polite"
       hidden
     >
       <div>
-        <strong>새 SoloNote 버전이 준비되었습니다.</strong>
-        <p>업데이트하면 최신 기능과 오류 수정이 적용됩니다.</p>
+        <strong>새 버전이 준비되었습니다.</strong>
+        <p>최신 기능과 오류 수정을 적용합니다.</p>
       </div>
-      <div class="pwa-update-actions">
+      <div class="banner-actions pwa-update-actions">
         <button type="button" id="applyUpdateButton" class="primary-button compact-button">
-          지금 업데이트
+          업데이트
         </button>
-        <button type="button" id="dismissUpdateButton" class="ghost-button compact-button">
+        <button type="button" id="dismissUpdateButton" class="text-button compact-button">
           나중에
         </button>
       </div>
@@ -177,7 +173,7 @@
 
     <section
       id="draftRecoveryBanner"
-      class="draft-recovery-banner"
+      class="status-banner draft-recovery-banner"
       role="status"
       aria-live="polite"
       aria-hidden="true"
@@ -185,324 +181,432 @@
     >
       <div>
         <strong>저장하지 않은 초안이 있습니다.</strong>
-        <p id="draftRecoveryDescription">이 브라우저에 자동 저장된 내용을 이어서 작성할 수 있습니다.</p>
+        <p id="draftRecoveryDescription">자동 저장된 내용을 이어서 작성할 수 있습니다.</p>
       </div>
-      <div class="draft-recovery-actions">
+      <div class="banner-actions draft-recovery-actions">
         <button type="button" id="restoreDraftButton" class="primary-button compact-button">
           이어서 작성
         </button>
-        <button type="button" id="discardDraftButton" class="ghost-button compact-button">
-          초안 삭제
+        <button type="button" id="discardDraftButton" class="text-button compact-button">
+          삭제
         </button>
       </div>
     </section>
 
-    <main class="layout">
-      <section class="panel editor-panel collapsed" aria-labelledby="editorTitle">
-        <div class="section-title-row editor-title-row">
+    <nav class="primary-view-tabs" aria-label="주요 화면">
+      <button
+        type="button"
+        id="notesViewTab"
+        class="primary-view-tab active"
+        data-app-view="notes"
+        aria-selected="true"
+        aria-controls="notesView"
+      >
+        메모
+      </button>
+      <button
+        type="button"
+        id="tasksViewTab"
+        class="primary-view-tab"
+        data-app-view="tasks"
+        aria-selected="false"
+        aria-controls="tasksView"
+      >
+        할 일
+        <span id="taskHubOpenCount" class="tab-count">0</span>
+      </button>
+    </nav>
+
+    <main class="workspace">
+      <section id="notesView" class="app-view" aria-labelledby="notesViewTitle">
+        <div class="view-heading">
           <div>
+            <h2 id="notesViewTitle">메모</h2>
+            <p id="resultSummary" aria-live="polite">메모를 불러오고 있습니다.</p>
+          </div>
+          <button
+            type="button"
+            id="editorToggleButton"
+            class="primary-button compact-button"
+          >
+            + 새 메모
+          </button>
+        </div>
+
+        <section class="panel editor-panel collapsed" aria-labelledby="editorTitle">
+          <div class="editor-heading">
             <h2 id="editorTitle">새 메모 작성</h2>
-            <p>떠오른 업무, 아이디어, 할 일을 바로 기록하세요.</p>
+            <button
+              type="button"
+              id="resetButton"
+              class="text-button compact-button hidden"
+            >
+              수정 취소
+            </button>
           </div>
-          <div class="editor-actions">
-            <button type="button" id="editorToggleButton" class="primary-button compact-button">+ 새 메모 작성</button>
-            <button type="button" id="resetButton" class="ghost-button compact-button hidden">수정 취소</button>
+
+          <form id="memoForm" class="memo-form editor-content">
+            <div class="draft-save-status" aria-live="polite">
+              <span class="draft-save-dot" aria-hidden="true"></span>
+              <span id="draftSaveStatus">작성 내용은 이 브라우저에 자동 저장됩니다.</span>
+            </div>
+
+            <input type="hidden" id="editingId" />
+            <input type="hidden" id="editingUpdatedAt" />
+
+            <label for="titleInput">제목</label>
+            <input
+              id="titleInput"
+              type="text"
+              placeholder="메모 제목"
+              autocomplete="off"
+            />
+
+            <label for="contentInput">내용</label>
+            <textarea
+              id="contentInput"
+              rows="7"
+              placeholder="내용을 입력하세요."
+            ></textarea>
+
+            <div class="form-grid">
+              <div>
+                <label for="projectInput">프로젝트</label>
+                <input
+                  id="projectInput"
+                  type="text"
+                  placeholder="선택 입력"
+                  autocomplete="off"
+                />
+
+                <div id="quickProjectBox" class="quick-project-box hidden">
+                  <div class="quick-project-header">
+                    <span>최근 프로젝트</span>
+                  </div>
+                  <div id="quickProjectList" class="quick-project-list"></div>
+                </div>
+              </div>
+
+              <div>
+                <label for="categoryInput">카테고리</label>
+                <select id="categoryInput">
+                  <option value="업무">업무</option>
+                  <option value="아이디어">아이디어</option>
+                  <option value="할 일">할 일</option>
+                  <option value="프로젝트">프로젝트</option>
+                  <option value="보관">보관</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="checklist-editor">
+              <div class="checklist-editor-header">
+                <label for="taskInput">체크리스트</label>
+                <span id="taskCountLabel">0개</span>
+              </div>
+              <div class="task-input-row">
+                <input
+                  id="taskInput"
+                  type="text"
+                  placeholder="할 일을 입력하세요."
+                  autocomplete="off"
+                />
+                <button
+                  type="button"
+                  id="addTaskButton"
+                  class="secondary-button compact-button"
+                >
+                  추가
+                </button>
+              </div>
+              <ul id="taskDraftList" class="task-draft-list" aria-label="작성 중인 체크리스트"></ul>
+            </div>
+
+            <div class="form-footer">
+              <label class="checkbox-row" for="importantInput">
+                <input id="importantInput" type="checkbox" />
+                <span>중요 표시</span>
+              </label>
+              <button type="submit" id="saveButton" class="primary-button">
+                저장하기
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <div class="search-toolbar">
+          <div class="search-box">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="메모 검색"
+              aria-label="메모 검색"
+            />
           </div>
+          <button
+            type="button"
+            id="filterToggleButton"
+            class="secondary-button filter-button"
+            aria-expanded="false"
+            aria-controls="filterPanel"
+          >
+            필터
+            <span id="filterActiveCount" class="filter-count" hidden>0</span>
+          </button>
         </div>
 
-        <form id="memoForm" class="memo-form editor-content">
-          <div class="draft-save-status" aria-live="polite">
-            <span class="draft-save-dot" aria-hidden="true"></span>
-            <span id="draftSaveStatus">작성 내용은 이 브라우저에 자동 저장됩니다.</span>
-          </div>
-
-          <input type="hidden" id="editingId" />
-          <input type="hidden" id="editingUpdatedAt" />
-
-          <label for="titleInput">제목</label>
-          <input
-            id="titleInput"
-            type="text"
-            placeholder="예: 업무노트 앱 1차 기능 정리"
-            autocomplete="off"
-          />
-
-          
-          <label for="projectInput">프로젝트명</label>
-          <input id="projectInput" type="text" placeholder="예: SoloNote 개발" autocomplete="off" />
-
-          <div id="quickProjectBox" class="quick-project-box hidden">
-            <div class="quick-project-header">
-              <span>최근 프로젝트</span>
-              <small>눌러서 빠르게 입력</small>
-            </div>
-            <div id="quickProjectList" class="quick-project-list"></div>
-          </div>
-<label for="contentInput">내용</label>
-          <textarea
-            id="contentInput"
-            rows="8"
-            placeholder="메모 내용을 입력하세요."
-          ></textarea>
-
-          
-
-          <div class="checklist-editor">
-            <div class="checklist-editor-header">
-              <label for="taskInput">체크리스트</label>
-              <span id="taskCountLabel">0개 항목</span>
-            </div>
-
-            <div class="task-input-row">
-              <input id="taskInput" type="text" placeholder="예: GitHub 업로드하기" autocomplete="off" />
-              <button type="button" id="addTaskButton" class="secondary-button task-add-button">추가</button>
-            </div>
-
-            <ul id="taskDraftList" class="task-draft-list" aria-label="작성 중인 체크리스트"></ul>
-          </div>
-<label for="categoryInput">카테고리</label>
-          <select id="categoryInput">
-            <option value="업무">업무</option>
-            <option value="아이디어">아이디어</option>
-            <option value="할 일">할 일</option>
-            <option value="프로젝트">프로젝트</option>
-            <option value="보관">보관</option>
-          </select>
-
-          <label class="checkbox-row" for="importantInput">
-            <input id="importantInput" type="checkbox" />
-            <span>중요 메모로 표시</span>
-          </label>
-
-          <button type="submit" id="saveButton" class="primary-button">저장하기</button>
-        </form>
-      </section>
-
-      <section class="panel list-panel" aria-labelledby="listTitle">
-        <div class="section-title-row">
+        <section id="filterPanel" class="filter-panel" hidden aria-label="메모 필터">
           <div>
-            <h2 id="listTitle">저장된 메모</h2>
-            <p>카테고리와 검색으로 필요한 메모를 찾을 수 있습니다.</p>
+            <span class="filter-label">카테고리</span>
+            <nav id="categoryTabs" class="category-tabs" aria-label="메모 카테고리">
+              <button type="button" class="category-tab active" data-category="전체">전체</button>
+              <button type="button" class="category-tab" data-category="중요">중요</button>
+              <button type="button" class="category-tab" data-category="업무">업무</button>
+              <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
+              <button type="button" class="category-tab" data-category="할 일">할 일</button>
+              <button type="button" class="category-tab" data-category="프로젝트">프로젝트</button>
+              <button type="button" class="category-tab" data-category="보관">보관</button>
+              <button type="button" class="category-tab" data-category="휴지통">휴지통</button>
+            </nav>
           </div>
-        </div>
 
-        <div class="backup-actions" aria-label="백업과 복원">
-          <button type="button" id="backupButton" class="secondary-button backup-button">백업하기</button>
-          <button type="button" id="restoreButton" class="ghost-button backup-button">복원하기</button>
-</div>
+          <div class="filter-select-grid">
+            <label>
+              <span>프로젝트</span>
+              <select id="projectFilterInput">
+                <option value="전체">전체</option>
+              </select>
+            </label>
 
-        <div class="search-box">
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="제목 또는 내용 검색하기..."
-            aria-label="메모 검색"
-          />
-        </div>
+            <label>
+              <span>정렬</span>
+              <select id="sortInput">
+                <option value="updatedDesc">최근 수정순</option>
+                <option value="createdDesc">최신 작성순</option>
+                <option value="createdAsc">오래된 작성순</option>
+                <option value="importantFirst">중요 먼저</option>
+                <option value="titleAsc">제목순</option>
+              </select>
+            </label>
+          </div>
 
-        <div class="project-filter-box">
-          <label for="projectFilterInput">프로젝트</label>
-          <select id="projectFilterInput">
-            <option value="전체">전체</option>
-          </select>
-        </div>
-
-        <div class="sort-box">
-          <label for="sortInput">정렬</label>
-          <select id="sortInput">
-            <option value="updatedDesc">최근 수정순</option>
-            <option value="createdDesc">최신 작성순</option>
-            <option value="createdAsc">오래된 작성순</option>
-            <option value="importantFirst">중요 먼저</option>
-            <option value="titleAsc">제목순</option>
-          </select>
-        </div>
-
-        <nav id="categoryTabs" class="category-tabs" aria-label="메모 카테고리">
-          <button type="button" class="category-tab active" data-category="전체">전체</button>
-          <button type="button" class="category-tab" data-category="중요">중요</button>
-          <button type="button" class="category-tab" data-category="업무">업무</button>
-          <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
-          <button type="button" class="category-tab" data-category="할 일">할 일</button>
-          <button type="button" class="category-tab" data-category="프로젝트">프로젝트</button>
-          <button type="button" class="category-tab" data-category="보관">보관</button>
-          <button type="button" class="category-tab" data-category="휴지통">휴지통</button>
-        </nav>
-
-        <div class="filter-summary" aria-live="polite">
-          <span id="resultSummary">메모를 불러오고 있습니다.</span>
           <button
             type="button"
             id="showAllMemosButton"
-            class="ghost-button compact-button"
+            class="text-button reset-filter-button"
             hidden
           >
             전체 메모 보기
           </button>
-        </div>
-
-        <section class="task-hub" aria-labelledby="taskHubTitle">
-          <div class="task-hub-header">
-            <div>
-              <h3 id="taskHubTitle">통합 할 일</h3>
-              <p>
-                모든 메모의 체크리스트를 한곳에서 확인합니다.
-                <strong id="taskHubOpenCount">0</strong>개 남음
-              </p>
-            </div>
-            <button
-              type="button"
-              id="taskHubToggleButton"
-              class="ghost-button compact-button"
-              aria-expanded="false"
-              aria-controls="taskHubContent"
-            >
-              할 일 보기
-            </button>
-          </div>
-
-          <div id="taskHubContent" class="task-hub-content" hidden>
-            <div class="task-hub-toolbar">
-              <div class="task-hub-view-tabs" role="group" aria-label="할 일 표시 범위">
-                <button
-                  type="button"
-                  class="task-hub-view-button active"
-                  data-task-view="open"
-                  aria-pressed="true"
-                >
-                  미완료
-                </button>
-                <button
-                  type="button"
-                  class="task-hub-view-button"
-                  data-task-view="all"
-                  aria-pressed="false"
-                >
-                  완료 포함
-                </button>
-              </div>
-              <span id="taskHubResultText" class="task-hub-result-text">미완료 할 일을 불러오고 있습니다.</span>
-            </div>
-
-            <div id="taskHubList" class="task-hub-list"></div>
-          </div>
         </section>
 
         <div id="memoList" class="memo-list"></div>
+      </section>
 
-        <section class="data-management" aria-label="데이터 관리">
-          <div class="data-management-header">
+      <section
+        id="tasksView"
+        class="app-view"
+        aria-labelledby="taskHubTitle"
+        hidden
+      >
+        <div class="view-heading">
+          <div>
+            <h2 id="taskHubTitle">할 일</h2>
+            <p id="taskHubResultText">미완료 할 일을 불러오고 있습니다.</p>
+          </div>
+        </div>
+
+        <div id="taskHubContent" class="task-hub-content">
+          <div class="task-hub-toolbar">
+            <div class="task-hub-view-tabs" role="group" aria-label="할 일 표시 범위">
+              <button
+                type="button"
+                class="task-hub-view-button active"
+                data-task-view="open"
+                aria-pressed="true"
+              >
+                미완료
+              </button>
+              <button
+                type="button"
+                class="task-hub-view-button"
+                data-task-view="all"
+                aria-pressed="false"
+              >
+                완료 포함
+              </button>
+            </div>
+          </div>
+          <div id="taskHubList" class="task-hub-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="appMenuBackdrop" class="app-menu-backdrop" hidden></div>
+
+    <aside
+      id="appMenuPanel"
+      class="app-menu-panel"
+      aria-label="앱 메뉴"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="menu-header">
+        <div>
+          <strong>메뉴</strong>
+          <span id="signedInEmail" class="signed-in-email">로그인됨</span>
+        </div>
+        <button
+          type="button"
+          id="appMenuCloseButton"
+          class="icon-button"
+          aria-label="메뉴 닫기"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="menu-scroll">
+        <section class="menu-section">
+          <h3>빠른 작업</h3>
+          <div class="menu-action-grid">
+            <button
+              type="button"
+              id="installAppButton"
+              class="menu-action-button"
+              hidden
+            >
+              앱 설치
+            </button>
+            <button type="button" id="backupButton" class="menu-action-button">
+              백업
+            </button>
+            <button type="button" id="restoreButton" class="menu-action-button">
+              복원
+            </button>
+            <button type="button" id="logoutButton" class="menu-action-button danger-text">
+              로그아웃
+            </button>
+          </div>
+        </section>
+
+        <section class="menu-section data-management" aria-label="데이터 관리">
+          <div class="menu-section-heading">
             <div>
-              <strong>데이터 관리</strong>
-              <p>백업, 이전, 휴지통과 전체 데이터 삭제 기능입니다.</p>
+              <h3>데이터 관리</h3>
+              <p>동기화, 휴지통, 기존 메모 이전</p>
             </div>
             <button
               type="button"
               id="dataManagementToggleButton"
-              class="ghost-button compact-button"
+              class="text-button compact-button"
               aria-expanded="false"
               aria-controls="dataManagementContent"
             >
-              관리 도구 보기
+              열기
             </button>
           </div>
 
           <div id="dataManagementContent" class="data-management-content" hidden>
-          <div class="data-stats">
-            <span>클라우드 메모 <strong id="totalMemoCount">0</strong>개</span>
-            <span>휴지통 <strong id="trashMemoCount">0</strong>개</span>
-            <span>최근 동기화 <strong id="lastSyncTime">-</strong></span>
-          </div>
-
-          <div id="legacyMigrationPanel" class="migration-panel">
-            <div class="migration-copy">
-              <strong>기존 브라우저 메모 이전</strong>
-              <p id="legacyMigrationMessage">
-                이 기기에 남아 있는 이전 버전 메모를 확인하고 있습니다.
-              </p>
+            <div class="data-stats">
+              <span>메모 <strong id="totalMemoCount">0</strong></span>
+              <span>휴지통 <strong id="trashMemoCount">0</strong></span>
+              <span>동기화 <strong id="lastSyncTime">-</strong></span>
             </div>
 
-            <div class="migration-summary">
-              <span>기존 메모 <strong id="legacyMemoCount">0</strong>개</span>
-              <span id="migrationSafetyLabel">원본 유지</span>
+            <div id="legacyMigrationPanel" class="migration-panel">
+              <div>
+                <strong>기존 브라우저 메모</strong>
+                <p id="legacyMigrationMessage">이전 메모를 확인하고 있습니다.</p>
+              </div>
+              <div class="migration-summary">
+                <span><strong id="legacyMemoCount">0</strong>개</span>
+                <span id="migrationSafetyLabel">원본 유지</span>
+              </div>
+              <button
+                type="button"
+                id="migrateLegacyButton"
+                class="secondary-button"
+                disabled
+              >
+                클라우드로 옮기기
+              </button>
             </div>
 
-            <button
-              type="button"
-              id="migrateLegacyButton"
-              class="secondary-button migration-button"
-              disabled
-            >
-              기존 메모를 클라우드로 옮기기
-            </button>
-
-            <p class="migration-help">
-              이미 옮겨진 메모는 자동으로 제외되며, 브라우저의 원본 메모는 삭제하지 않습니다.
-            </p>
-          </div>
-
-          <div class="data-actions">
-            <button type="button" id="cloudRefreshButton" class="secondary-button data-button">클라우드 새로고침</button>
-            <button type="button" id="emptyTrashButton" class="ghost-button data-button">휴지통 비우기</button>
-            <button type="button" id="resetAllDataButton" class="danger-button data-button">전체 클라우드 데이터 삭제</button>
-          </div>
+            <div class="data-actions">
+              <button type="button" id="cloudRefreshButton" class="secondary-button">
+                새로고침
+              </button>
+              <button type="button" id="emptyTrashButton" class="text-button">
+                휴지통 비우기
+              </button>
+              <button type="button" id="resetAllDataButton" class="danger-button">
+                전체 데이터 삭제
+              </button>
+            </div>
           </div>
         </section>
 
-        <section class="app-guide" aria-label="앱 정보와 사용 안내">
-          <div class="app-guide-header">
+        <section class="menu-section app-guide" aria-label="사용 안내">
+          <div class="menu-section-heading">
             <div>
-              <strong>앱 정보 / 사용 안내</strong>
-              <p>저장 방식, 백업 방법, 주요 사용법을 확인하세요.</p>
+              <h3>사용 안내</h3>
+              <p>저장, 설치, 백업 방법</p>
             </div>
-            <span class="version-badge">v4.1.2</span>
+            <button
+              type="button"
+              id="guideToggleButton"
+              class="text-button compact-button"
+              aria-expanded="false"
+              aria-controls="guideContent"
+            >
+              열기
+            </button>
           </div>
 
-          <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" aria-expanded="false" aria-controls="guideContent">
-            사용 안내 보기
-          </button>
-
-          <div id="guideContent" class="guide-content hidden">
+          <div id="guideContent" class="guide-content hidden" hidden>
             <div class="guide-item pwa-guide-item">
               <div class="pwa-guide-heading">
                 <div>
-                  <strong>앱 설치 / 업데이트</strong>
+                  <strong>앱 설치</strong>
                   <p id="pwaStatusText">설치 상태를 확인하고 있습니다.</p>
                 </div>
-                <button type="button" id="pwaHelpButton" class="ghost-button compact-button">
-                  설치 방법 보기
+                <button
+                  type="button"
+                  id="pwaHelpButton"
+                  class="text-button compact-button"
+                >
+                  방법 보기
                 </button>
               </div>
-
               <div id="pwaInstallHelp" class="pwa-install-help" hidden>
-                <p><strong>안드로이드 Chrome</strong>: 브라우저 메뉴에서 ‘앱 설치’ 또는 ‘홈 화면에 추가’를 선택합니다.</p>
-                <p><strong>아이폰 Safari</strong>: 공유 버튼을 누른 뒤 ‘홈 화면에 추가’를 선택합니다.</p>
-                <p><strong>PC Chrome·Edge</strong>: 주소창의 설치 아이콘 또는 브라우저 메뉴의 앱 설치를 선택합니다.</p>
+                <p><strong>안드로이드</strong> Chrome 메뉴 → 앱 설치</p>
+                <p><strong>아이폰</strong> Safari 공유 → 홈 화면에 추가</p>
+                <p><strong>PC</strong> 주소창 또는 브라우저 메뉴 → 앱 설치</p>
               </div>
             </div>
-
             <div class="guide-item">
-              <strong>저장 방식</strong>
-              <p>v4.1.2에서는 통합 할 일 카드의 아래쪽 전체 영역을 눌러 원본 메모를 열 수 있습니다.</p>
+              <strong>저장</strong>
+              <p>정식 메모는 클라우드에, 저장 전 초안은 현재 브라우저에 보관됩니다.</p>
             </div>
             <div class="guide-item">
-              <strong>백업 / 복원</strong>
-              <p>백업하기는 클라우드 메모를 JSON으로 저장합니다. 기존 브라우저 메모는 데이터 관리의 이전 버튼으로 옮길 수 있습니다.</p>
+              <strong>메모와 할 일</strong>
+              <p>메모 화면은 기록과 검색, 할 일 화면은 체크리스트 관리에 사용합니다.</p>
             </div>
             <div class="guide-item">
-              <strong>프로젝트와 카테고리</strong>
-              <p>프로젝트는 일이 속한 묶음이고, 카테고리는 메모의 종류입니다. 예: 프로젝트 SoloNote 개발 / 카테고리 할 일</p>
-            </div>
-            <div class="guide-item">
-              <strong>체크리스트</strong>
-              <p>메모 안에 할 일을 추가하고, 상세 보기에서 완료 여부를 체크할 수 있습니다.</p>
+              <strong>백업</strong>
+              <p>메뉴의 백업 버튼으로 JSON 파일을 저장할 수 있습니다.</p>
             </div>
           </div>
         </section>
+      </div>
 
-
-      </section>
-    </main>
+      <div class="menu-footer">
+        <span>SoloNote</span>
+        <span class="version-badge">v4.2</span>
+      </div>
+    </aside>
 
     <button
       type="button"
@@ -511,7 +615,7 @@
       aria-label="새 메모 작성"
     >
       <span aria-hidden="true">＋</span>
-      새 메모
+      <span class="mobile-new-memo-label">새 메모</span>
     </button>
   </div>
 
@@ -538,11 +642,11 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=412"></script>
-  <script src="./js/auth.js?v=412"></script>
-  <script src="./js/storage.js?v=412"></script>
-  <script src="./js/ui.js?v=412"></script>
-  <script src="./js/app.js?v=412"></script>
-  <script src="./js/pwa.js?v=412"></script>
+  <script src="./js/config.js?v=420"></script>
+  <script src="./js/auth.js?v=420"></script>
+  <script src="./js/storage.js?v=420"></script>
+  <script src="./js/ui.js?v=420"></script>
+  <script src="./js/app.js?v=420"></script>
+  <script src="./js/pwa.js?v=420"></script>
 </body>
 </html>

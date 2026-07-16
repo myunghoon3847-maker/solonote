@@ -53,6 +53,17 @@ const taskHubList = document.querySelector("#taskHubList");
 const taskHubOpenCount = document.querySelector("#taskHubOpenCount");
 const taskHubResultText = document.querySelector("#taskHubResultText");
 const taskHubViewTabs = document.querySelector(".task-hub-view-tabs");
+const notesViewTab = document.querySelector("#notesViewTab");
+const tasksViewTab = document.querySelector("#tasksViewTab");
+const notesView = document.querySelector("#notesView");
+const tasksView = document.querySelector("#tasksView");
+const filterToggleButton = document.querySelector("#filterToggleButton");
+const filterPanel = document.querySelector("#filterPanel");
+const filterActiveCount = document.querySelector("#filterActiveCount");
+const appMenuButton = document.querySelector("#appMenuButton");
+const appMenuPanel = document.querySelector("#appMenuPanel");
+const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
+const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
@@ -72,6 +83,7 @@ const DRAFT_AUTO_SAVE_DELAY_MS = 700;
 const DRAFT_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
 
 let currentTaskHubView = "open";
+let currentAppView = "notes";
 
 
 
@@ -428,31 +440,145 @@ function resetMemoFilters() {
   projectFilterInput.value = "전체";
   sortInput.value = "updatedDesc";
   setActiveCategory(currentCategory);
+  closeFilterPanel();
   refreshScreen();
 }
 
 function updateFilterControls(filteredMemos) {
   const hasSearch = Boolean(currentSearch.trim());
-  const hasChangedView =
-    hasSearch ||
-    currentCategory !== "전체" ||
-    currentProject !== "전체" ||
-    currentSort !== "updatedDesc";
+  const activeFilterCount = [
+    currentCategory !== "전체",
+    currentProject !== "전체",
+    currentSort !== "updatedDesc",
+  ].filter(Boolean).length;
+  const hasChangedView = hasSearch || activeFilterCount > 0;
 
   if (showAllMemosButton) {
     showAllMemosButton.hidden = !hasChangedView;
   }
 
+  if (filterActiveCount) {
+    filterActiveCount.textContent = String(activeFilterCount);
+    filterActiveCount.hidden = activeFilterCount === 0;
+  }
+
+  if (filterToggleButton) {
+    filterToggleButton.classList.toggle("active", activeFilterCount > 0);
+  }
+
   if (resultSummary) {
     const visibleCount = Array.isArray(filteredMemos) ? filteredMemos.length : 0;
-    const categoryText =
-      currentCategory === "전체" ? "전체 메모" : `${currentCategory} 메모`;
+    const parts = [`${visibleCount}개`];
 
-    resultSummary.textContent =
-      `${categoryText} ${visibleCount}개 표시` +
-      (currentProject !== "전체" ? ` · 프로젝트: ${currentProject}` : "") +
-      (hasSearch ? ` · 검색: “${currentSearch.trim()}”` : "");
+    if (currentCategory !== "전체") {
+      parts.push(currentCategory);
+    }
+
+    if (currentProject !== "전체") {
+      parts.push(currentProject);
+    }
+
+    if (hasSearch) {
+      parts.push(`“${currentSearch.trim()}”`);
+    }
+
+    resultSummary.textContent = parts.join(" · ");
   }
+}
+
+
+function isEditorOpen() {
+  const editorPanel = document.querySelector(".editor-panel");
+  return Boolean(editorPanel && !editorPanel.classList.contains("collapsed"));
+}
+
+function syncMobileNewMemoButton() {
+  if (!mobileNewMemoButton) {
+    return;
+  }
+
+  mobileNewMemoButton.hidden =
+    currentAppView !== "notes" || isEditorOpen();
+}
+
+function closeFilterPanel() {
+  if (!filterPanel || !filterToggleButton) {
+    return;
+  }
+
+  filterPanel.hidden = true;
+  filterToggleButton.setAttribute("aria-expanded", "false");
+}
+
+function handleFilterToggle() {
+  if (!filterPanel || !filterToggleButton) {
+    return;
+  }
+
+  const willOpen = filterPanel.hidden;
+  filterPanel.hidden = !willOpen;
+  filterToggleButton.setAttribute("aria-expanded", String(willOpen));
+}
+
+function closeAppMenu() {
+  if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
+    return;
+  }
+
+  appMenuPanel.hidden = true;
+  appMenuBackdrop.hidden = true;
+  appMenuPanel.setAttribute("aria-hidden", "true");
+  appMenuButton.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("menu-open");
+}
+
+function openAppMenu() {
+  if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
+    return;
+  }
+
+  closeFilterPanel();
+  appMenuPanel.hidden = false;
+  appMenuBackdrop.hidden = false;
+  appMenuPanel.setAttribute("aria-hidden", "false");
+  appMenuButton.setAttribute("aria-expanded", "true");
+  document.body.classList.add("menu-open");
+
+  window.requestAnimationFrame(() => {
+    appMenuCloseButton?.focus();
+  });
+}
+
+function switchAppView(view) {
+  currentAppView = view === "tasks" ? "tasks" : "notes";
+  const isNotes = currentAppView === "notes";
+
+  document.body.dataset.appView = currentAppView;
+  notesView.hidden = !isNotes;
+  tasksView.hidden = isNotes;
+
+  notesViewTab.classList.toggle("active", isNotes);
+  tasksViewTab.classList.toggle("active", !isNotes);
+  notesViewTab.setAttribute("aria-selected", String(isNotes));
+  tasksViewTab.setAttribute("aria-selected", String(!isNotes));
+
+  if (!isNotes) {
+    closeFilterPanel();
+    refreshTaskHub();
+  }
+
+  syncMobileNewMemoButton();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function handlePrimaryViewClick(event) {
+  const button = event.target.closest("[data-app-view]");
+
+  if (!button) {
+    return;
+  }
+
+  switchAppView(button.dataset.appView);
 }
 
 function handleDataManagementToggle() {
@@ -462,13 +588,12 @@ function handleDataManagementToggle() {
 
   const willOpen = dataManagementContent.hidden;
   dataManagementContent.hidden = !willOpen;
-  dataManagementToggleButton.textContent = willOpen
-    ? "관리 도구 접기"
-    : "관리 도구 보기";
+  dataManagementToggleButton.textContent = willOpen ? "닫기" : "열기";
   dataManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
 }
 
 function handleMobileNewMemoClick() {
+  switchAppView("notes");
   if (!confirmDiscardEditorChanges()) {
     return;
   }
@@ -1753,6 +1878,7 @@ async function handleEditClick() {
     return;
   }
 
+  switchAppView("notes");
   fillFormForEdit(memo);
   loadDraftTasks(memo.tasks);
   markEditorClean();
@@ -1962,12 +2088,11 @@ function handleGuideToggleClick() {
     return;
   }
 
-  const isHidden = guideContent.classList.toggle("hidden");
-  guideContent.hidden = isHidden;
-  guideToggleButton.textContent = isHidden
-    ? "사용 안내 보기"
-    : "사용 안내 접기";
-  guideToggleButton.setAttribute("aria-expanded", String(!isHidden));
+  const willOpen = guideContent.hidden;
+  guideContent.hidden = !willOpen;
+  guideContent.classList.toggle("hidden", !willOpen);
+  guideToggleButton.textContent = willOpen ? "닫기" : "열기";
+  guideToggleButton.setAttribute("aria-expanded", String(willOpen));
 }
 
 
@@ -1992,7 +2117,6 @@ function bindEvents() {
 
   backupButton.addEventListener("click", handleBackupClick);
   restoreButton.addEventListener("click", handleRestoreButtonClick);
-
   emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
   cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
@@ -2008,19 +2132,36 @@ function bindEvents() {
   addTaskButton.addEventListener("click", handleAddTask);
   taskInput.addEventListener("keydown", handleTaskInputKeydown);
   taskDraftList.addEventListener("click", handleTaskDraftListClick);
-  taskHubToggleButton.addEventListener("click", handleTaskHubToggle);
   taskHubViewTabs.addEventListener("click", handleTaskHubViewClick);
   taskHubList.addEventListener("click", (event) => {
     void handleTaskHubClick(event);
   });
 
+  notesViewTab.parentElement.addEventListener("click", handlePrimaryViewClick);
+  filterToggleButton.addEventListener("click", handleFilterToggle);
+  appMenuButton.addEventListener("click", openAppMenu);
+  appMenuCloseButton.addEventListener("click", closeAppMenu);
+  appMenuBackdrop.addEventListener("click", closeAppMenu);
+
   window.addEventListener("beforeunload", handleBeforeUnload);
   window.addEventListener("solonote-before-logout", handleBeforeLogout);
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      closeDetailModal();
+    if (event.key !== "Escape") {
+      return;
     }
+
+    if (!appMenuPanel.hidden) {
+      closeAppMenu();
+      return;
+    }
+
+    if (!filterPanel.hidden) {
+      closeFilterPanel();
+      return;
+    }
+
+    closeDetailModal();
   });
 
   window.addEventListener("online", () => {
@@ -2071,9 +2212,17 @@ if (dataManagementContent) {
   dataManagementContent.hidden = true;
 }
 
-if (taskHubContent) {
-  taskHubContent.hidden = true;
+if (filterPanel) {
+  filterPanel.hidden = true;
 }
+
+if (appMenuPanel && appMenuBackdrop) {
+  appMenuPanel.hidden = true;
+  appMenuBackdrop.hidden = true;
+}
+
+switchAppView("notes");
+
 if (navigator.onLine === false) {
   setOfflineStatus();
 } else {

@@ -52,10 +52,17 @@ function renderTaskChecklistHtml(memo) {
           .map(
             (task) => `
               <li class="detail-task-item ${task.done ? "done" : ""}">
-                <button type="button" class="task-toggle-button" data-memo-id="${memo.id}" data-task-id="${task.id}">
-                  <span class="task-checkmark">${task.done ? "✓" : ""}</span>
-                  <span class="task-text">${escapeHtml(task.text)}</span>
+                <button
+                  type="button"
+                  class="task-toggle-button"
+                  data-memo-id="${memo.id}"
+                  data-task-id="${task.id}"
+                  aria-label="${task.done ? "미완료로 변경" : "완료 처리"}: ${escapeHtml(task.text)}"
+                  aria-pressed="${task.done ? "true" : "false"}"
+                >
+                  <span class="task-checkmark" aria-hidden="true">${task.done ? "✓" : ""}</span>
                 </button>
+                <span class="task-text">${escapeHtml(task.text)}</span>
               </li>
             `
           )
@@ -132,8 +139,8 @@ function renderTaskHub(items, view = "open") {
         : "등록된 체크리스트가 없습니다.";
     const description =
       view === "open"
-        ? "모든 체크리스트를 완료했거나 아직 할 일을 추가하지 않았습니다."
-        : "메모 작성 화면에서 체크리스트 항목을 추가해보세요.";
+        ? "모든 할 일을 완료했거나 아직 체크리스트가 없습니다."
+        : "메모 작성 화면에서 체크리스트를 추가해보세요.";
 
     taskHubList.innerHTML = `
       <div class="task-hub-empty">
@@ -153,43 +160,36 @@ function renderTaskHub(items, view = "open") {
       const safeCategory = escapeHtml(item.category);
       const date = formatDate(item.updatedAt || item.createdAt);
       const metaParts = [
-        safeProject ? `프로젝트 ${safeProject}` : "",
+        safeMemoTitle,
+        safeProject,
         safeCategory,
         date,
       ].filter(Boolean);
 
       return `
         <article class="task-hub-item ${task.done ? "done" : ""}">
-          <div class="task-hub-task-main">
-            <button
-              type="button"
-              class="task-hub-check-button"
-              data-task-action="toggle"
-              data-memo-id="${item.memoId}"
-              data-task-id="${task.id}"
-              aria-label="${task.done ? "할 일 미완료로 변경" : "할 일 완료 처리"}: ${safeTaskText}"
-              aria-pressed="${task.done ? "true" : "false"}"
-            >
-              <span class="task-hub-checkmark" aria-hidden="true">${task.done ? "✓" : ""}</span>
-            </button>
-            <span class="task-hub-task-text">${safeTaskText}</span>
-          </div>
+          <button
+            type="button"
+            class="task-hub-check-button"
+            data-task-action="toggle"
+            data-memo-id="${item.memoId}"
+            data-task-id="${task.id}"
+            aria-label="${task.done ? "할 일 미완료로 변경" : "할 일 완료 처리"}: ${safeTaskText}"
+            aria-pressed="${task.done ? "true" : "false"}"
+          >
+            <span class="task-hub-checkmark" aria-hidden="true">${task.done ? "✓" : ""}</span>
+          </button>
 
           <button
             type="button"
-            class="task-hub-memo-link"
+            class="task-hub-main-link"
             data-task-action="open-memo"
             data-memo-id="${item.memoId}"
             aria-label="원본 메모 열기: ${safeMemoTitle}"
           >
-            <span class="task-hub-memo-copy">
-              <strong>${safeMemoTitle}</strong>
-              <span class="task-hub-memo-meta">${metaParts.join(" · ")}</span>
-            </span>
-            <span class="task-hub-open-label" aria-hidden="true">
-              원본 메모 열기
-              <span class="task-hub-open-arrow">→</span>
-            </span>
+            <span class="task-hub-task-text">${safeTaskText}</span>
+            <span class="task-hub-source">${metaParts.join(" · ")}</span>
+            <span class="task-hub-arrow" aria-hidden="true">›</span>
           </button>
         </article>
       `;
@@ -351,9 +351,9 @@ function openEditor() {
   const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
   editorPanel.classList.remove("collapsed");
-  toggleButton.textContent = "작성 영역 닫기";
+  toggleButton.textContent = "작성 닫기";
   toggleButton.classList.remove("primary-button");
-  toggleButton.classList.add("ghost-button");
+  toggleButton.classList.add("secondary-button");
 
   if (mobileNewMemoButton) {
     mobileNewMemoButton.hidden = true;
@@ -366,12 +366,12 @@ function closeEditor() {
   const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
   editorPanel.classList.add("collapsed");
-  toggleButton.textContent = "+ 새 메모 작성";
-  toggleButton.classList.remove("ghost-button");
+  toggleButton.textContent = "+ 새 메모";
+  toggleButton.classList.remove("secondary-button", "ghost-button");
   toggleButton.classList.add("primary-button");
 
   if (mobileNewMemoButton) {
-    mobileNewMemoButton.hidden = false;
+    mobileNewMemoButton.hidden = document.body.dataset.appView === "tasks";
   }
 }
 
