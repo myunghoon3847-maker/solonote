@@ -2325,3 +2325,181 @@ body.auth-logged-in #authScreen {
     flex-direction: column;
   }
 }
+
+
+/* v3.9: 배포 전 안정화 및 UI 정리 */
+body.modal-open {
+  overflow: hidden;
+}
+
+.search-control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.search-clear-button {
+  min-height: 44px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  margin: 2px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.filter-summary span {
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.filter-summary button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  margin: 0;
+}
+
+.empty-state-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.empty-state-actions .primary-button,
+.empty-state-actions .ghost-button {
+  margin: 0;
+}
+
+.data-management-header {
+  align-items: center;
+}
+
+.data-management-header > div {
+  min-width: 0;
+}
+
+.data-management-header button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  margin: 0;
+}
+
+.data-management-content {
+  display: grid;
+  gap: 12px;
+}
+
+.migration-panel[hidden],
+.data-management-content[hidden] {
+  display: none !important;
+}
+
+.mobile-new-memo-button {
+  display: none;
+}
+
+.modal-card:focus {
+  outline: none;
+}
+
+#detailModal[hidden] {
+  display: none !important;
+}
+
+button:focus-visible,
+.memo-card:focus-visible,
+.category-tab:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .app {
+    padding-bottom: calc(94px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-new-memo-button {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 15;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 50px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.34);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  .mobile-new-memo-button span {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .mobile-new-memo-button[hidden] {
+    display: none !important;
+  }
+
+  .data-management-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .data-management-header button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .search-control-row {
+    grid-template-columns: 1fr;
+  }
+
+  .search-clear-button {
+    width: 100%;
+  }
+
+  .filter-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-summary button {
+    width: 100%;
+  }
+
+  .empty-state-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .empty-state-actions button {
+    width: 100%;
+  }
+
+  .detail-actions button,
+  .pwa-update-actions button,
+  .header-account-actions button {
+    min-height: 44px;
+  }
+}

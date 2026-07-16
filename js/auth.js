@@ -470,6 +470,14 @@
       return;
     }
 
+    const beforeLogoutEvent = new CustomEvent("solonote-before-logout", {
+      cancelable: true,
+    });
+
+    if (!window.dispatchEvent(beforeLogoutEvent)) {
+      return;
+    }
+
     const originalText = logoutButton.textContent;
     logoutButton.disabled = true;
     logoutButton.textContent = "로그아웃 중...";

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=380" />
+  <link rel="manifest" href="./manifest.json?v=390" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=380" />
-  <link rel="stylesheet" href="./css/style.css?v=380" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=390" />
+  <link rel="stylesheet" href="./css/style.css?v=390" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -264,12 +264,21 @@
           <button type="button" id="restoreButton" class="ghost-button backup-button">복원하기</button>
 </div>
 
-        <div class="search-box">
+        <div class="search-box search-control-row">
           <input
             id="searchInput"
             type="search"
             placeholder="제목 또는 내용 검색하기..."
+            aria-label="메모 검색"
           />
+          <button
+            type="button"
+            id="clearSearchButton"
+            class="ghost-button search-clear-button"
+            hidden
+          >
+            검색 지우기
+          </button>
         </div>
 
         <div class="project-filter-box">
@@ -301,16 +310,38 @@
           <button type="button" class="category-tab" data-category="휴지통">휴지통</button>
         </nav>
 
+        <div class="filter-summary" aria-live="polite">
+          <span id="resultSummary">메모를 불러오고 있습니다.</span>
+          <button
+            type="button"
+            id="resetFiltersButton"
+            class="ghost-button compact-button"
+            hidden
+          >
+            필터 초기화
+          </button>
+        </div>
+
         <div id="memoList" class="memo-list"></div>
 
         <section class="data-management" aria-label="데이터 관리">
           <div class="data-management-header">
             <div>
               <strong>데이터 관리</strong>
-              <p>메모는 로그인한 계정의 Supabase 클라우드에 저장됩니다.</p>
+              <p>백업, 이전, 휴지통과 전체 데이터 삭제 기능입니다.</p>
             </div>
+            <button
+              type="button"
+              id="dataManagementToggleButton"
+              class="ghost-button compact-button"
+              aria-expanded="false"
+              aria-controls="dataManagementContent"
+            >
+              관리 도구 보기
+            </button>
           </div>
 
+          <div id="dataManagementContent" class="data-management-content" hidden>
           <div class="data-stats">
             <span>클라우드 메모 <strong id="totalMemoCount">0</strong>개</span>
             <span>휴지통 <strong id="trashMemoCount">0</strong>개</span>
@@ -349,6 +380,7 @@
             <button type="button" id="emptyTrashButton" class="ghost-button data-button">휴지통 비우기</button>
             <button type="button" id="resetAllDataButton" class="danger-button data-button">전체 클라우드 데이터 삭제</button>
           </div>
+          </div>
         </section>
 
         <section class="app-guide" aria-label="앱 정보와 사용 안내">
@@ -357,10 +389,10 @@
               <strong>앱 정보 / 사용 안내</strong>
               <p>저장 방식, 백업 방법, 주요 사용법을 확인하세요.</p>
             </div>
-            <span class="version-badge">v3.8</span>
+            <span class="version-badge">v3.9</span>
           </div>
 
-          <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" onclick="toggleSoloNoteGuide()">
+          <button type="button" id="guideToggleButton" class="ghost-button guide-toggle-button" aria-expanded="false" aria-controls="guideContent">
             사용 안내 보기
           </button>
 
@@ -385,7 +417,7 @@
 
             <div class="guide-item">
               <strong>저장 방식</strong>
-              <p>v3.8에서는 SoloNote를 스마트폰과 PC에 설치하고 새 버전을 안전하게 적용할 수 있습니다.</p>
+              <p>v3.9에서는 작성 중 이탈 방지와 모바일·검색·상세 화면 사용성을 정리했습니다.</p>
             </div>
             <div class="guide-item">
               <strong>백업 / 복원</strong>
@@ -405,9 +437,19 @@
 
       </section>
     </main>
+
+    <button
+      type="button"
+      id="mobileNewMemoButton"
+      class="mobile-new-memo-button"
+      aria-label="새 메모 작성"
+    >
+      <span aria-hidden="true">＋</span>
+      새 메모
+    </button>
   </div>
 
-  <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle" aria-hidden="true" hidden>
     <div class="modal-backdrop" data-close="true"></div>
     <article class="modal-card">
       <button type="button" id="closeDetailButton" class="close-button" aria-label="상세 보기 닫기">×</button>
@@ -428,49 +470,13 @@
     </article>
   </div>
 
-  <script>
-    function toggleSoloNoteGuide() {
-      var content = document.getElementById("guideContent");
-      var button = document.getElementById("guideToggleButton");
-
-      if (!content || !button) {
-        return;
-      }
-
-      var isHidden = content.classList.contains("hidden") || content.style.display === "none";
-
-      if (isHidden) {
-        content.classList.remove("hidden");
-        content.style.display = "grid";
-        button.textContent = "사용 안내 접기";
-      } else {
-        content.classList.add("hidden");
-        content.style.display = "none";
-        button.textContent = "사용 안내 보기";
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      var content = document.getElementById("guideContent");
-      var button = document.getElementById("guideToggleButton");
-
-      if (content) {
-        content.classList.add("hidden");
-        content.style.display = "none";
-      }
-
-      if (button) {
-        button.textContent = "사용 안내 보기";
-      }
-    });
-  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=380"></script>
-  <script src="./js/auth.js?v=380"></script>
-  <script src="./js/storage.js?v=380"></script>
-  <script src="./js/ui.js?v=380"></script>
-  <script src="./js/app.js?v=380"></script>
-  <script src="./js/pwa.js?v=380"></script>
+  <script src="./js/config.js?v=390"></script>
+  <script src="./js/auth.js?v=390"></script>
+  <script src="./js/storage.js?v=390"></script>
+  <script src="./js/ui.js?v=390"></script>
+  <script src="./js/app.js?v=390"></script>
+  <script src="./js/pwa.js?v=390"></script>
 </body>
 </html>

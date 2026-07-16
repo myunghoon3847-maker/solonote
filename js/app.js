@@ -37,6 +37,12 @@ const legacyMigrationMessage = document.querySelector("#legacyMigrationMessage")
 const migrateLegacyButton = document.querySelector("#migrateLegacyButton");
 const cloudRefreshButton = document.querySelector("#cloudRefreshButton");
 const lastSyncTime = document.querySelector("#lastSyncTime");
+const clearSearchButton = document.querySelector("#clearSearchButton");
+const resetFiltersButton = document.querySelector("#resetFiltersButton");
+const resultSummary = document.querySelector("#resultSummary");
+const dataManagementToggleButton = document.querySelector("#dataManagementToggleButton");
+const dataManagementContent = document.querySelector("#dataManagementContent");
+const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
@@ -46,6 +52,161 @@ let lastAutomaticSyncRequestAt = 0;
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
+let editorCleanSnapshot = "";
+let isEditorDirty = false;
+
+
+
+function getEditorSnapshot() {
+  return JSON.stringify({
+    title: titleInput?.value || "",
+    project: projectInput?.value || "",
+    content: contentInput?.value || "",
+    category: categoryInput?.value || "",
+    important: Boolean(importantInput?.checked),
+    editingId: editingIdInput?.value || "",
+    tasks: draftTasks.map((task) => ({
+      text: task.text,
+      done: Boolean(task.done),
+    })),
+  });
+}
+
+function markEditorClean() {
+  editorCleanSnapshot = getEditorSnapshot();
+  isEditorDirty = false;
+}
+
+function updateEditorDirtyState() {
+  isEditorDirty = getEditorSnapshot() !== editorCleanSnapshot;
+}
+
+function hasUnsavedEditorChanges() {
+  const editorPanel = document.querySelector(".editor-panel");
+
+  return Boolean(
+    isEditorDirty &&
+    editorPanel &&
+    !editorPanel.classList.contains("collapsed")
+  );
+}
+
+function confirmDiscardEditorChanges(message = "저장하지 않은 작성 내용이 있습니다. 계속하시겠습니까?") {
+  if (!hasUnsavedEditorChanges()) {
+    return true;
+  }
+
+  return window.confirm(message);
+}
+
+function handleBeforeUnload(event) {
+  if (!hasUnsavedEditorChanges()) {
+    return;
+  }
+
+  event.preventDefault();
+  event.returnValue = "";
+}
+
+function resetMemoFilters() {
+  currentCategory = "전체";
+  currentSearch = "";
+  currentProject = "전체";
+  currentSort = "updatedDesc";
+
+  searchInput.value = "";
+  projectFilterInput.value = "전체";
+  sortInput.value = "updatedDesc";
+  setActiveCategory(currentCategory);
+  refreshScreen();
+}
+
+function updateFilterControls(filteredMemos) {
+  const hasSearch = Boolean(currentSearch.trim());
+  const hasFilter =
+    currentCategory !== "전체" ||
+    currentProject !== "전체" ||
+    currentSort !== "updatedDesc";
+
+  if (clearSearchButton) {
+    clearSearchButton.hidden = !hasSearch;
+  }
+
+  if (resetFiltersButton) {
+    resetFiltersButton.hidden = !(hasSearch || hasFilter);
+  }
+
+  if (resultSummary) {
+    const visibleCount = Array.isArray(filteredMemos) ? filteredMemos.length : 0;
+    const categoryText =
+      currentCategory === "전체" ? "전체 메모" : `${currentCategory} 메모`;
+
+    resultSummary.textContent =
+      `${categoryText} ${visibleCount}개 표시` +
+      (currentProject !== "전체" ? ` · 프로젝트: ${currentProject}` : "") +
+      (hasSearch ? ` · 검색: “${currentSearch.trim()}”` : "");
+  }
+}
+
+function handleClearSearchClick() {
+  currentSearch = "";
+  searchInput.value = "";
+  refreshScreen();
+  searchInput.focus();
+}
+
+function handleDataManagementToggle() {
+  if (!dataManagementToggleButton || !dataManagementContent) {
+    return;
+  }
+
+  const willOpen = dataManagementContent.hidden;
+  dataManagementContent.hidden = !willOpen;
+  dataManagementToggleButton.textContent = willOpen
+    ? "관리 도구 접기"
+    : "관리 도구 보기";
+  dataManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
+}
+
+function handleMobileNewMemoClick() {
+  if (!confirmDiscardEditorChanges()) {
+    return;
+  }
+
+  resetForm();
+  openEditor();
+  document.querySelector(".editor-panel")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+  window.setTimeout(() => titleInput?.focus(), 250);
+}
+
+function handleCancelEditorClick() {
+  if (
+    !confirmDiscardEditorChanges(
+      "저장하지 않은 수정 내용이 있습니다. 수정을 취소하시겠습니까?"
+    )
+  ) {
+    return;
+  }
+
+  cancelEditAndCloseEditor();
+}
+
+function handleBeforeLogout(event) {
+  if (
+    !confirmDiscardEditorChanges(
+      "저장하지 않은 작성 내용이 있습니다. 로그아웃하시겠습니까?"
+    )
+  ) {
+    event.preventDefault();
+    return;
+  }
+
+  resetForm();
+  closeEditor();
+}
 
 function setCloudStatus(message, state = "ready") {
   if (!cloudSyncStatus) {
@@ -160,6 +321,7 @@ function refreshLegacyMigrationPanel() {
 
   if (count > 0) {
     legacyMigrationPanel.dataset.state = "available";
+    legacyMigrationPanel.hidden = false;
     migrateLegacyButton.disabled = false;
     migrateLegacyButton.textContent = "기존 메모를 클라우드로 옮기기";
 
@@ -172,6 +334,7 @@ function refreshLegacyMigrationPanel() {
   }
 
   legacyMigrationPanel.dataset.state = "empty";
+  legacyMigrationPanel.hidden = true;
   migrateLegacyButton.disabled = true;
   migrateLegacyButton.textContent = "옮길 기존 메모 없음";
 
@@ -714,7 +877,10 @@ function refreshScreen() {
   refreshProjectFilter();
   refreshQuickProjects();
   refreshDataStats();
-  renderMemoList(getFilteredMemos());
+
+  const filteredMemos = getFilteredMemos();
+  renderMemoList(filteredMemos);
+  updateFilterControls(filteredMemos);
 }
 
 function createDraftTask(text) {
@@ -771,6 +937,7 @@ function handleAddTask() {
   draftTasks.push(createDraftTask(text));
   taskInput.value = "";
   renderTaskDraftList();
+  updateEditorDirtyState();
   taskInput.focus();
 }
 
@@ -792,6 +959,7 @@ function handleTaskDraftListClick(event) {
 
   draftTasks = draftTasks.filter((task) => task.id !== removeButton.dataset.taskId);
   renderTaskDraftList();
+  updateEditorDirtyState();
 }
 
 
@@ -992,6 +1160,22 @@ async function handleFormSubmit(event) {
 }
 
 function handleMemoListClick(event) {
+  const emptyActionButton = event.target.closest("[data-empty-action]");
+
+  if (emptyActionButton) {
+    const action = emptyActionButton.dataset.emptyAction;
+
+    if (action === "create") {
+      handleMobileNewMemoClick();
+    }
+
+    if (action === "reset") {
+      resetMemoFilters();
+    }
+
+    return;
+  }
+
   const memoCard = event.target.closest(".memo-card");
 
   if (!memoCard) {
@@ -1063,6 +1247,7 @@ async function handleEditClick() {
 
   fillFormForEdit(memo);
   loadDraftTasks(memo.tasks);
+  markEditorClean();
 }
 
 async function handleDeleteClick() {
@@ -1305,12 +1490,19 @@ function handleGuideToggleClick() {
   }
 
   const isHidden = guideContent.classList.toggle("hidden");
-  guideToggleButton.textContent = isHidden ? "사용 안내 보기" : "사용 안내 접기";
+  guideContent.hidden = isHidden;
+  guideToggleButton.textContent = isHidden
+    ? "사용 안내 보기"
+    : "사용 안내 접기";
+  guideToggleButton.setAttribute("aria-expanded", String(!isHidden));
 }
 
 
 function bindEvents() {
   memoForm.addEventListener("submit", handleFormSubmit);
+  memoForm.addEventListener("input", updateEditorDirtyState);
+  memoForm.addEventListener("change", updateEditorDirtyState);
+
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
   categoryTabs.addEventListener("click", handleCategoryClick);
   searchInput.addEventListener("input", handleSearchInput);
@@ -1319,7 +1511,7 @@ function bindEvents() {
   quickProjectList.addEventListener("click", handleQuickProjectClick);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
-  document.querySelector("#resetButton").addEventListener("click", cancelEditAndCloseEditor);
+  document.querySelector("#resetButton").addEventListener("click", handleCancelEditorClick);
   document.querySelector("#closeDetailButton").addEventListener("click", closeDetailModal);
   document.querySelector("#detailModal").addEventListener("click", handleModalClick);
   document.querySelector("#editMemoButton").addEventListener("click", handleEditClick);
@@ -1334,10 +1526,17 @@ function bindEvents() {
   migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
+  clearSearchButton.addEventListener("click", handleClearSearchClick);
+  resetFiltersButton.addEventListener("click", resetMemoFilters);
+  dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
+  mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
 
   addTaskButton.addEventListener("click", handleAddTask);
   taskInput.addEventListener("keydown", handleTaskInputKeydown);
   taskDraftList.addEventListener("click", handleTaskDraftListClick);
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  window.addEventListener("solonote-before-logout", handleBeforeLogout);
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
@@ -1375,9 +1574,19 @@ function bindEvents() {
 
 bindEvents();
 renderTaskDraftList();
+markEditorClean();
 clearMemoCache();
 refreshScreen();
 refreshLegacyMigrationPanel();
+
+if (guideContent) {
+  guideContent.hidden = true;
+  guideContent.classList.add("hidden");
+}
+
+if (dataManagementContent) {
+  dataManagementContent.hidden = true;
+}
 if (navigator.onLine === false) {
   setOfflineStatus();
 } else {
@@ -1446,20 +1655,3 @@ window.addEventListener("solonote-auth-changed", (event) => {
   }
 })();
 
-
-function safeBindGuideToggle() {
-  const button = document.querySelector("#guideToggleButton");
-  const content = document.querySelector("#guideContent");
-
-  if (!button || !content || button.dataset.bound === "true") {
-    return;
-  }
-
-  button.dataset.bound = "true";
-  button.addEventListener("click", () => {
-    const isHidden = content.classList.toggle("hidden");
-    button.textContent = isHidden ? "사용 안내 보기" : "사용 안내 접기";
-  });
-}
-
-safeBindGuideToggle();

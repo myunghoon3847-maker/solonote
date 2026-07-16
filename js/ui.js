@@ -125,7 +125,15 @@ function renderMemoList(memos) {
     memoList.innerHTML = `
       <div class="empty-state">
         <strong>표시할 메모가 없습니다.</strong>
-        <p>새 메모를 작성하거나 검색어, 프로젝트, 카테고리를 확인해보세요.</p>
+        <p>새 메모를 작성하거나 검색어, 프로젝트, 카테고리를 초기화해보세요.</p>
+        <div class="empty-state-actions">
+          <button type="button" class="primary-button compact-button" data-empty-action="create">
+            새 메모 작성
+          </button>
+          <button type="button" class="ghost-button compact-button" data-empty-action="reset">
+            검색·필터 초기화
+          </button>
+        </div>
       </div>
     `;
     return;
@@ -164,6 +172,8 @@ function renderMemoList(memos) {
     })
     .join("");
 }
+
+let detailModalPreviousFocus = null;
 
 function openDetailModal(memo) {
   const modal = document.querySelector("#detailModal");
@@ -213,11 +223,38 @@ function openDetailModal(memo) {
     deleteButton.dataset.mode = "trash";
   }
 
+  detailModalPreviousFocus = document.activeElement;
+  modal.hidden = false;
   modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  window.requestAnimationFrame(() => {
+    document.querySelector("#closeDetailButton")?.focus();
+  });
 }
 
 function closeDetailModal() {
-  document.querySelector("#detailModal").classList.add("hidden");
+  const modal = document.querySelector("#detailModal");
+
+  if (!modal || modal.hidden || modal.classList.contains("hidden")) {
+    return;
+  }
+
+  modal.classList.add("hidden");
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+
+  if (
+    detailModalPreviousFocus &&
+    typeof detailModalPreviousFocus.focus === "function" &&
+    document.contains(detailModalPreviousFocus)
+  ) {
+    detailModalPreviousFocus.focus();
+  }
+
+  detailModalPreviousFocus = null;
 }
 
 function setActiveCategory(category) {
@@ -229,21 +266,31 @@ function setActiveCategory(category) {
 function openEditor() {
   const editorPanel = document.querySelector(".editor-panel");
   const toggleButton = document.querySelector("#editorToggleButton");
+  const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
   editorPanel.classList.remove("collapsed");
   toggleButton.textContent = "작성 영역 닫기";
   toggleButton.classList.remove("primary-button");
   toggleButton.classList.add("ghost-button");
+
+  if (mobileNewMemoButton) {
+    mobileNewMemoButton.hidden = true;
+  }
 }
 
 function closeEditor() {
   const editorPanel = document.querySelector(".editor-panel");
   const toggleButton = document.querySelector("#editorToggleButton");
+  const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
   editorPanel.classList.add("collapsed");
   toggleButton.textContent = "+ 새 메모 작성";
   toggleButton.classList.remove("ghost-button");
   toggleButton.classList.add("primary-button");
+
+  if (mobileNewMemoButton) {
+    mobileNewMemoButton.hidden = false;
+  }
 }
 
 function toggleEditor() {
@@ -305,6 +352,10 @@ function resetForm() {
   }
 
   setEditorMode("create");
+
+  if (typeof markEditorClean === "function") {
+    markEditorClean();
+  }
 }
 
 function cancelEditAndCloseEditor() {
