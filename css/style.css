@@ -2970,3 +2970,111 @@ button:focus-visible,
     grid-template-columns: 36px minmax(0, 1fr);
   }
 }
+
+
+/* v4.1.2: 원본 메모 열기 영역 확대 */
+.task-hub-item {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.task-hub-memo-link {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+  text-align: left;
+}
+
+.task-hub-memo-link:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.task-hub-memo-link:active {
+  transform: translateY(1px);
+}
+
+.task-hub-memo-link:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
+.task-hub-memo-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.task-hub-memo-copy strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #1e3a8a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.task-hub-memo-meta {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.task-hub-open-label {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 5px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.task-hub-open-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .task-hub-memo-link {
+    min-height: 60px;
+    padding: 12px 14px;
+    border-top: 1px solid #dbeafe;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .task-hub-memo-link {
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: center;
+    gap: 7px;
+    min-height: 72px;
+    padding: 13px 14px;
+  }
+
+  .task-hub-memo-copy strong {
+    white-space: normal;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .task-hub-open-label {
+    justify-content: flex-end;
+    width: 100%;
+    font-size: 12px;
+  }
+}

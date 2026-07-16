@@ -180,9 +180,16 @@ function renderTaskHub(items, view = "open") {
             class="task-hub-memo-link"
             data-task-action="open-memo"
             data-memo-id="${item.memoId}"
+            aria-label="원본 메모 열기: ${safeMemoTitle}"
           >
-            <strong>${safeMemoTitle}</strong>
-            <span>${metaParts.join(" · ")}</span>
+            <span class="task-hub-memo-copy">
+              <strong>${safeMemoTitle}</strong>
+              <span class="task-hub-memo-meta">${metaParts.join(" · ")}</span>
+            </span>
+            <span class="task-hub-open-label" aria-hidden="true">
+              원본 메모 열기
+              <span class="task-hub-open-arrow">→</span>
+            </span>
           </button>
         </article>
       `;
