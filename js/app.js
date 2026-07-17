@@ -57,6 +57,11 @@ const notesViewTab = document.querySelector("#notesViewTab");
 const tasksViewTab = document.querySelector("#tasksViewTab");
 const notesView = document.querySelector("#notesView");
 const tasksView = document.querySelector("#tasksView");
+const trashView = document.querySelector("#trashView");
+const trashList = document.querySelector("#trashList");
+const trashViewCount = document.querySelector("#trashViewCount");
+const emptyTrashViewButton = document.querySelector("#emptyTrashViewButton");
+const backFromTrashButton = document.querySelector("#backFromTrashButton");
 const filterToggleButton = document.querySelector("#filterToggleButton");
 const filterPanel = document.querySelector("#filterPanel");
 const filterActiveCount = document.querySelector("#filterActiveCount");
@@ -581,26 +586,11 @@ function openAppMenu() {
 }
 
 function handleOpenTrashClick() {
-  switchAppView("notes");
-  currentCategory = "휴지통";
-  currentSearch = "";
-  currentProject = "전체";
-
-  if (searchInput) {
-    searchInput.value = "";
-  }
-
-  if (projectFilterInput) {
-    projectFilterInput.value = "전체";
-  }
-
-  setActiveCategory(currentCategory);
-  closeFilterPanel();
+  switchAppView("trash");
   closeAppMenu();
-  refreshScreen();
 
   window.setTimeout(() => {
-    document.querySelector("#notesView")?.scrollIntoView({
+    trashView?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
@@ -608,21 +598,33 @@ function handleOpenTrashClick() {
 }
 
 function switchAppView(view) {
-  currentAppView = view === "tasks" ? "tasks" : "notes";
+  const allowedViews = ["notes", "tasks", "trash"];
+  currentAppView = allowedViews.includes(view) ? view : "notes";
+
   const isNotes = currentAppView === "notes";
+  const isTasks = currentAppView === "tasks";
+  const isTrash = currentAppView === "trash";
 
   document.body.dataset.appView = currentAppView;
   notesView.hidden = !isNotes;
-  tasksView.hidden = isNotes;
+  tasksView.hidden = !isTasks;
+  trashView.hidden = !isTrash;
 
   notesViewTab.classList.toggle("active", isNotes);
-  tasksViewTab.classList.toggle("active", !isNotes);
+  tasksViewTab.classList.toggle("active", isTasks);
   notesViewTab.setAttribute("aria-selected", String(isNotes));
-  tasksViewTab.setAttribute("aria-selected", String(!isNotes));
+  tasksViewTab.setAttribute("aria-selected", String(isTasks));
 
   if (!isNotes) {
     closeFilterPanel();
+  }
+
+  if (isTasks) {
     refreshTaskHub();
+  }
+
+  if (isTrash) {
+    refreshTrashView();
   }
 
   syncMobileNewMemoButton();
@@ -1370,16 +1372,11 @@ function getFilteredMemos() {
   const search = currentSearch.trim().toLowerCase();
 
   const filteredMemos = getMemos().filter((memo) => {
-    const isTrashView = currentCategory === "휴지통";
+    if (memo.isDeleted) {
+      return false;
+    }
+
     const isImportantView = currentCategory === "중요";
-
-    if (isTrashView && !memo.isDeleted) {
-      return false;
-    }
-
-    if (!isTrashView && memo.isDeleted) {
-      return false;
-    }
 
     if (isImportantView && !memo.isImportant) {
       return false;
@@ -1392,7 +1389,6 @@ function getFilteredMemos() {
     const matchesCategory =
       currentCategory === "전체" ||
       currentCategory === "중요" ||
-      currentCategory === "휴지통" ||
       memo.category === currentCategory;
 
     const taskText = Array.isArray(memo.tasks)
@@ -1412,6 +1408,30 @@ function getFilteredMemos() {
   });
 
   return sortMemos(filteredMemos);
+}
+
+function getTrashMemos() {
+  return getMemos()
+    .filter((memo) => memo.isDeleted)
+    .sort(
+      (a, b) =>
+        parseMemoDate(b.updatedAt || b.createdAt) -
+        parseMemoDate(a.updatedAt || a.createdAt)
+    );
+}
+
+function refreshTrashView() {
+  const trashMemos = getTrashMemos();
+
+  if (trashViewCount) {
+    trashViewCount.textContent = String(trashMemos.length);
+  }
+
+  if (emptyTrashViewButton) {
+    emptyTrashViewButton.disabled = trashMemos.length === 0;
+  }
+
+  renderTrashList(trashMemos);
 }
 
 
@@ -1474,6 +1494,10 @@ function refreshDataStats() {
     emptyTrashButton.disabled = stats.trashCount === 0;
   }
 
+  if (emptyTrashViewButton) {
+    emptyTrashViewButton.disabled = stats.trashCount === 0;
+  }
+
   if (resetAllDataButton) {
     resetAllDataButton.disabled = stats.totalCount === 0;
   }
@@ -1505,11 +1529,6 @@ async function handleEmptyTrashClick() {
 
   if (deletedCount === null) {
     return;
-  }
-
-  if (currentCategory === "휴지통") {
-    currentCategory = "전체";
-    setActiveCategory(currentCategory);
   }
 
   closeDetailModal();
@@ -1576,6 +1595,7 @@ function refreshScreen() {
   const filteredMemos = getFilteredMemos();
   renderMemoList(filteredMemos);
   updateFilterControls(filteredMemos);
+  refreshTrashView();
 }
 
 function createDraftTask(text) {
@@ -1885,6 +1905,90 @@ function handleMemoListClick(event) {
   }
 }
 
+
+async function handleTrashListClick(event) {
+  const actionButton = event.target.closest("[data-trash-action]");
+
+  if (actionButton) {
+    const memoId = actionButton.dataset.id;
+    const action = actionButton.dataset.trashAction;
+
+    if (!memoId) {
+      return;
+    }
+
+    if (action === "restore") {
+      actionButton.disabled = true;
+
+      const restoredMemo = await runCloudAction(
+        () => restoreMemo(memoId),
+        {
+          loadingMessage: "메모 복구 중",
+          successMessage: "메모 복구 완료",
+        }
+      );
+
+      if (!restoredMemo) {
+        actionButton.disabled = false;
+        return;
+      }
+
+      refreshScreen();
+      return;
+    }
+
+    if (action === "permanent-delete") {
+      const memo = findMemoById(memoId);
+      const title = memo?.title ? `“${memo.title}”` : "이 메모";
+      const shouldDelete = confirm(
+        `${title}를 영구 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
+      );
+
+      if (!shouldDelete) {
+        return;
+      }
+
+      actionButton.disabled = true;
+
+      const result = await runCloudAction(
+        async () => {
+          await permanentlyDeleteMemo(memoId);
+          return true;
+        },
+        {
+          loadingMessage: "메모 완전 삭제 중",
+          successMessage: "메모 완전 삭제 완료",
+        }
+      );
+
+      if (!result) {
+        actionButton.disabled = false;
+        return;
+      }
+
+      closeDetailModal();
+      refreshScreen();
+      return;
+    }
+  }
+
+  const openButton = event.target.closest("[data-trash-open]");
+
+  if (!openButton) {
+    return;
+  }
+
+  const memo = findMemoById(openButton.dataset.trashOpen);
+
+  if (memo) {
+    openDetailModal(memo);
+  }
+}
+
+function handleBackFromTrashClick() {
+  switchAppView("notes");
+}
+
 function handleCategoryClick(event) {
   const button = event.target.closest(".category-tab");
 
@@ -1935,8 +2039,12 @@ async function handleEditClick() {
     }
 
     closeDetailModal();
-    currentCategory = "전체";
-    setActiveCategory(currentCategory);
+
+    if (currentAppView !== "trash") {
+      currentCategory = "전체";
+      setActiveCategory(currentCategory);
+    }
+
     refreshScreen();
     return;
   }
@@ -2165,6 +2273,9 @@ function bindEvents() {
   memoForm.addEventListener("change", updateEditorDirtyState);
 
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
+  trashList?.addEventListener("click", (event) => {
+    void handleTrashListClick(event);
+  });
   categoryTabs.addEventListener("click", handleCategoryClick);
   searchInput.addEventListener("input", handleSearchInput);
   sortInput.addEventListener("change", handleSortChange);
@@ -2181,6 +2292,8 @@ function bindEvents() {
   backupButton.addEventListener("click", handleBackupClick);
   restoreButton.addEventListener("click", handleRestoreButtonClick);
   emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
+  emptyTrashViewButton?.addEventListener("click", handleEmptyTrashClick);
+  backFromTrashButton?.addEventListener("click", handleBackFromTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
   cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
   migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);

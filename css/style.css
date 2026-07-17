@@ -950,6 +950,116 @@ button:disabled {
   min-width: 148px;
 }
 
+/* 휴지통 전용 화면 */
+.trash-view {
+  gap: 16px;
+}
+
+.trash-view-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.trash-heading-main {
+  display: grid;
+  gap: 10px;
+}
+
+.trash-heading-main h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.trash-heading-main p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.trash-back-button {
+  justify-self: start;
+  padding-inline: 0;
+  color: var(--primary);
+}
+
+.trash-notice {
+  padding: 12px 14px;
+  border: 1px solid #fed7aa;
+  border-radius: var(--radius-sm);
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.trash-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trash-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+}
+
+.trash-card-main {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.trash-card-main:hover {
+  background: var(--surface-soft);
+}
+
+.trash-card-main h3 {
+  margin: 10px 0 5px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.trash-card-main > p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.trash-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trash-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  background: #fafbfc;
+}
+
+.trash-empty-state {
+  margin-top: 4px;
+}
+
 /* 통합 할 일 */
 .task-hub-content {
   display: grid;
@@ -1845,4 +1955,28 @@ button:disabled {
   .app-menu-panel {
     transition: none;
   }
+}
+
+@media (max-width: 560px) {
+  .trash-view-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .trash-view-heading > .danger-button {
+    width: 100%;
+  }
+
+  .trash-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trash-card-actions button {
+    width: 100%;
+  }
+}
+
+body[data-app-view="trash"] .primary-view-tabs {
+  display: none;
 }

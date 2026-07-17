@@ -255,6 +255,83 @@ function renderMemoList(memos) {
     .join("");
 }
 
+
+function renderTrashList(memos) {
+  const trashList = document.querySelector("#trashList");
+
+  if (!trashList) {
+    return;
+  }
+
+  if (!Array.isArray(memos) || memos.length === 0) {
+    trashList.innerHTML = `
+      <div class="empty-state trash-empty-state">
+        <strong>휴지통이 비어 있습니다.</strong>
+        <p>삭제한 메모가 생기면 이 화면에서 복원하거나 영구 삭제할 수 있습니다.</p>
+      </div>
+    `;
+    return;
+  }
+
+  trashList.innerHTML = memos
+    .map((memo) => {
+      const safeTitle = escapeHtml(memo.title);
+      const safeContent = escapeHtml(memo.content);
+      const safeCategory = escapeHtml(memo.category || "업무");
+      const safeProject = memo.project ? escapeHtml(memo.project) : "";
+      const date = formatDate(memo.updatedAt || memo.createdAt);
+      const projectChip = safeProject
+        ? `<span class="project-chip">${safeProject}</span>`
+        : "";
+      const progress = getTaskProgress(memo.tasks);
+      const taskChip =
+        progress.total > 0
+          ? `<span class="task-progress-chip">체크 ${progress.done}/${progress.total}</span>`
+          : "";
+
+      return `
+        <article class="trash-card" data-id="${memo.id}">
+          <button
+            type="button"
+            class="trash-card-main"
+            data-trash-open="${memo.id}"
+            aria-label="${safeTitle} 상세 보기"
+          >
+            <div class="trash-card-top">
+              <div class="memo-card-badges">
+                <span class="category-chip">${safeCategory}</span>
+                ${projectChip}
+                ${taskChip}
+              </div>
+              <span class="memo-date">${date}</span>
+            </div>
+            <h3>${safeTitle}</h3>
+            <p>${safeContent}</p>
+          </button>
+          <div class="trash-card-actions">
+            <button
+              type="button"
+              class="secondary-button compact-button"
+              data-trash-action="restore"
+              data-id="${memo.id}"
+            >
+              복원
+            </button>
+            <button
+              type="button"
+              class="danger-button compact-button"
+              data-trash-action="permanent-delete"
+              data-id="${memo.id}"
+            >
+              영구 삭제
+            </button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 let detailModalPreviousFocus = null;
 
 function openDetailModal(memo) {

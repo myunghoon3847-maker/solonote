@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>업무노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=4321" />
+  <link rel="manifest" href="./manifest.json?v=4322" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="업무노트" />
   <meta name="apple-mobile-web-app-title" content="업무노트" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=4321" />
-  <link rel="stylesheet" href="./css/style.css?v=4321" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=4322" />
+  <link rel="stylesheet" href="./css/style.css?v=4322" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -495,6 +495,43 @@
           <div id="taskHubList" class="task-hub-list"></div>
         </div>
       </section>
+
+      <section
+        id="trashView"
+        class="app-view trash-view"
+        aria-labelledby="trashViewTitle"
+        hidden
+      >
+        <div class="trash-view-heading">
+          <div class="trash-heading-main">
+            <button
+              type="button"
+              id="backFromTrashButton"
+              class="text-button trash-back-button"
+              aria-label="메모 화면으로 돌아가기"
+            >
+              ← 메모로 돌아가기
+            </button>
+            <div>
+              <h2 id="trashViewTitle">휴지통</h2>
+              <p><span id="trashViewCount">0</span>개의 삭제된 메모</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="emptyTrashViewButton"
+            class="danger-button compact-button"
+          >
+            휴지통 비우기
+          </button>
+        </div>
+
+        <div class="trash-notice" role="note">
+          삭제된 메모는 복원할 수 있습니다. 영구 삭제하거나 휴지통을 비우면 되돌릴 수 없습니다.
+        </div>
+
+        <div id="trashList" class="trash-list"></div>
+      </section>
     </main>
 
     <div id="appMenuBackdrop" class="app-menu-backdrop" hidden></div>
@@ -677,7 +714,7 @@
 
       <div class="menu-footer">
         <span>업무노트</span>
-        <span class="version-badge">v4.3.2.1</span>
+        <span class="version-badge">v4.3.2.2</span>
       </div>
     </aside>
 
@@ -791,12 +828,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=4321"></script>
-  <script src="./js/auth.js?v=4321"></script>
-  <script src="./js/storage.js?v=4321"></script>
-  <script src="./js/ui.js?v=4321"></script>
-  <script src="./js/app.js?v=4321"></script>
-  <script src="./js/account.js?v=4321"></script>
-  <script src="./js/pwa.js?v=4321"></script>
+  <script src="./js/config.js?v=4322"></script>
+  <script src="./js/auth.js?v=4322"></script>
+  <script src="./js/storage.js?v=4322"></script>
+  <script src="./js/ui.js?v=4322"></script>
+  <script src="./js/app.js?v=4322"></script>
+  <script src="./js/account.js?v=4322"></script>
+  <script src="./js/pwa.js?v=4322"></script>
 </body>
 </html>

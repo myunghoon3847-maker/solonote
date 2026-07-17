@@ -1,4 +1,4 @@
-# SoloNote v4.3.2.1 계정 삭제 테스트 체크리스트
+# SoloNote v4.3.2.2 계정 삭제 테스트 체크리스트
 
 ## 배포 전
 - [ ] 사전 점검 SQL의 orphan_memo_count가 0이다.

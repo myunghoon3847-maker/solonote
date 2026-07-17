@@ -1,4 +1,4 @@
-# SoloNote v4.3.2.1 계정 삭제 설정
+# SoloNote v4.3.2.2 계정 삭제 설정
 
 이 버전의 화면 코드만 GitHub Pages에 올려서는 계정 삭제가 작동하지 않습니다. 아래 Supabase 설정을 한 번 적용해야 합니다.
 
