@@ -74,6 +74,7 @@ select:focus-visible {
 /* 공통 버튼 */
 .primary-button,
 .secondary-button,
+.ghost-button,
 .text-button,
 .danger-button,
 .icon-button,
@@ -109,6 +110,22 @@ select:focus-visible {
   border-color: var(--primary-line);
   background: var(--primary-soft);
   color: #1d4ed8;
+}
+
+
+.ghost-button {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ghost-button:hover {
+  border-color: var(--primary-line);
+  background: var(--surface-soft);
+  color: var(--text);
 }
 
 .text-button {
@@ -904,9 +921,15 @@ button:disabled {
 
 .empty-state-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 7px;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.empty-state-actions .primary-button,
+.empty-state-actions .ghost-button {
+  min-width: 148px;
 }
 
 /* 통합 할 일 */
@@ -1612,5 +1635,19 @@ button:disabled {
 
   .detail-actions button {
     min-height: 44px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .empty-state-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .empty-state-actions .primary-button,
+  .empty-state-actions .ghost-button {
+    width: 100%;
+    min-width: 0;
   }
 }
