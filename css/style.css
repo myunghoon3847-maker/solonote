@@ -1651,3 +1651,128 @@ button:disabled {
     min-width: 0;
   }
 }
+
+
+/* 계정 삭제 */
+.account-delete-menu-button {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--danger-soft);
+  border-color: #fecaca;
+}
+
+.account-delete-menu-button:hover {
+  border-color: #fca5a5;
+  background: #fee2e2;
+}
+
+.account-deletion-card {
+  width: min(100%, 560px);
+}
+
+.danger-eyebrow {
+  margin: 0 42px 4px 0;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.account-deletion-description {
+  margin: 0;
+  color: #475569;
+}
+
+.account-deletion-warning {
+  margin-top: 18px;
+  padding: 14px 15px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: #7f1d1d;
+}
+
+.account-deletion-warning strong {
+  font-size: 13px;
+}
+
+.account-deletion-warning ul {
+  margin: 8px 0 0;
+  padding-left: 19px;
+}
+
+.account-deletion-warning li + li {
+  margin-top: 4px;
+}
+
+.account-backup-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.account-deletion-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.account-deletion-form label {
+  margin-top: 4px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-deletion-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.account-deletion-form input:focus {
+  border-color: #f87171;
+}
+
+.account-deletion-status {
+  min-height: 21px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.account-deletion-status[data-state="error"] {
+  color: var(--danger);
+}
+
+.account-deletion-status[data-state="info"] {
+  color: #1d4ed8;
+}
+
+.account-deletion-status[data-state="success"] {
+  color: var(--success);
+}
+
+.account-deletion-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.account-deletion-actions button {
+  min-height: 44px;
+}
+
+@media (max-width: 480px) {
+  .account-deletion-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .account-deletion-actions #confirmAccountDeletionButton {
+    order: -1;
+  }
+}

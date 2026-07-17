@@ -51,7 +51,7 @@ SoloNote v3.9는 본인이 사용하는 1인 로그인형 클라우드 업무노
 - [ ] 할 일 체크 영역과 원본 메모 열기 영역 확인
 - [ ] 새 CSS에서 로그인·모달·PWA 화면 깨짐 여부 확인
 
-## v4.3.1.1 공개 회원가입 점검
+## v4.3.2 공개 회원가입 점검
 
 - [ ] Supabase `Allow new users to sign up` 활성화
 - [ ] Supabase `Confirm Email` 활성화 권장

@@ -1,52 +1,41 @@
-# SoloNote v4.3.1.1
+# SoloNote v4.3.2
 
-SoloNote v4.3.1.1은 Google Play 비공개 테스트 준비를 위한 첫 번째 인증 확장 버전입니다.
-기존 v4.2의 메모·할 일·동기화·백업·PWA 기능을 유지하면서 공개 회원가입을 추가했습니다.
+SoloNote v4.3.2는 회원가입이 완료된 v4.3.1.1을 기준으로 **안전한 계정 및 사용자 데이터 삭제 기능**을 추가한 출시 준비 버전입니다. 기존 메모·할 일·동기화·백업·PWA 기능은 유지합니다.
 
-## 이번 버전 핵심 변경
+## 핵심 변경
 
-- 로그인 화면에 `회원가입` 진입 버튼 추가
-- 이메일·비밀번호·비밀번호 확인 입력 화면 추가
-- 비밀번호 8자 이상 및 일치 여부 검사
-- Supabase `signUp()`을 이용한 이메일 회원가입
-- 가입 인증 이메일의 복귀 주소를 현재 SoloNote 주소로 지정
-- 이메일 인증이 켜진 경우 인증 후 로그인하도록 안내
-- 이메일 인증이 꺼진 경우 가입 직후 자동 로그인 지원
-- 이미 가입된 이메일의 존재 여부를 과도하게 노출하지 않는 안내 문구 적용
-- 가입 인증 링크를 비밀번호 재설정 링크로 잘못 판단하던 URL 판별 로직 수정
-- 인증 성공·오류·안내 메시지 색상 표시 수정
-- PWA 캐시 버전 갱신
+- 우측 메뉴에 `계정 관리 → 계정 삭제` 추가
+- 삭제 전 JSON 백업 버튼 제공
+- 현재 비밀번호 재확인
+- `계정 삭제` 확인 문구 입력
+- 삭제 진행 중 중복 요청과 창 닫기 차단
+- Supabase Edge Function에서 로그인 JWT 재검증
+- 해당 사용자의 클라우드 메모와 Auth 계정 삭제
+- 로컬 자동 저장 초안과 이전 메모 정리
+- 삭제 후 로그인 화면에 완료 메시지 표시
+- PWA 캐시를 v4.3.2로 갱신
 
-## 변경하지 않은 기능
+## 중요: Supabase 설정 필요
 
-- 메모 작성·수정·삭제·휴지통·복원
-- 검색·카테고리·프로젝트·정렬
-- 중요 메모
-- 체크리스트와 통합 할 일 화면
-- Supabase 클라우드 동기화
-- 오프라인 저장과 재연결
-- 충돌 처리
-- JSON 백업·복원
-- 초안 자동 저장·복구
-- PWA 설치·업데이트
+GitHub Pages에 웹 파일만 배포하면 계정 삭제는 작동하지 않습니다. 다음 문서를 따라 SQL과 Edge Function을 한 번 배포해야 합니다.
 
-## 테스트 주소
+- `ACCOUNT_DELETE_SETUP.md`
+- `supabase/sql/01_account_delete_preflight.sql`
+- `supabase/sql/02_enable_account_delete_cascade.sql`
+- `supabase/functions/delete-account/index.ts`
 
-배포 후 아래 주소로 캐시를 우회해 확인합니다.
+`service_role` 키는 브라우저 코드나 GitHub 저장소에 넣지 않습니다. Edge Function의 서버 환경에서만 사용합니다.
+
+## 테스트
+
+- 계정 삭제 전용: `ACCOUNT_DELETE_TEST_CHECKLIST.md`
+- 전체 기능: `TEST_CHECKLIST.md`
+- 출시 점검: `RELEASE_CHECKLIST.md`
+
+배포 후 캐시 확인 주소:
 
 ```text
-https://myunghoon3847-maker.github.io/solonote/?v=4311
+https://myunghoon3847-maker.github.io/solonote/?v=432
 ```
 
-## Supabase 설정
-
-회원가입 코드만 배포하면 끝나는 것이 아닙니다. Supabase Dashboard에서 공개 가입과 이메일 인증,
-Redirect URL을 설정해야 합니다. 자세한 내용은 `SUPABASE_AUTH_SETUP.md`를 확인하세요.
-
-## 데이터베이스 작업
-
-추가 SQL과 `memos` 테이블 변경은 없습니다.
-
-## 다음 단계
-
-v4.3.2에서 안전한 계정 삭제와 사용자 데이터 정리를 구현합니다.
+실제 계정 삭제는 중요한 데이터가 없는 테스트 계정으로 먼저 확인하세요.

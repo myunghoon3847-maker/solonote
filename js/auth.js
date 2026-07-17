@@ -40,6 +40,7 @@
   let pendingLoginMessageType = "";
   const recoveryUrlHint = hasPasswordRecoveryHint();
   const signupConfirmationUrlHint = hasSignupConfirmationHint();
+  const POST_AUTH_MESSAGE_KEY = "solonote_post_auth_message_v1";
 
   window.solonotePasswordRecoveryActive = false;
 
@@ -50,6 +51,31 @@
         detail: { session: session || null },
       })
     );
+  }
+
+
+  function consumePostAuthMessage() {
+    try {
+      const rawMessage = window.sessionStorage.getItem(POST_AUTH_MESSAGE_KEY);
+
+      if (!rawMessage) {
+        return null;
+      }
+
+      window.sessionStorage.removeItem(POST_AUTH_MESSAGE_KEY);
+      const parsed = JSON.parse(rawMessage);
+
+      if (!parsed || typeof parsed.message !== "string") {
+        return null;
+      }
+
+      return {
+        message: parsed.message,
+        type: typeof parsed.type === "string" ? parsed.type : "info",
+      };
+    } catch (error) {
+      return null;
+    }
   }
 
   function getAuthUrlParams() {
@@ -734,7 +760,13 @@
           "error"
         );
       } else {
-        showLoginScreen();
+        const postAuthMessage = consumePostAuthMessage();
+
+        if (postAuthMessage) {
+          showLoginScreen(postAuthMessage.message, postAuthMessage.type);
+        } else {
+          showLoginScreen();
+        }
       }
     } catch (error) {
       showLoginScreen(translateAuthError(error), "error");

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=4311" />
+  <link rel="manifest" href="./manifest.json?v=432" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=4311" />
-  <link rel="stylesheet" href="./css/style.css?v=4311" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=432" />
+  <link rel="stylesheet" href="./css/style.css?v=432" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -606,6 +606,22 @@
           </div>
         </section>
 
+        <section class="menu-section account-management" aria-label="계정 관리">
+          <div class="menu-section-heading">
+            <div>
+              <h3>계정 관리</h3>
+              <p>계정과 클라우드 데이터를 관리합니다.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="openAccountDeletionButton"
+            class="menu-action-button account-delete-menu-button danger-text"
+          >
+            계정 삭제
+          </button>
+        </section>
+
         <section class="menu-section app-guide" aria-label="사용 안내">
           <div class="menu-section-heading">
             <div>
@@ -662,7 +678,7 @@
 
       <div class="menu-footer">
         <span>SoloNote</span>
-        <span class="version-badge">v4.3.1</span>
+        <span class="version-badge">v4.3.2</span>
       </div>
     </aside>
 
@@ -675,6 +691,82 @@
       <span aria-hidden="true">＋</span>
       <span class="mobile-new-memo-label">새 메모</span>
     </button>
+  </div>
+
+  <div
+    id="accountDeletionModal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="accountDeletionTitle"
+    aria-describedby="accountDeletionDescription"
+    aria-hidden="true"
+    hidden
+  >
+    <div class="modal-backdrop" data-account-delete-close="true"></div>
+    <article class="modal-card account-deletion-card">
+      <button
+        type="button"
+        id="closeAccountDeletionButton"
+        class="close-button"
+        aria-label="계정 삭제 창 닫기"
+      >
+        ×
+      </button>
+
+      <p class="danger-eyebrow">되돌릴 수 없는 작업</p>
+      <h2 id="accountDeletionTitle">SoloNote 계정 삭제</h2>
+      <p id="accountDeletionDescription" class="account-deletion-description">
+        계정을 삭제하면 모든 클라우드 메모와 체크리스트가 영구 삭제되며 복구할 수 없습니다.
+      </p>
+
+      <div class="account-deletion-warning" role="note">
+        <strong>삭제되는 항목</strong>
+        <ul>
+          <li>Supabase 로그인 계정</li>
+          <li>클라우드에 저장된 모든 메모와 체크리스트</li>
+          <li>현재 기기의 SoloNote 자동 저장 초안과 이전 메모</li>
+        </ul>
+      </div>
+
+      <button type="button" id="backupBeforeDeleteButton" class="secondary-button account-backup-button">
+        삭제 전에 JSON 백업하기
+      </button>
+
+      <form id="accountDeletionForm" class="account-deletion-form">
+        <label for="accountDeletionPassword">현재 비밀번호</label>
+        <input
+          id="accountDeletionPassword"
+          type="password"
+          autocomplete="current-password"
+          placeholder="본인 확인을 위해 입력"
+          required
+        />
+
+        <label for="accountDeletionConfirmation">
+          아래 입력란에 <strong>계정 삭제</strong>를 정확히 입력하세요.
+        </label>
+        <input
+          id="accountDeletionConfirmation"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="계정 삭제"
+          required
+        />
+
+        <p id="accountDeletionStatus" class="account-deletion-status" aria-live="polite"></p>
+
+        <div class="account-deletion-actions">
+          <button type="button" id="cancelAccountDeletionButton" class="secondary-button">
+            취소
+          </button>
+          <button type="submit" id="confirmAccountDeletionButton" class="danger-button" disabled>
+            계정과 데이터 영구 삭제
+          </button>
+        </div>
+      </form>
+    </article>
   </div>
 
   <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle" aria-hidden="true" hidden>
@@ -700,11 +792,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=4311"></script>
-  <script src="./js/auth.js?v=4311"></script>
-  <script src="./js/storage.js?v=4311"></script>
-  <script src="./js/ui.js?v=4311"></script>
-  <script src="./js/app.js?v=4311"></script>
-  <script src="./js/pwa.js?v=4311"></script>
+  <script src="./js/config.js?v=432"></script>
+  <script src="./js/auth.js?v=432"></script>
+  <script src="./js/storage.js?v=432"></script>
+  <script src="./js/ui.js?v=432"></script>
+  <script src="./js/app.js?v=432"></script>
+  <script src="./js/account.js?v=432"></script>
+  <script src="./js/pwa.js?v=432"></script>
 </body>
 </html>
