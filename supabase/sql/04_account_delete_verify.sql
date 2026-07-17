@@ -1,4 +1,4 @@
--- 업무노트 v4.3.2.3 계정 삭제 최종 설정 확인
+-- 업무노트 v4.3.2.4 계정 삭제 최종 설정 확인
 -- 결과의 cascade_enabled가 true이고 guard_function_installed가 true여야 합니다.
 
 select exists (

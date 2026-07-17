@@ -1,4 +1,4 @@
-# 업무노트 v4.3.2.3 계정 삭제 테스트 체크리스트
+# 업무노트 v4.3.2.4 계정 삭제 테스트 체크리스트
 
 ## A. Supabase 배포 전 확인
 
@@ -7,7 +7,7 @@
 - [ ] `03_create_account_deletion_guard.sql`을 적용했다.
 - [ ] `04_account_delete_verify.sql`의 `cascade_enabled`가 true다.
 - [ ] `guard_function_installed`가 true다.
-- [ ] `delete-account` Edge Function을 v4.3.2.3 코드로 배포했다.
+- [ ] `delete-account` Edge Function을 v4.3.2.4 코드로 배포했다.
 - [ ] 브라우저 코드와 GitHub에 관리자 키가 없다.
 
 ## B. 화면과 입력 검수

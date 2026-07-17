@@ -4,7 +4,8 @@
   const config = window.SOLONOTE_CONFIG || {};
   const REQUIRED_CONFIRMATION = "계정 삭제";
   const POST_AUTH_MESSAGE_KEY = "solonote_post_auth_message_v1";
-  const DELETE_REQUEST_TIMEOUT_MS = 30000;
+  const DELETE_REQUEST_TIMEOUT_MS = 45000;
+  const DELETE_STATUS_RECHECK_DELAYS_MS = [0, 1200, 2500];
 
   const openButton = document.querySelector("#openAccountDeletionButton");
   const modal = document.querySelector("#accountDeletionModal");
@@ -176,6 +177,10 @@
         "계정은 삭제되었지만 서버 데이터 정리 결과를 확인하지 못했습니다.",
       ACCOUNT_DELETED_CLEANUP_PENDING:
         "계정은 삭제되었지만 일부 서버 데이터 정리가 완료되지 않았습니다.",
+      INTERNAL_FUNCTION_ERROR:
+        "계정 삭제 서버 내부에서 오류가 발생했습니다. Supabase 함수 로그를 확인하세요.",
+      EDGE_FUNCTION_TIMEOUT:
+        "계정 삭제 서버의 응답 시간이 초과되었습니다. 계정 상태를 다시 확인했습니다.",
       INVALID_SESSION:
         "로그인 세션을 확인할 수 없습니다. 다시 로그인한 뒤 시도하세요.",
     };
@@ -211,12 +216,40 @@
     return message || "계정을 삭제하지 못했습니다. 잠시 후 다시 시도하세요.";
   }
 
+  function sleep(milliseconds) {
+    return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+  }
+
+  async function confirmAccountWasDeleted(client) {
+    for (const delay of DELETE_STATUS_RECHECK_DELAYS_MS) {
+      if (delay > 0) {
+        await sleep(delay);
+      }
+
+      try {
+        const {
+          data: { user },
+          error,
+        } = await client.auth.getUser();
+
+        if (!user && (!error || error.status === 401 || error.status === 403)) {
+          return true;
+        }
+      } catch (_error) {
+        // 네트워크 오류는 삭제 성공으로 단정하지 않습니다.
+      }
+    }
+
+    return false;
+  }
+
   async function invokeDeleteAccount(session) {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(
       () => controller.abort(),
       DELETE_REQUEST_TIMEOUT_MS
     );
+    const requestId = window.crypto?.randomUUID?.() || `solonote-${Date.now()}`;
 
     try {
       const response = await window.fetch(
@@ -227,8 +260,13 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
+            "X-Client-Info": "solonote-v4.3.2.4",
+            "X-Request-Id": requestId,
           },
-          body: JSON.stringify({ confirmation: REQUIRED_CONFIRMATION }),
+          body: JSON.stringify({
+            confirmation: REQUIRED_CONFIRMATION,
+            clientVersion: "4.3.2.4",
+          }),
           cache: "no-store",
           signal: controller.signal,
         }
@@ -250,10 +288,18 @@
         failure.code = payload.code || "";
         failure.accountDeleted = Boolean(payload.accountDeleted);
         failure.cleanupPending = Boolean(payload.cleanupPending);
+        failure.requestId = payload.requestId || response.headers.get("X-Request-Id") || requestId;
         throw failure;
       }
 
       return payload;
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        error.code = "EDGE_FUNCTION_TIMEOUT";
+        error.requestId = requestId;
+      }
+
+      throw error;
     } finally {
       window.clearTimeout(timeoutId);
     }
@@ -359,6 +405,20 @@
           "info"
         );
         return;
+      }
+
+      if (error?.code === "EDGE_FUNCTION_TIMEOUT") {
+        setStatus("서버 응답이 늦어 계정 삭제 결과를 다시 확인하고 있습니다.", "info");
+        const accountDeleted = await confirmAccountWasDeleted(client);
+
+        if (accountDeleted) {
+          await finishDeletionLocally(
+            client,
+            "업무노트 계정과 데이터가 삭제되었습니다.",
+            "success"
+          );
+          return;
+        }
       }
 
       setStatus(translateDeletionError(error), "error");

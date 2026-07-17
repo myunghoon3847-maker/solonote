@@ -1,4 +1,4 @@
-# 업무노트 v4.3.2.3 계정 삭제 설정
+# 업무노트 v4.3.2.4 계정 삭제 설정
 
 이 버전의 웹 파일만 GitHub Pages에 올려서는 계정 삭제가 작동하지 않습니다. Supabase 데이터베이스 설정과 Edge Function 배포를 모두 완료해야 합니다.
 
@@ -95,18 +95,18 @@ Edge Function에서는 다음 순서로 관리자 키를 찾습니다.
 
 ## 4. GitHub Pages 배포
 
-v4.3.2.3 파일을 저장소 루트에 업로드하고 배포합니다.
+v4.3.2.4 파일을 저장소 루트에 업로드하고 배포합니다.
 
 권장 커밋 메시지:
 
 ```text
-Harden secure account deletion flow in v4.3.2.3
+Harden secure account deletion flow in v4.3.2.4
 ```
 
 캐시 확인 주소:
 
 ```text
-https://myunghoon3847-maker.github.io/solonote/?v=4323
+https://myunghoon3847-maker.github.io/solonote/?v=4324
 ```
 
 ## 5. 실제 삭제 테스트

@@ -1,4 +1,4 @@
-# SoloNote v4.3.2.3 Supabase 회원가입 설정
+# SoloNote v4.3.2.4 Supabase 회원가입 설정
 
 ## 1. 공개 회원가입 허용
 

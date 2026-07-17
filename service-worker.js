@@ -1,18 +1,18 @@
-const CACHE_NAME = "solonote-v4-3-2-3-cache";
+const CACHE_NAME = "solonote-v4-3-2-4-cache";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json?v=4323",
-  "./css/style.css?v=4323",
-  "./js/config.js?v=4323",
-  "./js/auth.js?v=4323",
-  "./js/storage.js?v=4323",
-  "./js/ui.js?v=4323",
-  "./js/app.js?v=4323",
-  "./js/account.js?v=4323",
-  "./js/pwa.js?v=4323",
-  "./icons/icon-192.png?v=4323",
+  "./manifest.json?v=4324",
+  "./css/style.css?v=4324",
+  "./js/config.js?v=4324",
+  "./js/auth.js?v=4324",
+  "./js/storage.js?v=4324",
+  "./js/ui.js?v=4324",
+  "./js/app.js?v=4324",
+  "./js/account.js?v=4324",
+  "./js/pwa.js?v=4324",
+  "./icons/icon-192.png?v=4324",
   "./icons/icon-512.png"
 ];
 

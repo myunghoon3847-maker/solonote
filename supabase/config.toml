@@ -1,2 +1,4 @@
 [functions.delete-account]
+# 브라우저 OPTIONS 요청을 함수에서 즉시 처리하고,
+# POST 요청은 함수 내부에서 사용자 JWT를 Auth 서버로 재검증합니다.
 verify_jwt = false
