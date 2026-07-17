@@ -1,64 +1,52 @@
-# 업무노트 v4.3.2.2
+# 업무노트 v4.3.2.3
 
-업무노트 v4.3.2.2은 회원가입이 완료된 v4.3.1.1을 기준으로 **안전한 계정 및 사용자 데이터 삭제 기능**을 추가한 출시 준비 버전입니다. 기존 메모·할 일·동기화·백업·PWA 기능은 유지합니다.
+업무노트 v4.3.2.3은 v4.3.2.2의 휴지통 전용 화면을 유지하면서 **계정 삭제 과정의 데이터 손실 방지와 서버 검증을 강화한 계정 삭제 완성 후보판**입니다.
 
-## 핵심 변경
+## 이번 버전의 핵심 변경
 
-- 우측 메뉴에 `계정 관리 → 계정 삭제` 추가
-- 삭제 전 JSON 백업 버튼 제공
-- 현재 비밀번호 재확인
-- `계정 삭제` 확인 문구 입력
-- 삭제 진행 중 중복 요청과 창 닫기 차단
-- Supabase Edge Function에서 로그인 JWT 재검증
-- 해당 사용자의 클라우드 메모와 Auth 계정 삭제
-- 로컬 자동 저장 초안과 이전 메모 정리
-- 삭제 후 로그인 화면에 완료 메시지 표시
-- PWA 캐시를 v4.3.2.2로 갱신
+- 브라우저의 비밀번호 입력만 믿지 않고 Edge Function에서도 최근 password 인증 기록을 확인
+- 계정 삭제 전에 `memos.user_id → auth.users.id`의 `ON DELETE CASCADE` 설정을 서버에서 재검증
+- 메모를 먼저 지우지 않고 Auth 사용자 삭제를 실행해, 계정 삭제 실패 시 메모가 먼저 사라지는 문제 방지
+- Auth 사용자 삭제 성공 후 남은 메모가 0개인지 확인
+- 예외적으로 메모가 남으면 서버에서 추가 정리 후 다시 검증
+- 계정은 삭제됐지만 후속 검증에 문제가 생긴 경우를 일반 실패와 구분
+- 잘못된 비밀번호, 세션 만료, Edge Function 미배포, SQL 미적용, 저장소 파일 소유 등 오류 안내 세분화
+- 계정 삭제 요청 30초 시간 제한과 중복 요청 방지
+- 계정 삭제 후 localStorage·sessionStorage·Supabase 로컬 세션 정리
+- PWA 캐시 및 정적 자산 버전 `4323` 적용
 
-## 중요: Supabase 설정 필요
+## 반드시 적용해야 하는 Supabase 설정
 
-GitHub Pages에 웹 파일만 배포하면 계정 삭제는 작동하지 않습니다. 다음 문서를 따라 SQL과 Edge Function을 한 번 배포해야 합니다.
+웹 파일만 GitHub Pages에 배포하면 계정 삭제는 작동하지 않습니다. 다음 파일을 순서대로 적용해야 합니다.
 
-- `ACCOUNT_DELETE_SETUP.md`
-- `supabase/sql/01_account_delete_preflight.sql`
-- `supabase/sql/02_enable_account_delete_cascade.sql`
-- `supabase/functions/delete-account/index.ts`
+1. `supabase/sql/01_account_delete_preflight.sql`
+2. `supabase/sql/02_enable_account_delete_cascade.sql`
+3. `supabase/sql/03_create_account_deletion_guard.sql`
+4. `supabase/sql/04_account_delete_verify.sql`
+5. `supabase/functions/delete-account/index.ts` 배포
 
-`service_role` 키는 브라우저 코드나 GitHub 저장소에 넣지 않습니다. Edge Function의 서버 환경에서만 사용합니다.
+자세한 순서는 `ACCOUNT_DELETE_SETUP.md`를 확인하세요.
 
-## 테스트
+## 보안 원칙
+
+- 관리자 키는 브라우저, `config.js`, GitHub 저장소에 넣지 않습니다.
+- Edge Function은 요청 본문의 사용자 ID를 받지 않습니다.
+- 로그인 JWT를 Supabase Auth 서버에서 검증한 뒤 해당 사용자 본인만 삭제합니다.
+- JWT의 최근 password 인증 기록이 5분을 넘으면 삭제를 거부합니다.
+- 데이터베이스 CASCADE 안전 점검을 통과하지 못하면 계정과 메모를 모두 유지합니다.
+
+## 테스트 문서
 
 - 계정 삭제 전용: `ACCOUNT_DELETE_TEST_CHECKLIST.md`
+- v4.3.2.3 변경 기록: `CHANGES_v4.3.2.3.md`
+- 내부 정적 검수: `VALIDATION_REPORT_v4.3.2.3.md`
 - 전체 기능: `TEST_CHECKLIST.md`
 - 출시 점검: `RELEASE_CHECKLIST.md`
 
-배포 후 캐시 확인 주소:
+## 배포 후 캐시 확인 주소
 
 ```text
-https://myunghoon3847-maker.github.io/solonote/?v=4322
+https://myunghoon3847-maker.github.io/solonote/?v=4323
 ```
 
-실제 계정 삭제는 중요한 데이터가 없는 테스트 계정으로 먼저 확인하세요.
-
-
-## v4.3.2.2 UI 및 카테고리 정리
-
-- 사용자 화면 앱 이름을 `업무노트`로 변경
-- 카테고리 탭을 검색창 아래로 이동
-- 카테고리에서 `프로젝트`, `휴지통` 제거
-- `일상` 카테고리 추가
-- 기존 `프로젝트` 카테고리 메모는 `업무`로 자동 전환
-- 휴지통을 우측 메뉴 최상단에 배치
-- 계정 관리를 메뉴 상단 영역으로 이동
-- 우측 메뉴 열기/닫기 애니메이션 추가
-- 체크리스트 삭제 버튼 디자인과 접근성 개선
-
-
-## v4.3.2.2 휴지통 전용 화면
-
-- 일반 메모 목록과 휴지통을 완전히 분리했습니다.
-- 오른쪽 메뉴의 휴지통을 누르면 앱 내부 전용 화면으로 이동합니다.
-- 휴지통 화면에서 개별 복원, 개별 영구 삭제, 전체 비우기를 할 수 있습니다.
-- 메모 검색·카테고리·프로젝트 필터·새 메모 작성 영역은 휴지통 화면에 표시하지 않습니다.
-- 휴지통이 비었을 때 전용 안내 화면을 표시합니다.
-- 데이터베이스와 Supabase 테이블 구조 변경은 없습니다.
+실제 계정 삭제는 중요한 데이터가 없는 별도 테스트 계정으로 먼저 확인해야 합니다.
