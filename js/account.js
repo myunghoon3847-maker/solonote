@@ -181,6 +181,12 @@
         "계정 삭제 서버 내부에서 오류가 발생했습니다. Supabase 함수 로그를 확인하세요.",
       EDGE_FUNCTION_TIMEOUT:
         "계정 삭제 서버의 응답 시간이 초과되었습니다. 계정 상태를 다시 확인했습니다.",
+      USER_AUTH_CHECK_TIMEOUT:
+        "로그인 사용자 확인 시간이 초과되었습니다. 잠시 후 다시 시도하세요.",
+      DATABASE_GUARD_TIMEOUT:
+        "계정 삭제 안전 점검 시간이 초과되었습니다. Supabase SQL 설정을 확인하세요.",
+      AUTH_DELETE_TIMEOUT:
+        "로그인 계정 삭제 시간이 초과되었습니다. 계정 상태를 다시 확인하세요.",
       INVALID_SESSION:
         "로그인 세션을 확인할 수 없습니다. 다시 로그인한 뒤 시도하세요.",
     };
@@ -260,12 +266,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "solonote-v4.3.2.5",
+            "X-Client-Info": "solonote-v4.3.2.6",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.3.2.5",
+            clientVersion: "4.3.2.6",
           }),
           cache: "no-store",
           signal: controller.signal,

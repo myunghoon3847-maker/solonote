@@ -1,6 +1,6 @@
-# 업무노트 v4.3.2.5
+# 업무노트 v4.3.2.6
 
-업무노트 v4.3.2.5은 v4.3.2.2의 휴지통 전용 화면을 유지하면서 **계정 삭제 과정의 데이터 손실 방지와 서버 검증을 강화한 계정 삭제 완성 후보판**입니다.
+업무노트 v4.3.2.6은 v4.3.2.2의 휴지통 전용 화면을 유지하면서 **계정 삭제 과정의 데이터 손실 방지와 서버 검증을 강화한 계정 삭제 완성 후보판**입니다.
 
 ## 이번 버전의 핵심 변경
 
@@ -13,7 +13,7 @@
 - 잘못된 비밀번호, 세션 만료, Edge Function 미배포, SQL 미적용, 저장소 파일 소유 등 오류 안내 세분화
 - 계정 삭제 요청 30초 시간 제한과 중복 요청 방지
 - 계정 삭제 후 localStorage·sessionStorage·Supabase 로컬 세션 정리
-- PWA 캐시 및 정적 자산 버전 `4325` 적용
+- PWA 캐시 및 정적 자산 버전 `4326` 적용
 
 ## 반드시 적용해야 하는 Supabase 설정
 
@@ -38,23 +38,23 @@
 ## 테스트 문서
 
 - 계정 삭제 전용: `ACCOUNT_DELETE_TEST_CHECKLIST.md`
-- v4.3.2.5 변경 기록: `CHANGES_v4.3.2.5.md`
-- 내부 정적 검수: `VALIDATION_REPORT_v4.3.2.5.md`
+- v4.3.2.6 변경 기록: `CHANGES_v4.3.2.6.md`
+- 내부 정적 검수: `VALIDATION_REPORT_v4.3.2.6.md`
 - 전체 기능: `TEST_CHECKLIST.md`
 - 출시 점검: `RELEASE_CHECKLIST.md`
 
 ## 배포 후 캐시 확인 주소
 
 ```text
-https://myunghoon3847-maker.github.io/solonote/?v=4325
+https://myunghoon3847-maker.github.io/solonote/?v=4326
 ```
 
 실제 계정 삭제는 중요한 데이터가 없는 별도 테스트 계정으로 먼저 확인해야 합니다.
 
-## v4.3.2.5 긴급 배포 안내
+## v4.3.2.6 긴급 배포 안내
 
-계정 삭제 함수의 OPTIONS 504/546 문제 해결 절차는 `DEPLOY_DELETE_ACCOUNT_v4.3.2.5.md`를 확인하세요.
+계정 삭제 함수의 OPTIONS 504/546 문제 해결 절차는 `DEPLOY_DELETE_ACCOUNT_v4.3.2.6.md`를 확인하세요.
 
-## v4.3.2.5 긴급 수정
+## v4.3.2.6 긴급 수정
 
 브라우저 시간 초과 시 읽기 전용 `AbortError.code`를 변경해 발생하던 `Cannot set property code of which has only a getter` 오류를 수정했습니다. 이번 수정은 웹앱 배포만 필요하며 Edge Function 재배포는 필요하지 않습니다.
