@@ -260,12 +260,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "solonote-v4.3.2.4",
+            "X-Client-Info": "solonote-v4.3.2.5",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.3.2.4",
+            clientVersion: "4.3.2.5",
           }),
           cache: "no-store",
           signal: controller.signal,
@@ -295,8 +295,14 @@
       return payload;
     } catch (error) {
       if (error?.name === "AbortError") {
-        error.code = "EDGE_FUNCTION_TIMEOUT";
-        error.requestId = requestId;
+        const timeoutError = new Error(
+          "계정 삭제 서버의 응답 시간이 초과되었습니다."
+        );
+        timeoutError.name = "AccountDeletionTimeoutError";
+        timeoutError.code = "EDGE_FUNCTION_TIMEOUT";
+        timeoutError.requestId = requestId;
+        timeoutError.cause = error;
+        throw timeoutError;
       }
 
       throw error;
