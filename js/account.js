@@ -276,7 +276,7 @@
       window.sessionStorage.setItem(
         POST_AUTH_MESSAGE_KEY,
         JSON.stringify({
-          message: "SoloNote 계정과 데이터가 삭제되었습니다.",
+          message: "업무노트 계정과 데이터가 삭제되었습니다.",
           type: "success",
         })
       );
