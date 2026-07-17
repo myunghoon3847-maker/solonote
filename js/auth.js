@@ -10,6 +10,15 @@
   const loginEmail = document.querySelector("#loginEmail");
   const loginPassword = document.querySelector("#loginPassword");
   const loginButton = document.querySelector("#loginButton");
+  const showSignupButton = document.querySelector("#showSignupButton");
+  const signupForm = document.querySelector("#signupForm");
+  const signupEmail = document.querySelector("#signupEmail");
+  const signupPassword = document.querySelector("#signupPassword");
+  const signupPasswordConfirm = document.querySelector("#signupPasswordConfirm");
+  const signupButton = document.querySelector("#signupButton");
+  const backToLoginFromSignupButton = document.querySelector(
+    "#backToLoginFromSignupButton"
+  );
   const forgotPasswordButton = document.querySelector("#forgotPasswordButton");
   const resetRequestForm = document.querySelector("#resetRequestForm");
   const resetEmail = document.querySelector("#resetEmail");
@@ -30,6 +39,7 @@
   let pendingLoginMessage = "";
   let pendingLoginMessageType = "";
   const recoveryUrlHint = hasPasswordRecoveryHint();
+  const signupConfirmationUrlHint = hasSignupConfirmationHint();
 
   window.solonotePasswordRecoveryActive = false;
 
@@ -42,16 +52,24 @@
     );
   }
 
-  function hasPasswordRecoveryHint() {
-    const query = new URLSearchParams(window.location.search);
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  function getAuthUrlParams() {
+    return {
+      query: new URLSearchParams(window.location.search),
+      hash: new URLSearchParams(window.location.hash.replace(/^#/, "")),
+    };
+  }
 
-    return (
-      query.get("type") === "recovery" ||
-      hash.get("type") === "recovery" ||
-      query.has("token_hash") ||
-      hash.has("access_token")
-    );
+  function getAuthFlowType() {
+    const { query, hash } = getAuthUrlParams();
+    return query.get("type") || hash.get("type") || "";
+  }
+
+  function hasPasswordRecoveryHint() {
+    return getAuthFlowType() === "recovery";
+  }
+
+  function hasSignupConfirmationHint() {
+    return ["signup", "email"].includes(getAuthFlowType());
   }
 
   function getRecoveryUrlError() {
@@ -65,7 +83,7 @@
     ).replace(/\+/g, " ");
   }
 
-  function getPasswordResetRedirectUrl() {
+  function getAuthRedirectUrl() {
     return new URL("./", window.location.href).href;
   }
 
@@ -96,7 +114,9 @@
     authMessage.className = "auth-message";
 
     if (type) {
-      authMessage.classList.add(`auth-message-${type}`);
+      authMessage.dataset.state = type;
+    } else {
+      delete authMessage.dataset.state;
     }
   }
 
@@ -122,6 +142,7 @@
   function hideAuthForms() {
     setElementVisible(authLoading, false);
     setElementVisible(loginForm, false);
+    setElementVisible(signupForm, false);
     setElementVisible(resetRequestForm, false);
     setElementVisible(passwordRecoveryForm, false);
   }
@@ -165,8 +186,8 @@
 
     setAuthCopy(
       "SoloNote",
-      "등록해둔 내 계정으로 로그인하세요.",
-      "이 화면에는 회원가입 기능이 없습니다. Supabase에 미리 만든 본인 계정만 로그인할 수 있습니다."
+      "내 계정으로 로그인하세요.",
+      "처음 사용한다면 회원가입 후 이메일 인증을 완료하세요."
     );
 
     if (signedInEmail) {
@@ -178,6 +199,37 @@
     }
 
     setMessage(message, messageType);
+    notifyAuthChange(null);
+  }
+
+  function showSignupScreen() {
+    isPasswordRecovery = false;
+    window.solonotePasswordRecoveryActive = false;
+
+    showAuthContainer();
+    hideAuthForms();
+    setElementVisible(signupForm, true);
+
+    setAuthCopy(
+      "회원가입",
+      "SoloNote 계정을 만들고 메모를 안전하게 동기화하세요.",
+      "가입 후 받은 이메일의 인증 링크를 눌러야 로그인이 가능합니다."
+    );
+
+    if (signupEmail && loginEmail?.value.trim()) {
+      signupEmail.value = loginEmail.value.trim();
+    }
+
+    if (signupPassword) {
+      signupPassword.value = "";
+    }
+
+    if (signupPasswordConfirm) {
+      signupPasswordConfirm.value = "";
+    }
+
+    setMessage("");
+    signupEmail?.focus();
     notifyAuthChange(null);
   }
 
@@ -276,7 +328,19 @@
     }
 
     if (/email not confirmed/i.test(message)) {
-      return "이메일 인증이 완료되지 않았습니다. Supabase 사용자 상태를 확인하세요.";
+      return "이메일 인증이 완료되지 않았습니다. 받은 인증 메일의 링크를 확인하세요.";
+    }
+
+    if (/user already registered|already been registered|already exists/i.test(message)) {
+      return "이미 가입된 이메일입니다. 로그인하거나 비밀번호를 재설정하세요.";
+    }
+
+    if (/signups? not allowed|signup.*disabled/i.test(message)) {
+      return "현재 회원가입이 비활성화되어 있습니다. Supabase 인증 설정을 확인하세요.";
+    }
+
+    if (/invalid email|email address.*invalid/i.test(message)) {
+      return "올바른 이메일 주소를 입력하세요.";
     }
 
     if (/rate limit|too many requests|email rate limit/i.test(message)) {
@@ -344,6 +408,74 @@
     }
   }
 
+  async function handleSignup(event) {
+    event.preventDefault();
+
+    if (!client) {
+      setMessage("Supabase 연결을 초기화하지 못했습니다.", "error");
+      return;
+    }
+
+    const email = signupEmail?.value.trim() || "";
+    const password = signupPassword?.value || "";
+    const passwordConfirm = signupPasswordConfirm?.value || "";
+
+    if (!email) {
+      setMessage("사용할 이메일을 입력하세요.", "error");
+      signupEmail?.focus();
+      return;
+    }
+
+    if (password.length < 8) {
+      setMessage("비밀번호는 8자 이상으로 입력하세요.", "error");
+      signupPassword?.focus();
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      setMessage("비밀번호와 확인 비밀번호가 일치하지 않습니다.", "error");
+      signupPasswordConfirm?.focus();
+      return;
+    }
+
+    setButtonBusy(signupButton, true, "가입 처리 중...", "회원가입");
+    setMessage("계정을 만들고 인증 이메일을 요청하고 있습니다.", "info");
+
+    try {
+      const { data, error } = await client.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: getAuthRedirectUrl(),
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (loginEmail) {
+        loginEmail.value = email;
+      }
+
+      signupForm?.reset();
+
+      if (data.session) {
+        showApp(data.session);
+        return;
+      }
+
+      showLoginScreen(
+        "가입 요청이 접수되었습니다. 받은 인증 메일의 링크를 누른 뒤 로그인하세요. 이미 가입된 이메일이라면 로그인하거나 비밀번호를 재설정하세요.",
+        "success"
+      );
+    } catch (error) {
+      setMessage(translateAuthError(error), "error");
+    } finally {
+      setButtonBusy(signupButton, false, "가입 처리 중...", "회원가입");
+    }
+  }
+
   async function handleResetRequest(event) {
     event.preventDefault();
 
@@ -370,7 +502,7 @@
 
     try {
       const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: getPasswordResetRedirectUrl(),
+        redirectTo: getAuthRedirectUrl(),
       });
 
       if (error) {
@@ -530,6 +662,11 @@
     window.solonoteSupabase = client;
 
     loginForm?.addEventListener("submit", handleLogin);
+    showSignupButton?.addEventListener("click", showSignupScreen);
+    signupForm?.addEventListener("submit", handleSignup);
+    backToLoginFromSignupButton?.addEventListener("click", () =>
+      showLoginScreen()
+    );
     forgotPasswordButton?.addEventListener("click", showResetRequestScreen);
     resetRequestForm?.addEventListener("submit", handleResetRequest);
     backToLoginButton?.addEventListener("click", () => showLoginScreen());
@@ -563,6 +700,9 @@
         ) {
           showPasswordRecoveryScreen(session);
         } else {
+          if (signupConfirmationUrlHint) {
+            cleanAuthParametersFromUrl();
+          }
           showApp(session);
         }
         return;
@@ -582,6 +722,9 @@
         if (recoveryUrlHint) {
           showPasswordRecoveryScreen(data.session);
         } else {
+          if (signupConfirmationUrlHint) {
+            cleanAuthParametersFromUrl();
+          }
           showApp(data.session);
         }
       } else if (recoveryUrlHint || getRecoveryUrlError()) {

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoloNote - 1인 업무노트</title>
-  <link rel="manifest" href="./manifest.json?v=420" />
+  <link rel="manifest" href="./manifest.json?v=431" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="SoloNote" />
   <meta name="apple-mobile-web-app-title" content="SoloNote" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=420" />
-  <link rel="stylesheet" href="./css/style.css?v=420" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=431" />
+  <link rel="stylesheet" href="./css/style.css?v=431" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -33,7 +33,7 @@
           type="email"
           autocomplete="username"
           inputmode="email"
-          placeholder="Supabase에 등록한 이메일"
+          placeholder="가입한 이메일"
           required
         />
 
@@ -51,11 +51,69 @@
         </button>
 
         <button
+          id="showSignupButton"
+          type="button"
+          class="secondary-button"
+        >
+          처음이신가요? 회원가입
+        </button>
+
+        <button
           id="forgotPasswordButton"
           type="button"
           class="auth-link-button"
         >
           비밀번호를 잊으셨나요?
+        </button>
+      </form>
+
+      <form id="signupForm" class="login-form hidden">
+        <div class="auth-form-intro">
+          <strong>SoloNote 계정 만들기</strong>
+          <p>이메일 인증 후 PC와 스마트폰에서 같은 메모를 사용할 수 있습니다.</p>
+        </div>
+
+        <label for="signupEmail">이메일</label>
+        <input
+          id="signupEmail"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          placeholder="사용할 이메일"
+          required
+        />
+
+        <label for="signupPassword">비밀번호</label>
+        <input
+          id="signupPassword"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          placeholder="8자 이상"
+          required
+        />
+        <p class="field-help">8자 이상의 비밀번호를 입력하세요.</p>
+
+        <label for="signupPasswordConfirm">비밀번호 확인</label>
+        <input
+          id="signupPasswordConfirm"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          placeholder="비밀번호 다시 입력"
+          required
+        />
+
+        <button id="signupButton" type="submit" class="primary-button">
+          회원가입
+        </button>
+
+        <button
+          id="backToLoginFromSignupButton"
+          type="button"
+          class="auth-link-button"
+        >
+          이미 계정이 있나요? 로그인
         </button>
       </form>
 
@@ -120,7 +178,7 @@
       </form>
 
       <p id="authMessage" class="auth-message" aria-live="polite"></p>
-      <p id="authNote" class="auth-note">이 화면에는 회원가입 기능이 없습니다. Supabase에 미리 만든 본인 계정만 로그인할 수 있습니다.</p>
+      <p id="authNote" class="auth-note">처음 사용한다면 회원가입 후 이메일 인증을 완료하세요.</p>
     </div>
   </section>
 
@@ -604,7 +662,7 @@
 
       <div class="menu-footer">
         <span>SoloNote</span>
-        <span class="version-badge">v4.2</span>
+        <span class="version-badge">v4.3.1</span>
       </div>
     </aside>
 
@@ -642,11 +700,11 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=420"></script>
-  <script src="./js/auth.js?v=420"></script>
-  <script src="./js/storage.js?v=420"></script>
-  <script src="./js/ui.js?v=420"></script>
-  <script src="./js/app.js?v=420"></script>
-  <script src="./js/pwa.js?v=420"></script>
+  <script src="./js/config.js?v=431"></script>
+  <script src="./js/auth.js?v=431"></script>
+  <script src="./js/storage.js?v=431"></script>
+  <script src="./js/ui.js?v=431"></script>
+  <script src="./js/app.js?v=431"></script>
+  <script src="./js/pwa.js?v=431"></script>
 </body>
 </html>

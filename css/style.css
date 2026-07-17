@@ -200,7 +200,8 @@ button:disabled {
 
 .auth-brand p:not(.eyebrow),
 .auth-form-intro p,
-.auth-note {
+.auth-note,
+.field-help {
   margin: 7px 0 0;
   color: var(--muted);
   font-size: 13px;
@@ -209,6 +210,24 @@ button:disabled {
 .login-form {
   display: grid;
   gap: 10px;
+}
+
+.login-form .primary-button,
+.login-form .secondary-button {
+  width: 100%;
+}
+
+.auth-form-intro {
+  margin-bottom: 4px;
+}
+
+.auth-form-intro strong {
+  display: block;
+  font-size: 16px;
+}
+
+.field-help {
+  margin: -5px 0 1px;
 }
 
 .login-form label,
@@ -268,6 +287,10 @@ button:disabled {
 
 .auth-message[data-state="success"] {
   color: var(--success);
+}
+
+.auth-message[data-state="info"] {
+  color: var(--primary);
 }
 
 /* 앱 기본 */

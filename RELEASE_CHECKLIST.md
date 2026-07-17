@@ -50,3 +50,16 @@ SoloNote v3.9는 본인이 사용하는 1인 로그인형 클라우드 업무노
 - [ ] 우측 메뉴의 백업·복원·데이터 관리 확인
 - [ ] 할 일 체크 영역과 원본 메모 열기 영역 확인
 - [ ] 새 CSS에서 로그인·모달·PWA 화면 깨짐 여부 확인
+
+## v4.3.1 공개 회원가입 점검
+
+- [ ] Supabase `Allow new users to sign up` 활성화
+- [ ] Supabase `Confirm Email` 활성화 권장
+- [ ] Site URL을 실제 GitHub Pages 주소로 설정
+- [ ] GitHub Pages 주소를 Redirect URLs에 등록
+- [ ] 새 이메일 회원가입과 인증 메일 수신 확인
+- [ ] 인증 전 로그인 차단 확인
+- [ ] 인증 링크 복귀와 로그인 확인
+- [ ] 가입 링크가 비밀번호 재설정 화면으로 열리지 않는지 확인
+- [ ] 기존 사용자 로그인과 메모 데이터 유지 확인
+- [ ] Service Role Key가 저장소에 없는지 재확인
