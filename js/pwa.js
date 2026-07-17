@@ -43,13 +43,13 @@
   function refreshInstallStatus() {
     if (isStandaloneMode()) {
       setInstallButtonVisible(false);
-      setPwaStatus("SoloNote가 이 기기에 앱으로 설치되어 실행 중입니다.");
+      setPwaStatus("업무노트가 이 기기에 앱으로 설치되어 실행 중입니다.");
       return;
     }
 
     if (deferredInstallPrompt) {
       setInstallButtonVisible(true);
-      setPwaStatus("이 기기에 SoloNote를 앱으로 설치할 수 있습니다.");
+      setPwaStatus("이 기기에 업무노트를 앱으로 설치할 수 있습니다.");
       return;
     }
 
@@ -104,7 +104,7 @@
       const choice = await deferredInstallPrompt.userChoice;
 
       if (choice && choice.outcome === "accepted") {
-        setPwaStatus("SoloNote 설치를 진행하고 있습니다.");
+        setPwaStatus("업무노트 설치를 진행하고 있습니다.");
       } else {
         setPwaStatus("설치를 취소했습니다. 필요할 때 다시 설치할 수 있습니다.");
       }
@@ -217,7 +217,7 @@
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
     setInstallButtonVisible(false);
-    setPwaStatus("SoloNote 설치가 완료되었습니다.");
+    setPwaStatus("업무노트 설치가 완료되었습니다.");
   });
 
   if ("serviceWorker" in navigator) {

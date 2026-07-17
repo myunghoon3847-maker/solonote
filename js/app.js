@@ -64,12 +64,16 @@ const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
+const openTrashButton = document.querySelector("#openTrashButton");
+const menuTrashMemoCount = document.querySelector("#menuTrashMemoCount");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
 let activeCloudLoadPromise = null;
 let automaticSyncTimer = null;
 let lastAutomaticSyncRequestAt = 0;
+let appMenuCloseTimer = null;
+let isAppMenuOpen = false;
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
@@ -446,12 +450,12 @@ function resetMemoFilters() {
 
 function updateFilterControls(filteredMemos) {
   const hasSearch = Boolean(currentSearch.trim());
+  const hasCategoryView = currentCategory !== "전체";
   const activeFilterCount = [
-    currentCategory !== "전체",
     currentProject !== "전체",
     currentSort !== "updatedDesc",
   ].filter(Boolean).length;
-  const hasChangedView = hasSearch || activeFilterCount > 0;
+  const hasChangedView = hasSearch || hasCategoryView || activeFilterCount > 0;
 
   if (showAllMemosButton) {
     showAllMemosButton.hidden = !hasChangedView;
@@ -525,16 +529,35 @@ function closeAppMenu() {
     return;
   }
 
-  appMenuPanel.hidden = true;
-  appMenuBackdrop.hidden = true;
+  isAppMenuOpen = false;
+
+  if (appMenuCloseTimer) {
+    window.clearTimeout(appMenuCloseTimer);
+  }
+
+  appMenuPanel.classList.remove("is-open");
+  appMenuBackdrop.classList.remove("is-open");
   appMenuPanel.setAttribute("aria-hidden", "true");
   appMenuButton.setAttribute("aria-expanded", "false");
   document.body.classList.remove("menu-open");
+
+  appMenuCloseTimer = window.setTimeout(() => {
+    appMenuPanel.hidden = true;
+    appMenuBackdrop.hidden = true;
+    appMenuCloseTimer = null;
+  }, 260);
 }
 
 function openAppMenu() {
   if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
     return;
+  }
+
+  isAppMenuOpen = true;
+
+  if (appMenuCloseTimer) {
+    window.clearTimeout(appMenuCloseTimer);
+    appMenuCloseTimer = null;
   }
 
   closeFilterPanel();
@@ -545,8 +568,43 @@ function openAppMenu() {
   document.body.classList.add("menu-open");
 
   window.requestAnimationFrame(() => {
-    appMenuCloseButton?.focus();
+    window.requestAnimationFrame(() => {
+      if (!isAppMenuOpen) {
+        return;
+      }
+
+      appMenuPanel.classList.add("is-open");
+      appMenuBackdrop.classList.add("is-open");
+      appMenuCloseButton?.focus();
+    });
   });
+}
+
+function handleOpenTrashClick() {
+  switchAppView("notes");
+  currentCategory = "휴지통";
+  currentSearch = "";
+  currentProject = "전체";
+
+  if (searchInput) {
+    searchInput.value = "";
+  }
+
+  if (projectFilterInput) {
+    projectFilterInput.value = "전체";
+  }
+
+  setActiveCategory(currentCategory);
+  closeFilterPanel();
+  closeAppMenu();
+  refreshScreen();
+
+  window.setTimeout(() => {
+    document.querySelector("#notesView")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 280);
 }
 
 function switchAppView(view) {
@@ -1398,14 +1456,19 @@ function refreshProjectFilter() {
 
 
 function refreshDataStats() {
-  if (!totalMemoCount || !trashMemoCount) {
-    return;
-  }
-
   const stats = getDataStats();
 
-  totalMemoCount.textContent = stats.totalCount;
-  trashMemoCount.textContent = stats.trashCount;
+  if (totalMemoCount) {
+    totalMemoCount.textContent = stats.totalCount;
+  }
+
+  if (trashMemoCount) {
+    trashMemoCount.textContent = stats.trashCount;
+  }
+
+  if (menuTrashMemoCount) {
+    menuTrashMemoCount.textContent = stats.trashCount;
+  }
 
   if (emptyTrashButton) {
     emptyTrashButton.disabled = stats.trashCount === 0;
@@ -1540,7 +1603,7 @@ function renderTaskDraftList() {
       (task) => `
         <li class="task-draft-item">
           <span>${escapeHtml(task.text)}</span>
-          <button type="button" class="task-remove-button" data-task-id="${task.id}">삭제</button>
+          <button type="button" class="task-remove-button" data-task-id="${task.id}" aria-label="체크리스트 항목 삭제">삭제</button>
         </li>
       `
     )
@@ -1989,7 +2052,7 @@ function handleBackupClick() {
   const jsonText = JSON.stringify(backupData, null, 2);
   const blob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const fileName = `solonote-backup-${getTodayTextForFileName()}.json`;
+  const fileName = `업무노트-backup-${getTodayTextForFileName()}.json`;
 
   const downloadLink = document.createElement("a");
   downloadLink.href = url;
@@ -2142,6 +2205,7 @@ function bindEvents() {
   appMenuButton.addEventListener("click", openAppMenu);
   appMenuCloseButton.addEventListener("click", closeAppMenu);
   appMenuBackdrop.addEventListener("click", closeAppMenu);
+  openTrashButton?.addEventListener("click", handleOpenTrashClick);
 
   window.addEventListener("beforeunload", handleBeforeUnload);
   window.addEventListener("solonote-before-logout", handleBeforeLogout);
@@ -2217,6 +2281,8 @@ if (filterPanel) {
 }
 
 if (appMenuPanel && appMenuBackdrop) {
+  appMenuPanel.classList.remove("is-open");
+  appMenuBackdrop.classList.remove("is-open");
   appMenuPanel.hidden = true;
   appMenuBackdrop.hidden = true;
 }

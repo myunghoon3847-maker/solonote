@@ -94,6 +94,22 @@ function normalizeProject(project) {
   return typeof project === "string" ? project.trim() : "";
 }
 
+const ALLOWED_MEMO_CATEGORIES = new Set([
+  "업무",
+  "아이디어",
+  "할 일",
+  "일상",
+  "보관",
+]);
+
+function normalizeCategory(category) {
+  if (category === "프로젝트") {
+    return "업무";
+  }
+
+  return ALLOWED_MEMO_CATEGORIES.has(category) ? category : "업무";
+}
+
 function normalizeMemo(memo) {
   const now = new Date().toISOString();
 
@@ -102,7 +118,7 @@ function normalizeMemo(memo) {
     id: memo && memo.id ? String(memo.id) : createSafeId("memo"),
     title: memo && typeof memo.title === "string" ? memo.title : "제목 없음",
     content: memo && typeof memo.content === "string" ? memo.content : "",
-    category: memo && typeof memo.category === "string" ? memo.category : "업무",
+    category: normalizeCategory(memo && memo.category),
     project: normalizeProject(memo && memo.project),
     createdAt: (memo && (memo.createdAt || memo.created_at)) || now,
     updatedAt:
@@ -250,7 +266,7 @@ function toDatabasePayload(memoData, userId) {
     user_id: userId,
     title: typeof memoData.title === "string" ? memoData.title : "",
     content: typeof memoData.content === "string" ? memoData.content : "",
-    category: typeof memoData.category === "string" ? memoData.category : "업무",
+    category: normalizeCategory(memoData.category),
     project: normalizeProject(memoData.project),
     is_important: Boolean(memoData.isImportant),
     is_deleted: Boolean(memoData.isDeleted),
@@ -277,8 +293,20 @@ async function loadMemosFromCloud() {
     throw error;
   }
 
-  memoCache = (data || []).map(mapDatabaseRowToMemo);
+  const rows = data || [];
+  memoCache = rows.map(mapDatabaseRowToMemo);
   cloudMemosLoaded = true;
+
+  if (rows.some((row) => row.category === "프로젝트")) {
+    const { error: migrationError } = await client
+      .from("memos")
+      .update({ category: "업무" })
+      .eq("category", "프로젝트");
+
+    if (migrationError) {
+      console.warn("기존 프로젝트 카테고리를 업무로 변경하지 못했습니다.", migrationError);
+    }
+  }
 
   return memoCache;
 }
@@ -493,7 +521,7 @@ function extractMemosFromBackup(backupData) {
     return backupData.memos;
   }
 
-  throw new Error("올바른 SoloNote 백업 파일이 아닙니다.");
+  throw new Error("올바른 업무노트 백업 파일이 아닙니다.");
 }
 
 function normalizeTextForSignature(value) {

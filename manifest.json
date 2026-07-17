@@ -1,7 +1,7 @@
 {
-  "name": "SoloNote - 1인 업무노트",
-  "short_name": "SoloNote",
-  "description": "혼자 일하는 사람을 위한 업무, 아이디어, 할 일 기록장",
+  "name": "업무노트 - 1인 업무·아이디어 노트",
+  "short_name": "업무노트",
+  "description": "1인 개발자, 프리랜서, 창작자를 위한 업무·아이디어·할 일 메모 앱",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
