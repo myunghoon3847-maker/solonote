@@ -21,8 +21,33 @@
     );
   }
 
+  function isTrustedWebActivity() {
+    const referrer = document.referrer || "";
+    return referrer.startsWith("android-app://com.hooncompany.hoonnote");
+  }
+
+  function isPackagedAppMode() {
+    return isStandaloneMode() || isTrustedWebActivity();
+  }
+
   function isIosDevice() {
     return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  }
+
+  function applyPackagedAppUi() {
+    if (!isTrustedWebActivity()) {
+      return;
+    }
+
+    document.documentElement.dataset.appContext = "twa";
+
+    if (pwaHelpButton) {
+      pwaHelpButton.hidden = true;
+    }
+
+    if (pwaInstallHelp) {
+      pwaInstallHelp.hidden = true;
+    }
   }
 
   function setInstallButtonVisible(isVisible) {
@@ -41,9 +66,13 @@
   }
 
   function refreshInstallStatus() {
-    if (isStandaloneMode()) {
+    if (isPackagedAppMode()) {
       setInstallButtonVisible(false);
-      setPwaStatus("훈노트가 이 기기에 앱으로 설치되어 실행 중입니다.");
+      setPwaStatus(
+        isTrustedWebActivity()
+          ? "Google Play용 훈노트 앱으로 실행 중입니다."
+          : "훈노트가 이 기기에 앱으로 설치되어 실행 중입니다."
+      );
       return;
     }
 
@@ -188,7 +217,7 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=380"
+        "./service-worker.js?v=440"
       );
 
       watchRegistration(registration);
@@ -236,6 +265,7 @@
   applyUpdateButton?.addEventListener("click", applyServiceWorkerUpdate);
   dismissUpdateButton?.addEventListener("click", hideUpdateBanner);
 
+  applyPackagedAppUi();
   refreshInstallStatus();
   window.addEventListener("load", registerServiceWorker);
 })();

@@ -1,0 +1,21 @@
+{
+  "applicationName": "훈노트",
+  "launcherName": "훈노트",
+  "packageId": "com.hooncompany.hoonnote",
+  "host": "myunghoon3847-maker.github.io",
+  "startUrl": "/solonote/",
+  "manifestUrl": "https://myunghoon3847-maker.github.io/solonote/manifest.json",
+  "themeColor": "#2563EB",
+  "navigationColor": "#FFFFFF",
+  "backgroundColor": "#F8FAFC",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "minSdkVersion": 23,
+  "targetSdkVersion": 36,
+  "appStore": "Google Play",
+  "releaseTrack": "Internal testing",
+  "signing": "Google Play App Signing",
+  "buildFormat": "AAB"
+}
