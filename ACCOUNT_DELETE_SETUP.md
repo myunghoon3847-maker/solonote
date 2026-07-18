@@ -1,10 +1,10 @@
-# 업무노트 v4.3.2.6 계정 삭제 설정
+# 훈노트 v4.3.3 계정 삭제 설정
 
 이 버전의 웹 파일만 GitHub Pages에 올려서는 계정 삭제가 작동하지 않습니다. Supabase 데이터베이스 설정과 Edge Function 배포를 모두 완료해야 합니다.
 
 ## 0. 시작 전 백업
 
-1. 업무노트에서 JSON 백업을 내려받습니다.
+1. 훈노트에서 JSON 백업을 내려받습니다.
 2. 중요한 계정이 아닌 별도 테스트 계정을 준비합니다.
 3. Supabase Dashboard의 프로젝트가 `nxobwqvsqvowimherzlo`인지 확인합니다.
 
@@ -95,18 +95,18 @@ Edge Function에서는 다음 순서로 관리자 키를 찾습니다.
 
 ## 4. GitHub Pages 배포
 
-v4.3.2.6 파일을 저장소 루트에 업로드하고 배포합니다.
+v4.3.3 파일을 저장소 루트에 업로드하고 배포합니다.
 
 권장 커밋 메시지:
 
 ```text
-Harden secure account deletion flow in v4.3.2.6
+Harden secure account deletion flow in v4.3.3
 ```
 
 캐시 확인 주소:
 
 ```text
-https://myunghoon3847-maker.github.io/solonote/?v=4326
+https://myunghoon3847-maker.github.io/solonote/?v=433
 ```
 
 ## 5. 실제 삭제 테스트
@@ -156,7 +156,7 @@ https://myunghoon3847-maker.github.io/solonote/?v=4326
 
 ### 저장소 파일 소유 오류
 
-Supabase Storage 객체를 사용자가 소유하고 있으면 Auth 사용자 삭제가 거부될 수 있습니다. 현재 업무노트는 파일 첨부 기능을 사용하지 않지만, 향후 파일 기능을 추가할 때는 계정 삭제 전에 해당 사용자의 Storage 객체를 먼저 정리해야 합니다.
+Supabase Storage 객체를 사용자가 소유하고 있으면 Auth 사용자 삭제가 거부될 수 있습니다. 현재 훈노트는 파일 첨부 기능을 사용하지 않지만, 향후 파일 기능을 추가할 때는 계정 삭제 전에 해당 사용자의 Storage 객체를 먼저 정리해야 합니다.
 
 ## 계정 삭제 처리 순서
 

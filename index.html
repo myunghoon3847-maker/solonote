@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>업무노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=4326" />
+  <title>훈노트 - 1인 업무·아이디어 노트</title>
+  <link rel="manifest" href="./manifest.json?v=433" />
   <meta name="theme-color" content="#2563eb" />
-  <meta name="application-name" content="업무노트" />
-  <meta name="apple-mobile-web-app-title" content="업무노트" />
+  <meta name="application-name" content="훈노트" />
+  <meta name="apple-mobile-web-app-title" content="훈노트" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=4326" />
-  <link rel="stylesheet" href="./css/style.css?v=4326" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png?v=433" />
+  <link rel="stylesheet" href="./css/style.css?v=433" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
     <div class="auth-card">
       <div class="auth-brand">
-        <p class="eyebrow">1인 클라우드 업무노트</p>
-        <h1 id="authTitle">업무노트</h1>
+        <p class="eyebrow">1인 클라우드 훈노트</p>
+        <h1 id="authTitle">훈노트</h1>
         <p id="authDescription">등록해둔 내 계정으로 로그인하세요.</p>
       </div>
 
@@ -69,7 +69,7 @@
 
       <form id="signupForm" class="login-form hidden">
         <div class="auth-form-intro">
-          <strong>업무노트 계정 만들기</strong>
+          <strong>훈노트 계정 만들기</strong>
           <p>이메일 인증 후 PC와 스마트폰에서 같은 메모를 사용할 수 있습니다.</p>
         </div>
 
@@ -104,7 +104,32 @@
           required
         />
 
-        <button id="signupButton" type="submit" class="primary-button">
+        <div class="signup-privacy-summary" role="note">
+          <strong>개인정보 수집·이용 안내</strong>
+          <dl>
+            <div><dt>수집 항목</dt><dd>이메일, 사용자 식별번호</dd></div>
+            <div><dt>이용 목적</dt><dd>회원가입, 로그인, 메모 저장 및 동기화</dd></div>
+            <div><dt>보유 기간</dt><dd>계정 삭제 시까지</dd></div>
+          </dl>
+          <p>동의를 거부할 수 있으나 회원가입과 클라우드 동기화 기능을 이용할 수 없습니다.</p>
+        </div>
+
+        <div class="signup-agreements" aria-label="회원가입 필수 동의">
+          <label class="agreement-item">
+            <input id="agreeTerms" type="checkbox" required />
+            <span><strong>[필수]</strong> <a href="./legal/terms.html" target="_blank" rel="noopener noreferrer">이용약관</a>에 동의합니다.</span>
+          </label>
+          <label class="agreement-item">
+            <input id="agreePrivacy" type="checkbox" required />
+            <span><strong>[필수]</strong> <a href="./legal/privacy.html" target="_blank" rel="noopener noreferrer">개인정보처리방침</a>을 확인하고 개인정보 수집·이용에 동의합니다.</span>
+          </label>
+          <label class="agreement-item">
+            <input id="confirmAge" type="checkbox" required />
+            <span><strong>[필수]</strong> 만 14세 이상입니다.</span>
+          </label>
+        </div>
+
+        <button id="signupButton" type="submit" class="primary-button" disabled>
           회원가입
         </button>
 
@@ -120,7 +145,7 @@
       <form id="resetRequestForm" class="login-form hidden">
         <div class="auth-form-intro">
           <strong>재설정 이메일 받기</strong>
-          <p>업무노트 로그인 계정의 이메일을 입력하세요.</p>
+          <p>훈노트 로그인 계정의 이메일을 입력하세요.</p>
         </div>
 
         <label for="resetEmail">이메일</label>
@@ -179,6 +204,11 @@
 
       <p id="authMessage" class="auth-message" aria-live="polite"></p>
       <p id="authNote" class="auth-note">처음 사용한다면 회원가입 후 이메일 인증을 완료하세요.</p>
+      <nav class="auth-policy-links" aria-label="정책 및 고객지원">
+        <a href="./legal/privacy.html" target="_blank" rel="noopener noreferrer">개인정보처리방침</a>
+        <a href="./legal/terms.html" target="_blank" rel="noopener noreferrer">이용약관</a>
+        <a href="./support/" target="_blank" rel="noopener noreferrer">고객지원</a>
+      </nav>
     </div>
   </section>
 
@@ -186,7 +216,7 @@
     <header class="app-header">
       <div class="header-inner">
         <div class="brand-block">
-          <h1>업무노트</h1>
+          <h1>훈노트</h1>
           <p><span id="memoCount">0</span>개 메모</p>
         </div>
 
@@ -658,6 +688,20 @@
             </div>
           </div>
         </section>
+        <section class="menu-section legal-support-section" aria-label="법률 및 지원">
+          <div class="menu-section-heading">
+            <div>
+              <h3>법률 및 지원</h3>
+              <p>정책, 계정 삭제 안내, 고객지원</p>
+            </div>
+          </div>
+          <div class="legal-support-links">
+            <a class="menu-action-button legal-menu-link" href="./legal/privacy.html" target="_blank" rel="noopener noreferrer">개인정보처리방침</a>
+            <a class="menu-action-button legal-menu-link" href="./legal/terms.html" target="_blank" rel="noopener noreferrer">이용약관</a>
+            <a class="menu-action-button legal-menu-link" href="./support/delete-account.html" target="_blank" rel="noopener noreferrer">계정 및 데이터 삭제 안내</a>
+            <a class="menu-action-button legal-menu-link" href="./support/" target="_blank" rel="noopener noreferrer">고객지원</a>
+          </div>
+        </section>
         <section class="menu-section app-guide" aria-label="사용 안내">
           <div class="menu-section-heading">
             <div>
@@ -713,8 +757,8 @@
       </div>
 
       <div class="menu-footer">
-        <span>업무노트</span>
-        <span class="version-badge">v4.3.2.6</span>
+        <span>훈노트</span>
+        <span class="version-badge">v4.3.3</span>
       </div>
     </aside>
 
@@ -751,7 +795,7 @@
       </button>
 
       <p class="danger-eyebrow">되돌릴 수 없는 작업</p>
-      <h2 id="accountDeletionTitle">업무노트 계정 삭제</h2>
+      <h2 id="accountDeletionTitle">훈노트 계정 삭제</h2>
       <p id="accountDeletionDescription" class="account-deletion-description">
         계정을 삭제하면 모든 클라우드 메모와 체크리스트가 영구 삭제되며 복구할 수 없습니다. 서버에서 본인 확인과 데이터 연결 상태를 점검한 뒤 삭제합니다.
       </p>
@@ -761,7 +805,7 @@
         <ul>
           <li>Supabase 로그인 계정</li>
           <li>클라우드에 저장된 모든 메모와 체크리스트</li>
-          <li>현재 기기의 업무노트 자동 저장 초안과 이전 메모</li>
+          <li>현재 기기의 훈노트 자동 저장 초안과 이전 메모</li>
         </ul>
       </div>
 
@@ -828,12 +872,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=4326"></script>
-  <script src="./js/auth.js?v=4326"></script>
-  <script src="./js/storage.js?v=4326"></script>
-  <script src="./js/ui.js?v=4326"></script>
-  <script src="./js/app.js?v=4326"></script>
-  <script src="./js/account.js?v=4326"></script>
-  <script src="./js/pwa.js?v=4326"></script>
+  <script src="./js/config.js?v=433"></script>
+  <script src="./js/auth.js?v=433"></script>
+  <script src="./js/storage.js?v=433"></script>
+  <script src="./js/ui.js?v=433"></script>
+  <script src="./js/app.js?v=433"></script>
+  <script src="./js/account.js?v=433"></script>
+  <script src="./js/pwa.js?v=433"></script>
 </body>
 </html>

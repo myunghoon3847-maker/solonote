@@ -521,7 +521,7 @@ function extractMemosFromBackup(backupData) {
     return backupData.memos;
   }
 
-  throw new Error("올바른 업무노트 백업 파일이 아닙니다.");
+  throw new Error("올바른 훈노트 백업 파일이 아닙니다.");
 }
 
 function normalizeTextForSignature(value) {

@@ -15,6 +15,9 @@
   const signupEmail = document.querySelector("#signupEmail");
   const signupPassword = document.querySelector("#signupPassword");
   const signupPasswordConfirm = document.querySelector("#signupPasswordConfirm");
+  const agreeTerms = document.querySelector("#agreeTerms");
+  const agreePrivacy = document.querySelector("#agreePrivacy");
+  const confirmAge = document.querySelector("#confirmAge");
   const signupButton = document.querySelector("#signupButton");
   const backToLoginFromSignupButton = document.querySelector(
     "#backToLoginFromSignupButton"
@@ -155,6 +158,18 @@
     button.textContent = isBusy ? busyText : normalText;
   }
 
+  function updateSignupButtonState() {
+    if (!signupButton) {
+      return;
+    }
+
+    signupButton.disabled = !(
+      agreeTerms?.checked &&
+      agreePrivacy?.checked &&
+      confirmAge?.checked
+    );
+  }
+
   function setElementVisible(element, isVisible) {
     if (!element) {
       return;
@@ -211,7 +226,7 @@
     setElementVisible(loginForm, true);
 
     setAuthCopy(
-      "업무노트",
+      "훈노트",
       "내 계정으로 로그인하세요.",
       "처음 사용한다면 회원가입 후 이메일 인증을 완료하세요."
     );
@@ -238,7 +253,7 @@
 
     setAuthCopy(
       "회원가입",
-      "업무노트 계정을 만들고 메모를 안전하게 동기화하세요.",
+      "훈노트 계정을 만들고 메모를 안전하게 동기화하세요.",
       "가입 후 받은 이메일의 인증 링크를 눌러야 로그인이 가능합니다."
     );
 
@@ -253,6 +268,13 @@
     if (signupPasswordConfirm) {
       signupPasswordConfirm.value = "";
     }
+
+    [agreeTerms, agreePrivacy, confirmAge].forEach((checkbox) => {
+      if (checkbox) {
+        checkbox.checked = false;
+      }
+    });
+    updateSignupButtonState();
 
     setMessage("");
     signupEmail?.focus();
@@ -464,6 +486,12 @@
       return;
     }
 
+    if (!agreeTerms?.checked || !agreePrivacy?.checked || !confirmAge?.checked) {
+      setMessage("이용약관, 개인정보 수집·이용, 만 14세 이상 확인에 모두 동의해야 합니다.", "error");
+      (agreeTerms && !agreeTerms.checked ? agreeTerms : agreePrivacy && !agreePrivacy.checked ? agreePrivacy : confirmAge)?.focus();
+      return;
+    }
+
     setButtonBusy(signupButton, true, "가입 처리 중...", "회원가입");
     setMessage("계정을 만들고 인증 이메일을 요청하고 있습니다.", "info");
 
@@ -485,6 +513,7 @@
       }
 
       signupForm?.reset();
+      updateSignupButtonState();
 
       if (data.session) {
         showApp(data.session);
@@ -499,6 +528,7 @@
       setMessage(translateAuthError(error), "error");
     } finally {
       setButtonBusy(signupButton, false, "가입 처리 중...", "회원가입");
+      updateSignupButtonState();
     }
   }
 
@@ -690,6 +720,10 @@
     loginForm?.addEventListener("submit", handleLogin);
     showSignupButton?.addEventListener("click", showSignupScreen);
     signupForm?.addEventListener("submit", handleSignup);
+    [agreeTerms, agreePrivacy, confirmAge].forEach((checkbox) => {
+      checkbox?.addEventListener("change", updateSignupButtonState);
+    });
+    updateSignupButtonState();
     backToLoginFromSignupButton?.addEventListener("click", () =>
       showLoginScreen()
     );

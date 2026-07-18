@@ -1980,3 +1980,111 @@ button:disabled {
 body[data-app-view="trash"] .primary-view-tabs {
   display: none;
 }
+
+
+/* v4.3.3 회원가입 동의 및 정책 링크 */
+.signup-privacy-summary {
+  display: grid;
+  gap: 7px;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.signup-privacy-summary > strong {
+  font-size: 12px;
+}
+
+.signup-privacy-summary dl {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.signup-privacy-summary dl div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.signup-privacy-summary dt {
+  color: #334155;
+  font-weight: 700;
+}
+
+.signup-privacy-summary dd,
+.signup-privacy-summary p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.signup-privacy-summary p {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.signup-agreements {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.agreement-item {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: start;
+  gap: 8px;
+  color: #334155;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+}
+
+.agreement-item input {
+  width: 18px !important;
+  min-height: 18px !important;
+  margin: 1px 0 0;
+  padding: 0 !important;
+  accent-color: var(--primary);
+}
+
+.agreement-item a,
+.auth-policy-links a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-policy-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+
+.legal-support-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.legal-menu-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+@media (max-width: 420px) {
+  .legal-support-links {
+    grid-template-columns: 1fr;
+  }
+}

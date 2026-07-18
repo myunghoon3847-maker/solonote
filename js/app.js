@@ -2160,7 +2160,7 @@ function handleBackupClick() {
   const jsonText = JSON.stringify(backupData, null, 2);
   const blob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const fileName = `업무노트-backup-${getTodayTextForFileName()}.json`;
+  const fileName = `훈노트-backup-${getTodayTextForFileName()}.json`;
 
   const downloadLink = document.createElement("a");
   downloadLink.href = url;

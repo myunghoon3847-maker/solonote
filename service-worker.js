@@ -1,19 +1,24 @@
-const CACHE_NAME = "solonote-v4-3-2-6-cache";
+const CACHE_NAME = "hoonnote-v4-3-3-cache";
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json?v=4326",
-  "./css/style.css?v=4326",
-  "./js/config.js?v=4326",
-  "./js/auth.js?v=4326",
-  "./js/storage.js?v=4326",
-  "./js/ui.js?v=4326",
-  "./js/app.js?v=4326",
-  "./js/account.js?v=4326",
-  "./js/pwa.js?v=4326",
-  "./icons/icon-192.png?v=4326",
-  "./icons/icon-512.png"
+  "./manifest.json?v=433",
+  "./css/style.css?v=433",
+  "./js/config.js?v=433",
+  "./js/auth.js?v=433",
+  "./js/storage.js?v=433",
+  "./js/ui.js?v=433",
+  "./js/app.js?v=433",
+  "./js/account.js?v=433",
+  "./js/pwa.js?v=433",
+  "./icons/icon-192.png?v=433",
+  "./icons/icon-512.png",
+  "./legal/legal.css?v=433",
+  "./legal/privacy.html",
+  "./legal/terms.html",
+  "./support/index.html",
+  "./support/delete-account.html"
 ];
 
 self.addEventListener("install", (event) => {
@@ -32,7 +37,6 @@ self.addEventListener("activate", (event) => {
       )
     )
   );
-
   self.clients.claim();
 });
 
@@ -47,30 +51,41 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const requestUrl = new URL(event.request.url);
+  const request = event.request;
+  const requestUrl = new URL(request.url);
 
   if (requestUrl.origin !== self.location.origin) {
     return;
   }
 
-  const request = event.request;
-
   if (request.mode === "navigate" || request.destination === "document") {
+    const scopePath = new URL(self.registration.scope).pathname;
+    const isAppShellNavigation =
+      requestUrl.pathname === scopePath ||
+      requestUrl.pathname === `${scopePath}index.html`;
+
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) =>
-            cache.put("./index.html", responseClone)
-          );
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
           return networkResponse;
         })
-        .catch(() =>
-          caches.match(request).then(
-            (cachedResponse) =>
-              cachedResponse || caches.match("./index.html")
-          )
-        )
+        .catch(async () => {
+          const cachedResponse = await caches.match(request, { ignoreSearch: true });
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          if (isAppShellNavigation) {
+            return caches.match("./index.html");
+          }
+          return new Response("오프라인 상태에서는 이 페이지를 처음 열 수 없습니다.", {
+            status: 503,
+            headers: { "Content-Type": "text/plain; charset=utf-8" }
+          });
+        })
     );
     return;
   }
@@ -80,13 +95,10 @@ self.addEventListener("fetch", (event) => {
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) =>
-            cache.put(request, responseClone)
-          );
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
         }
-
         return networkResponse;
       })
-      .catch(() => caches.match(request))
+      .catch(() => caches.match(request, { ignoreSearch: true }))
   );
 });
