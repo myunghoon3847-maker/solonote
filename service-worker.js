@@ -1,24 +1,25 @@
-const CACHE_NAME = "hoonnote-v4-5-cache";
+const CACHE_NAME = "hoonnote-v4-5-1-cache";
+const APP_CACHE_PREFIXES = ["hoonnote-", "solonote-"];
 
 const STATIC_ASSETS = [
   "./",
   "./index.html",
-  "./manifest.json?v=450",
-  "./css/style.css?v=450",
-  "./js/config.js?v=450",
-  "./js/auth.js?v=450",
-  "./js/storage.js?v=450",
-  "./js/ui.js?v=450",
-  "./js/app.js?v=450",
-  "./js/account.js?v=450",
-  "./js/pwa.js?v=450",
-  "./icons/icon-192.png?v=450",
-  "./icons/icon-512.png?v=450",
-  "./icons/icon-maskable-192.png?v=450",
-  "./icons/icon-maskable-512.png?v=450",
-  "./icons/icon-monochrome-512.png?v=450",
-  "./icons/apple-touch-icon.png?v=450",
-  "./legal/legal.css?v=450",
+  "./manifest.json?v=451",
+  "./css/style.css?v=451",
+  "./js/config.js?v=451",
+  "./js/auth.js?v=451",
+  "./js/storage.js?v=451",
+  "./js/ui.js?v=451",
+  "./js/app.js?v=451",
+  "./js/account.js?v=451",
+  "./js/pwa.js?v=451",
+  "./icons/icon-192.png?v=451",
+  "./icons/icon-512.png?v=451",
+  "./icons/icon-maskable-192.png?v=451",
+  "./icons/icon-maskable-512.png?v=451",
+  "./icons/icon-monochrome-512.png?v=451",
+  "./icons/apple-touch-icon.png?v=451",
+  "./legal/legal.css?v=451",
   "./legal/privacy.html",
   "./legal/terms.html",
   "./support/index.html",
@@ -36,7 +37,11 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) =>
       Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .filter(
+            (cacheName) =>
+              cacheName !== CACHE_NAME &&
+              APP_CACHE_PREFIXES.some((prefix) => cacheName.startsWith(prefix))
+          )
           .map((cacheName) => caches.delete(cacheName))
       )
     )
@@ -103,6 +108,6 @@ self.addEventListener("fetch", (event) => {
         }
         return networkResponse;
       })
-      .catch(() => caches.match(request, { ignoreSearch: true }))
+      .catch(() => caches.match(request))
   );
 });

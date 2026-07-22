@@ -154,6 +154,10 @@
     if (typeof window.clearMemoCache === "function") {
       window.clearMemoCache();
     }
+
+    if (typeof window.clearMemoCategoryCache === "function") {
+      window.clearMemoCategoryCache();
+    }
   }
 
   function translateDeletionError(error) {
@@ -266,12 +270,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.4",
+            "X-Client-Info": "hoonnote-v4.5.1",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.4",
+            clientVersion: "4.5.1",
           }),
           cache: "no-store",
           signal: controller.signal,

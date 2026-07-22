@@ -1,8 +1,17 @@
-# 훈노트 v4.5
+# 훈노트 v4.5.1
 
-훈노트(HoonNote) v4.5는 v4.4의 클라우드 메모·로그인·PWA·Android TWA 준비 구조를 유지하면서 사용자별 카테고리 추가·이름 변경·삭제 기능을 도입한 버전입니다.
+훈노트(HoonNote) v4.5.1은 v4.5의 사용자별 카테고리 기능을 유지하면서 카테고리 영역의 UI 불일치와 정적 파일 혼합 로딩 문제를 수정한 오류 수정판입니다.
 
-## v4.5 핵심 기능
+## v4.5.1 수정 내용
+
+- 카테고리 필터와 `관리` 버튼을 서로 다른 영역으로 분리
+- `관리` 버튼을 기존 훈노트의 텍스트 버튼 디자인으로 통일
+- 모바일에서 카테고리 탭만 가로 스크롤되도록 정리
+- CSS·JavaScript·서비스 워커 버전을 `v=451`로 일괄 갱신
+- 오프라인 캐시가 다른 버전의 정적 파일을 대신 반환하지 않도록 수정
+- 카테고리 관리 이벤트를 앱 초기화 앞부분에서 연결
+
+## 유지되는 v4.5 기능
 
 - 사용자별 카테고리를 Supabase에 저장하고 여러 기기에서 동기화
 - `카테고리 관리` 창에서 새 카테고리 추가
@@ -22,18 +31,20 @@
 1. 현재 운영 데이터를 JSON으로 백업합니다.
 2. Supabase SQL Editor에서 `supabase/sql/05_create_memo_categories.sql`을 실행합니다.
 3. `SUPABASE_CATEGORY_SETUP_v4.5.md`의 확인 쿼리로 테이블·정책·함수를 확인합니다.
-4. 이 폴더의 웹 파일을 GitHub Pages 저장소에 배포합니다.
-5. `https://myunghoon3847-maker.github.io/solonote/?v=450`에서 v4.5 표시를 확인합니다.
-6. `TEST_CHECKLIST_v4.5.md`에 따라 PC와 스마트폰에서 검수합니다.
+4. 이 폴더의 웹 파일을 일부가 아닌 전체 교체 방식으로 GitHub Pages 저장소에 배포합니다.
+5. `https://myunghoon3847-maker.github.io/solonote/?v=451`에서 v4.5.1 표시를 확인합니다.
+6. 설치 앱에서 업데이트 안내가 보이면 `업데이트`를 누릅니다.
+7. `TEST_CHECKLIST_v4.5.1.md`에 따라 PC와 스마트폰에서 검수합니다.
 
-웹 파일보다 SQL을 먼저 적용해야 합니다. 이번 변경은 웹앱과 데이터베이스 기능이며 기존 TWA 래퍼 설정을 바꾸지 않으므로, 웹 배포 확인 전에는 새 AAB를 만들지 않습니다.
+v4.5에서 SQL을 이미 실행했다면 다시 실행할 필요가 없습니다. 아직 실행하지 않았다면 웹 파일보다 SQL을 먼저 적용해야 합니다. 이번 변경은 웹앱 UI와 캐시 수정이며 기존 TWA 래퍼 설정을 바꾸지 않으므로 새 AAB는 필요하지 않습니다.
 
 ## 주요 문서
 
-- `CHANGES_v4.5.md`: 변경사항
+- `CHANGES_v4.5.1.md`: 이번 수정사항
+- `CHANGES_v4.5.md`: 카테고리 기능 변경사항
 - `SUPABASE_CATEGORY_SETUP_v4.5.md`: 데이터베이스 적용 방법
-- `TEST_CHECKLIST_v4.5.md`: 기능 검수표
-- `RELEASE_CHECKLIST_v4.5.md`: 배포 순서
+- `TEST_CHECKLIST_v4.5.1.md`: 오류 수정 검수표
+- `RELEASE_CHECKLIST_v4.5.1.md`: 배포 순서
 - `AGENTS.md`: Codex 개발 원칙
 - `PROJECT_CONTEXT.md`: 프로젝트 구조와 현재 상태
 

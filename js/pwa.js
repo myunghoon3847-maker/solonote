@@ -217,7 +217,8 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=440"
+        "./service-worker.js?v=451",
+        { updateViaCache: "none" }
       );
 
       watchRegistration(registration);

@@ -71,6 +71,14 @@ const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
 const menuTrashMemoCount = document.querySelector("#menuTrashMemoCount");
+const categoryManagerModal = document.querySelector("#categoryManagerModal");
+const openCategoryManagerButton = document.querySelector("#openCategoryManagerButton");
+const closeCategoryManagerButton = document.querySelector("#closeCategoryManagerButton");
+const categoryCreateForm = document.querySelector("#categoryCreateForm");
+const newCategoryInput = document.querySelector("#newCategoryInput");
+const addCategoryButton = document.querySelector("#addCategoryButton");
+const categoryManagerList = document.querySelector("#categoryManagerList");
+const categoryManagerStatus = document.querySelector("#categoryManagerStatus");
 
 let currentCloudUserId = "";
 let cloudLoadSequence = 0;
@@ -79,6 +87,7 @@ let automaticSyncTimer = null;
 let lastAutomaticSyncRequestAt = 0;
 let appMenuCloseTimer = null;
 let isAppMenuOpen = false;
+let categoryManagerPreviousFocus = null;
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
@@ -355,6 +364,16 @@ function restoreLocalEditorDraft() {
   projectInput.value = draft.project || "";
   contentInput.value = draft.content || "";
   categoryInput.value = draft.category || "업무";
+
+  if (!categoryInput.value) {
+    const fallbackOption = [...categoryInput.options].find(
+      (option) => option.value === FALLBACK_MEMO_CATEGORY
+    );
+    categoryInput.value = fallbackOption
+      ? FALLBACK_MEMO_CATEGORY
+      : categoryInput.options[0]?.value || "업무";
+  }
+
   importantInput.checked = Boolean(draft.isImportant);
   editingIdInput.value = originalMemoExists ? draft.editingId || "" : "";
   editingUpdatedAtInput.value = originalMemoExists
@@ -720,6 +739,317 @@ function setCloudStatus(message, state = "ready") {
 
 
 
+function getManagedMemoCategoryNames() {
+  const cloudCategories = getMemoCategories().map((category) => category.name);
+  return cloudCategories.length > 0
+    ? cloudCategories
+    : [...DEFAULT_MEMO_CATEGORIES];
+}
+
+function getCompatibilityMemoCategoryNames() {
+  const categoryNames = [...COMPATIBILITY_MEMO_CATEGORIES];
+  const hasUncategorizedMemo = getMemos().some(
+    (memo) => memo.category === FALLBACK_MEMO_CATEGORY
+  );
+
+  if (hasUncategorizedMemo || currentCategory === FALLBACK_MEMO_CATEGORY) {
+    categoryNames.push(FALLBACK_MEMO_CATEGORY);
+  }
+
+  return categoryNames;
+}
+
+function createCategoryTabButton(category) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "category-tab";
+  button.dataset.category = category;
+  button.textContent = category;
+  return button;
+}
+
+function renderMemoCategoryControls() {
+  if (!categoryInput || !categoryTabs) {
+    return;
+  }
+
+  const previousEditorCategory = categoryInput.value;
+  const editingMemo = editingIdInput?.value
+    ? findMemoById(editingIdInput.value)
+    : null;
+  const managedNames = getManagedMemoCategoryNames();
+  const compatibilityNames = getCompatibilityMemoCategoryNames();
+  const selectableNames = [...new Set([...managedNames, ...compatibilityNames])];
+
+  categoryInput.replaceChildren(
+    ...selectableNames.map((category) => {
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      return option;
+    })
+  );
+
+  const preferredEditorCategory = editingMemo?.category || previousEditorCategory;
+  categoryInput.value = selectableNames.includes(preferredEditorCategory)
+    ? preferredEditorCategory
+    : managedNames[0] || FALLBACK_MEMO_CATEGORY;
+
+  const filterNames = ["전체", "중요", ...managedNames, ...compatibilityNames];
+  const categoryButtons = [...new Set(filterNames)].map(createCategoryTabButton);
+
+  categoryTabs.replaceChildren(...categoryButtons);
+
+  const validCurrentCategories = new Set(filterNames);
+
+  if (!validCurrentCategories.has(currentCategory)) {
+    currentCategory = "전체";
+  }
+
+  setActiveCategory(currentCategory);
+}
+
+function setCategoryManagerStatus(message = "", state = "") {
+  if (!categoryManagerStatus) {
+    return;
+  }
+
+  categoryManagerStatus.textContent = message;
+
+  if (state) {
+    categoryManagerStatus.dataset.state = state;
+  } else {
+    delete categoryManagerStatus.dataset.state;
+  }
+}
+
+function renderCategoryManagerList() {
+  if (!categoryManagerList) {
+    return;
+  }
+
+  const categories = getMemoCategories();
+
+  if (categories.length === 0) {
+    categoryManagerList.innerHTML = `
+      <div class="empty-state">
+        <strong>카테고리를 불러오고 있습니다.</strong>
+        <p>잠시 후 다시 확인해주세요.</p>
+      </div>
+    `;
+    return;
+  }
+
+  categoryManagerList.innerHTML = categories
+    .map(
+      (category) => `
+        <div class="category-manager-item" data-category-id="${escapeHtml(category.id)}">
+          <span class="category-manager-name" title="${escapeHtml(category.name)}">
+            ${escapeHtml(category.name)}
+          </span>
+          <div class="category-manager-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              data-category-action="rename"
+              data-category-id="${escapeHtml(category.id)}"
+            >
+              이름 변경
+            </button>
+            <button
+              type="button"
+              class="text-button danger-text"
+              data-category-action="delete"
+              data-category-id="${escapeHtml(category.id)}"
+              ${categories.length <= 1 ? "disabled" : ""}
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function openCategoryManager() {
+  if (!categoryManagerModal) {
+    return;
+  }
+
+  categoryManagerPreviousFocus = document.activeElement;
+  setCategoryManagerStatus();
+  renderCategoryManagerList();
+  categoryManagerModal.hidden = false;
+  categoryManagerModal.classList.remove("hidden");
+  categoryManagerModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  window.setTimeout(() => newCategoryInput?.focus(), 0);
+}
+
+function closeCategoryManager() {
+  if (!categoryManagerModal) {
+    return;
+  }
+
+  categoryManagerModal.classList.add("hidden");
+  categoryManagerModal.hidden = true;
+  categoryManagerModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  categoryCreateForm?.reset();
+  setCategoryManagerStatus();
+
+  if (
+    categoryManagerPreviousFocus &&
+    typeof categoryManagerPreviousFocus.focus === "function" &&
+    document.contains(categoryManagerPreviousFocus)
+  ) {
+    categoryManagerPreviousFocus.focus();
+  }
+
+  categoryManagerPreviousFocus = null;
+}
+
+async function handleCategoryCreateSubmit(event) {
+  event.preventDefault();
+  const name = newCategoryInput?.value || "";
+
+  if (addCategoryButton) {
+    addCategoryButton.disabled = true;
+    addCategoryButton.textContent = "추가 중";
+  }
+
+  try {
+    const category = await runCloudAction(
+      () => addMemoCategory(name),
+      {
+        loadingMessage: "카테고리 추가 중",
+        successMessage: "카테고리 추가 완료",
+      }
+    );
+
+    if (!category) {
+      return;
+    }
+
+    categoryCreateForm?.reset();
+    renderMemoCategoryControls();
+    renderCategoryManagerList();
+    setCategoryManagerStatus(`“${category.name}” 카테고리를 추가했습니다.`, "success");
+    newCategoryInput?.focus();
+  } finally {
+    if (addCategoryButton) {
+      addCategoryButton.disabled = false;
+      addCategoryButton.textContent = "추가";
+    }
+  }
+}
+
+async function handleCategoryManagerListClick(event) {
+  const actionButton = event.target.closest("[data-category-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const categoryId = actionButton.dataset.categoryId;
+  const category = getMemoCategories().find((item) => item.id === categoryId);
+
+  if (!category) {
+    setCategoryManagerStatus("카테고리를 찾지 못했습니다. 새로고침 후 다시 시도해주세요.", "error");
+    return;
+  }
+
+  if (actionButton.dataset.categoryAction === "rename") {
+    const replacementName = prompt("새 카테고리 이름을 입력하세요.", category.name);
+
+    if (replacementName === null) {
+      return;
+    }
+
+    actionButton.disabled = true;
+    const wasActiveCategory = currentCategory === category.name;
+    const renamedCategory = await runCloudAction(
+      () => renameMemoCategory(categoryId, replacementName),
+      {
+        loadingMessage: "카테고리 이름 변경 중",
+        successMessage: "카테고리 이름 변경 완료",
+      }
+    );
+    actionButton.disabled = false;
+
+    if (!renamedCategory) {
+      return;
+    }
+
+    if (wasActiveCategory) {
+      currentCategory = renamedCategory.name;
+    }
+
+    renderMemoCategoryControls();
+    refreshScreen();
+    renderCategoryManagerList();
+    setCategoryManagerStatus(
+      `“${category.name}”을 “${renamedCategory.name}”으로 변경했습니다.`,
+      "success"
+    );
+    return;
+  }
+
+  if (actionButton.dataset.categoryAction !== "delete") {
+    return;
+  }
+
+  const affectedMemoCount = getMemos().filter(
+    (memo) => memo.category === category.name
+  ).length;
+  const shouldDelete = confirm(
+    `“${category.name}” 카테고리를 삭제할까요?\n\n` +
+    `연결된 메모 ${affectedMemoCount}개는 삭제되지 않고 ‘미분류’로 이동합니다.`
+  );
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  actionButton.disabled = true;
+  const wasActiveCategory = currentCategory === category.name;
+  const result = await runCloudAction(
+    () => deleteMemoCategory(categoryId),
+    {
+      loadingMessage: "카테고리 삭제 중",
+      successMessage: "카테고리 삭제 완료",
+    }
+  );
+  actionButton.disabled = false;
+
+  if (!result) {
+    return;
+  }
+
+  if (wasActiveCategory) {
+    currentCategory = result.affectedMemoCount > 0
+      ? FALLBACK_MEMO_CATEGORY
+      : "전체";
+  }
+
+  renderMemoCategoryControls();
+  refreshScreen();
+  renderCategoryManagerList();
+  setCategoryManagerStatus(
+    result.affectedMemoCount > 0
+      ? `“${category.name}”을 삭제하고 메모 ${result.affectedMemoCount}개를 ‘미분류’로 옮겼습니다.`
+      : `“${category.name}” 카테고리를 삭제했습니다.`,
+    "success"
+  );
+}
+
+function handleCategoryManagerModalClick(event) {
+  if (event.target.closest("[data-category-close='true']")) {
+    closeCategoryManager();
+  }
+}
+
 function isNetworkCloudError(error) {
   const message = String(error && error.message ? error.message : "");
 
@@ -940,8 +1270,16 @@ function translateCloudError(error) {
     return "다른 기기에서 이 메모가 먼저 수정되었습니다.";
   }
 
+  if (/relation .*memo_categories.* does not exist/i.test(message)) {
+    return "Supabase 카테고리 설정이 필요합니다. 05_create_memo_categories.sql을 먼저 실행하세요.";
+  }
+
   if (code === "42P01" || /relation .*memos.* does not exist/i.test(message)) {
-    return "Supabase에 memos 테이블이 없습니다. SQL 실행 여부를 확인하세요.";
+    return "Supabase에 필요한 테이블이 없습니다. v4.5 Supabase SQL 설정을 확인하세요.";
+  }
+
+  if (code === "42883" && /memo_category/i.test(message)) {
+    return "카테고리 변경용 Supabase 함수가 없습니다. v4.5 SQL을 다시 실행하세요.";
   }
 
   if (code === "42501" || /row-level security|permission denied/i.test(message)) {
@@ -999,7 +1337,9 @@ async function loadCloudMemosForSession(session, options = {}) {
 
   if (!userId) {
     clearMemoCache();
+    clearMemoCategoryCache();
     currentCloudUserId = "";
+    renderMemoCategoryControls();
     refreshScreen();
     setCloudStatus("로그인 필요", "error");
     return null;
@@ -1034,11 +1374,13 @@ async function loadCloudMemosForSession(session, options = {}) {
 
     try {
       await loadMemosFromCloud();
+      await loadMemoCategoriesFromCloud();
 
       if (sequence !== cloudLoadSequence || currentCloudUserId !== userId) {
         return null;
       }
 
+      renderMemoCategoryControls();
       refreshScreen();
       refreshOpenDetailFromCache();
       refreshLegacyMigrationPanel();
@@ -1107,6 +1449,7 @@ async function runCloudAction(action, options = {}) {
 
   try {
     const result = await action();
+    renderMemoCategoryControls();
     refreshScreen();
     refreshOpenDetailFromCache();
     refreshLegacyMigrationPanel();
@@ -2268,6 +2611,17 @@ function handleGuideToggleClick() {
 
 
 function bindEvents() {
+  categoryTabs?.addEventListener("click", handleCategoryClick);
+  openCategoryManagerButton?.addEventListener("click", openCategoryManager);
+  closeCategoryManagerButton?.addEventListener("click", closeCategoryManager);
+  categoryCreateForm?.addEventListener("submit", (event) => {
+    void handleCategoryCreateSubmit(event);
+  });
+  categoryManagerList?.addEventListener("click", (event) => {
+    void handleCategoryManagerListClick(event);
+  });
+  categoryManagerModal?.addEventListener("click", handleCategoryManagerModalClick);
+
   memoForm.addEventListener("submit", handleFormSubmit);
   memoForm.addEventListener("input", updateEditorDirtyState);
   memoForm.addEventListener("change", updateEditorDirtyState);
@@ -2276,7 +2630,6 @@ function bindEvents() {
   trashList?.addEventListener("click", (event) => {
     void handleTrashListClick(event);
   });
-  categoryTabs.addEventListener("click", handleCategoryClick);
   searchInput.addEventListener("input", handleSearchInput);
   sortInput.addEventListener("change", handleSortChange);
   projectFilterInput.addEventListener("change", handleProjectFilterChange);
@@ -2319,12 +2672,16 @@ function bindEvents() {
   appMenuCloseButton.addEventListener("click", closeAppMenu);
   appMenuBackdrop.addEventListener("click", closeAppMenu);
   openTrashButton?.addEventListener("click", handleOpenTrashClick);
-
   window.addEventListener("beforeunload", handleBeforeUnload);
   window.addEventListener("solonote-before-logout", handleBeforeLogout);
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") {
+      return;
+    }
+
+    if (categoryManagerModal && !categoryManagerModal.hidden) {
+      closeCategoryManager();
       return;
     }
 
@@ -2377,6 +2734,8 @@ setDraftSaveStatus(
   "ready"
 );
 clearMemoCache();
+clearMemoCategoryCache();
+renderMemoCategoryControls();
 refreshScreen();
 refreshLegacyMigrationPanel();
 
@@ -2415,6 +2774,8 @@ window.addEventListener("solonote-auth-changed", (event) => {
     cloudLoadSequence += 1;
     currentCloudUserId = "";
     clearMemoCache();
+    clearMemoCategoryCache();
+    renderMemoCategoryControls();
     refreshScreen();
     setCloudStatus("비밀번호 재설정 중", "loading");
     return;
@@ -2427,7 +2788,10 @@ window.addEventListener("solonote-auth-changed", (event) => {
     recoverableDraft = null;
     hideDraftRecoveryBanner();
     clearMemoCache();
+    clearMemoCategoryCache();
     closeDetailModal();
+    closeCategoryManager();
+    renderMemoCategoryControls();
     refreshScreen();
     setCloudStatus("로그인 필요", "error");
     return;
@@ -2480,4 +2844,3 @@ window.addEventListener("solonote-auth-changed", (event) => {
     showMemoListError(message);
   }
 })();
-

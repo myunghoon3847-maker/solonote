@@ -2,6 +2,21 @@ const LEGACY_STORAGE_KEY = "solonote_memos_v1";
 
 let memoCache = [];
 let cloudMemosLoaded = false;
+let memoCategoryCache = [];
+let cloudMemoCategoriesLoaded = false;
+
+const DEFAULT_MEMO_CATEGORIES = Object.freeze(["업무", "아이디어", "일상"]);
+const COMPATIBILITY_MEMO_CATEGORIES = Object.freeze(["할 일", "보관"]);
+const FALLBACK_MEMO_CATEGORY = "미분류";
+const MAX_MEMO_CATEGORY_LENGTH = 20;
+const RESERVED_MEMO_CATEGORY_NAMES = new Set([
+  "전체",
+  "중요",
+  "할 일",
+  "보관",
+  "휴지통",
+  FALLBACK_MEMO_CATEGORY,
+]);
 
 
 class MemoConflictError extends Error {
@@ -94,20 +109,17 @@ function normalizeProject(project) {
   return typeof project === "string" ? project.trim() : "";
 }
 
-const ALLOWED_MEMO_CATEGORIES = new Set([
-  "업무",
-  "아이디어",
-  "할 일",
-  "일상",
-  "보관",
-]);
-
 function normalizeCategory(category) {
   if (category === "프로젝트") {
     return "업무";
   }
 
-  return ALLOWED_MEMO_CATEGORIES.has(category) ? category : "업무";
+  if (typeof category !== "string") {
+    return "업무";
+  }
+
+  const normalizedCategory = category.trim().slice(0, MAX_MEMO_CATEGORY_LENGTH);
+  return normalizedCategory || "업무";
 }
 
 function normalizeMemo(memo) {
@@ -164,8 +176,94 @@ function clearMemoCache() {
   cloudMemosLoaded = false;
 }
 
+function clearMemoCategoryCache() {
+  memoCategoryCache = [];
+  cloudMemoCategoriesLoaded = false;
+}
+
 function hasLoadedCloudMemos() {
   return cloudMemosLoaded;
+}
+
+function hasLoadedCloudMemoCategories() {
+  return cloudMemoCategoriesLoaded;
+}
+
+function normalizeMemoCategoryRecord(row) {
+  return {
+    id: String(row.id),
+    name: normalizeCategory(row.name),
+    position: Number.isFinite(Number(row.position)) ? Number(row.position) : 0,
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || row.created_at || "",
+  };
+}
+
+function sortMemoCategoryCache() {
+  memoCategoryCache.sort((left, right) => {
+    const positionCompare = left.position - right.position;
+
+    if (positionCompare !== 0) {
+      return positionCompare;
+    }
+
+    return left.name.localeCompare(right.name, "ko-KR");
+  });
+}
+
+function getMemoCategories() {
+  return memoCategoryCache.map((category) => ({ ...category }));
+}
+
+function isReservedMemoCategoryName(name) {
+  return RESERVED_MEMO_CATEGORY_NAMES.has(normalizeCategory(name));
+}
+
+function validateMemoCategoryName(name, options = {}) {
+  const { excludeId = "" } = options;
+  const normalizedName = typeof name === "string" ? name.trim() : "";
+
+  if (!normalizedName) {
+    throw new Error("카테고리 이름을 입력해주세요.");
+  }
+
+  if (normalizedName.length > MAX_MEMO_CATEGORY_LENGTH) {
+    throw new Error(`카테고리 이름은 ${MAX_MEMO_CATEGORY_LENGTH}자 이하로 입력해주세요.`);
+  }
+
+  if (/\p{Cc}/u.test(normalizedName)) {
+    throw new Error("카테고리 이름에 제어 문자를 사용할 수 없습니다.");
+  }
+
+  if (isReservedMemoCategoryName(normalizedName)) {
+    throw new Error(`“${normalizedName}”은 시스템에서 사용하는 이름입니다.`);
+  }
+
+  const duplicateCategory = memoCategoryCache.find(
+    (category) =>
+      category.id !== excludeId &&
+      category.name.localeCompare(normalizedName, "ko-KR", { sensitivity: "accent" }) === 0
+  );
+
+  if (duplicateCategory) {
+    throw new Error("같은 이름의 카테고리가 이미 있습니다.");
+  }
+
+  return normalizedName;
+}
+
+function getDiscoveredMemoCategoryNames(options = {}) {
+  const { includeDefaults = false } = options;
+  const discoveredNames = memoCache
+    .map((memo) => normalizeCategory(memo.category))
+    .filter((name) => !isReservedMemoCategoryName(name));
+
+  return [
+    ...new Set([
+      ...(includeDefaults ? DEFAULT_MEMO_CATEGORIES : []),
+      ...discoveredNames,
+    ]),
+  ];
 }
 
 function getLegacyMemoCount() {
@@ -258,6 +356,194 @@ async function getCloudContext() {
     client,
     session,
     user: session.user,
+  };
+}
+
+async function fetchMemoCategories(client, userId) {
+  const { data, error } = await client
+    .from("memo_categories")
+    .select("id, name, position, created_at, updated_at")
+    .eq("user_id", userId)
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(normalizeMemoCategoryRecord);
+}
+
+async function insertMissingMemoCategories(client, userId, names, startPosition = 0) {
+  const existingNames = new Set(
+    memoCategoryCache.map((category) => category.name.toLocaleLowerCase("ko-KR"))
+  );
+  const uniqueNames = [];
+
+  names.forEach((name) => {
+    const normalizedName = normalizeCategory(name);
+    const comparisonName = normalizedName.toLocaleLowerCase("ko-KR");
+
+    if (
+      isReservedMemoCategoryName(normalizedName) ||
+      existingNames.has(comparisonName)
+    ) {
+      return;
+    }
+
+    existingNames.add(comparisonName);
+    uniqueNames.push(normalizedName);
+  });
+
+  if (uniqueNames.length === 0) {
+    return [];
+  }
+
+  const payload = uniqueNames.map((name, index) => ({
+    user_id: userId,
+    name,
+    position: startPosition + index,
+  }));
+
+  const { data, error } = await client
+    .from("memo_categories")
+    .insert(payload)
+    .select("id, name, position, created_at, updated_at");
+
+  if (error && error.code !== "23505") {
+    throw error;
+  }
+
+  return (data || []).map(normalizeMemoCategoryRecord);
+}
+
+async function loadMemoCategoriesFromCloud() {
+  const { client, user } = await getCloudContext();
+
+  memoCategoryCache = await fetchMemoCategories(client, user.id);
+
+  const discoveredNames = getDiscoveredMemoCategoryNames({
+    includeDefaults: memoCategoryCache.length === 0,
+  });
+  const nextPosition = memoCategoryCache.reduce(
+    (highestPosition, category) => Math.max(highestPosition, category.position + 1),
+    0
+  );
+
+  await insertMissingMemoCategories(
+    client,
+    user.id,
+    discoveredNames,
+    nextPosition
+  );
+
+  memoCategoryCache = await fetchMemoCategories(client, user.id);
+  sortMemoCategoryCache();
+  cloudMemoCategoriesLoaded = true;
+
+  return getMemoCategories();
+}
+
+async function addMemoCategory(name) {
+  const normalizedName = validateMemoCategoryName(name);
+  const { client, user } = await getCloudContext();
+  const nextPosition = memoCategoryCache.reduce(
+    (highestPosition, category) => Math.max(highestPosition, category.position + 1),
+    0
+  );
+
+  const { data, error } = await client
+    .from("memo_categories")
+    .insert({
+      user_id: user.id,
+      name: normalizedName,
+      position: nextPosition,
+    })
+    .select("id, name, position, created_at, updated_at")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      throw new Error("같은 이름의 카테고리가 이미 있습니다.");
+    }
+
+    throw error;
+  }
+
+  const newCategory = normalizeMemoCategoryRecord(data);
+  memoCategoryCache.push(newCategory);
+  sortMemoCategoryCache();
+  cloudMemoCategoriesLoaded = true;
+
+  return { ...newCategory };
+}
+
+async function renameMemoCategory(categoryId, name) {
+  const category = memoCategoryCache.find((item) => item.id === categoryId);
+
+  if (!category) {
+    throw new Error("변경할 카테고리를 찾지 못했습니다. 새로고침 후 다시 시도해주세요.");
+  }
+
+  const normalizedName = validateMemoCategoryName(name, { excludeId: categoryId });
+
+  if (category.name === normalizedName) {
+    return { ...category };
+  }
+
+  const { client } = await getCloudContext();
+  const { error } = await client.rpc("rename_memo_category", {
+    target_category_id: categoryId,
+    replacement_name: normalizedName,
+  });
+
+  if (error) {
+    if (error.code === "23505" || /already exists|duplicate/i.test(error.message || "")) {
+      throw new Error("같은 이름의 카테고리가 이미 있습니다.");
+    }
+
+    throw error;
+  }
+
+  memoCategoryCache = memoCategoryCache.map((item) =>
+    item.id === categoryId
+      ? { ...item, name: normalizedName, updatedAt: new Date().toISOString() }
+      : item
+  );
+  await loadMemosFromCloud();
+  sortMemoCategoryCache();
+
+  return { ...memoCategoryCache.find((item) => item.id === categoryId) };
+}
+
+async function deleteMemoCategory(categoryId) {
+  const category = memoCategoryCache.find((item) => item.id === categoryId);
+
+  if (!category) {
+    throw new Error("삭제할 카테고리를 찾지 못했습니다. 새로고침 후 다시 시도해주세요.");
+  }
+
+  if (memoCategoryCache.length <= 1) {
+    throw new Error("메모 작성을 위해 카테고리를 최소 1개는 남겨주세요.");
+  }
+
+  const { client } = await getCloudContext();
+  const { data, error } = await client.rpc("delete_memo_category", {
+    target_category_id: categoryId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const affectedMemoCount = Number(data) || 0;
+  memoCategoryCache = memoCategoryCache.filter((item) => item.id !== categoryId);
+  await loadMemosFromCloud();
+  sortMemoCategoryCache();
+
+  return {
+    deletedCategory: { ...category },
+    affectedMemoCount,
   };
 }
 
@@ -505,9 +791,10 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "3.6",
+    backupVersion: "4.5.1",
     storage: "supabase",
     exportedAt: new Date().toISOString(),
+    categories: getMemoCategories().map((category) => category.name),
     memos: memoCache,
   };
 }
@@ -522,6 +809,39 @@ function extractMemosFromBackup(backupData) {
   }
 
   throw new Error("올바른 훈노트 백업 파일이 아닙니다.");
+}
+
+function extractMemoCategoryNamesFromBackup(backupData) {
+  if (!backupData || !Array.isArray(backupData.categories)) {
+    return [];
+  }
+
+  return backupData.categories
+    .map((category) =>
+      typeof category === "string" ? category : category && category.name
+    )
+    .map((name) => normalizeCategory(name))
+    .filter((name) => !isReservedMemoCategoryName(name));
+}
+
+async function importMemoCategoriesFromBackup(backupData, client, userId) {
+  const categoryNames = extractMemoCategoryNamesFromBackup(backupData);
+
+  if (categoryNames.length === 0) {
+    return;
+  }
+
+  const nextPosition = memoCategoryCache.reduce(
+    (highestPosition, category) => Math.max(highestPosition, category.position + 1),
+    0
+  );
+
+  await insertMissingMemoCategories(
+    client,
+    userId,
+    categoryNames,
+    nextPosition
+  );
 }
 
 function normalizeTextForSignature(value) {
@@ -575,6 +895,8 @@ async function importMemosFromBackup(backupData) {
   const importedMemos = extractMemosFromBackup(backupData).map(normalizeMemo);
   const { client, user } = await getCloudContext();
 
+  await importMemoCategoriesFromBackup(backupData, client, user.id);
+
   const existingSignatures = new Set(
     memoCache.map((memo) => createMemoSignature(normalizeMemo(memo)))
   );
@@ -599,6 +921,8 @@ async function importMemosFromBackup(backupData) {
   });
 
   if (memosToInsert.length === 0) {
+    await loadMemoCategoriesFromCloud();
+
     return {
       addedCount: 0,
       skippedCount,
@@ -618,6 +942,7 @@ async function importMemosFromBackup(backupData) {
   const addedMemos = (data || []).map(mapDatabaseRowToMemo);
   memoCache = [...addedMemos, ...memoCache];
   sortCacheByUpdatedDate();
+  await loadMemoCategoriesFromCloud();
 
   return {
     addedCount: addedMemos.length,
