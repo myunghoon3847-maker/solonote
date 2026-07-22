@@ -1,0 +1,13 @@
+# Android signing secrets — never commit
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+key.properties
+local.properties
+
+# PWABuilder/Bubblewrap generated build folders
+android-project/
+.gradle/
+build/

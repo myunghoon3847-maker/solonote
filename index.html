@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>훈노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=440" />
+  <link rel="manifest" href="./manifest.json?v=450" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="훈노트" />
   <meta name="apple-mobile-web-app-title" content="훈노트" />
@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=440" />
-  <link rel="stylesheet" href="./css/style.css?v=440" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=450" />
+  <link rel="stylesheet" href="./css/style.css?v=450" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -382,8 +382,8 @@
                 <select id="categoryInput">
                   <option value="업무">업무</option>
                   <option value="아이디어">아이디어</option>
-                  <option value="할 일">할 일</option>
                   <option value="일상">일상</option>
+                  <option value="할 일">할 일</option>
                   <option value="보관">보관</option>
                 </select>
               </div>
@@ -451,9 +451,18 @@
           <button type="button" class="category-tab" data-category="중요">중요</button>
           <button type="button" class="category-tab" data-category="업무">업무</button>
           <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
-          <button type="button" class="category-tab" data-category="할 일">할 일</button>
           <button type="button" class="category-tab" data-category="일상">일상</button>
+          <button type="button" class="category-tab" data-category="할 일">할 일</button>
           <button type="button" class="category-tab" data-category="보관">보관</button>
+          <button
+            type="button"
+            id="openCategoryManagerButton"
+            class="category-manage-button"
+            aria-haspopup="dialog"
+            aria-controls="categoryManagerModal"
+          >
+            카테고리 관리
+          </button>
         </nav>
 
         <section id="filterPanel" class="filter-panel" hidden aria-label="메모 필터">
@@ -760,7 +769,7 @@
 
       <div class="menu-footer">
         <span>훈노트</span>
-        <span class="version-badge">v4.4</span>
+        <span class="version-badge">v4.5</span>
       </div>
     </aside>
 
@@ -799,14 +808,14 @@
       <p class="danger-eyebrow">되돌릴 수 없는 작업</p>
       <h2 id="accountDeletionTitle">훈노트 계정 삭제</h2>
       <p id="accountDeletionDescription" class="account-deletion-description">
-        계정을 삭제하면 모든 클라우드 메모와 체크리스트가 영구 삭제되며 복구할 수 없습니다. 서버에서 본인 확인과 데이터 연결 상태를 점검한 뒤 삭제합니다.
+        계정을 삭제하면 모든 클라우드 메모, 카테고리와 체크리스트가 영구 삭제되며 복구할 수 없습니다. 서버에서 본인 확인과 데이터 연결 상태를 점검한 뒤 삭제합니다.
       </p>
 
       <div class="account-deletion-warning" role="note">
         <strong>삭제되는 항목</strong>
         <ul>
           <li>Supabase 로그인 계정</li>
-          <li>클라우드에 저장된 모든 메모와 체크리스트</li>
+          <li>클라우드에 저장된 모든 메모, 카테고리와 체크리스트</li>
           <li>현재 기기의 훈노트 자동 저장 초안과 이전 메모</li>
         </ul>
       </div>
@@ -851,6 +860,57 @@
     </article>
   </div>
 
+  <div
+    id="categoryManagerModal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="categoryManagerTitle"
+    aria-hidden="true"
+    hidden
+  >
+    <div class="modal-backdrop" data-category-close="true"></div>
+    <article class="modal-card category-manager-card">
+      <button
+        type="button"
+        id="closeCategoryManagerButton"
+        class="close-button"
+        aria-label="카테고리 관리 닫기"
+      >
+        ×
+      </button>
+
+      <p class="category-manager-eyebrow">메모 분류</p>
+      <h2 id="categoryManagerTitle">카테고리 관리</h2>
+      <p class="category-manager-description">
+        내 업무 방식에 맞게 카테고리를 추가하거나 이름을 바꿀 수 있습니다.
+      </p>
+
+      <form id="categoryCreateForm" class="category-create-form">
+        <label for="newCategoryInput">새 카테고리</label>
+        <div class="category-create-row">
+          <input
+            id="newCategoryInput"
+            type="text"
+            maxlength="20"
+            autocomplete="off"
+            placeholder="예: 고객 업무"
+          />
+          <button type="submit" id="addCategoryButton" class="primary-button compact-button">
+            추가
+          </button>
+        </div>
+      </form>
+
+      <p id="categoryManagerStatus" class="category-manager-status" aria-live="polite"></p>
+      <div id="categoryManagerList" class="category-manager-list"></div>
+
+      <p class="category-manager-note">
+        카테고리를 삭제해도 메모는 삭제되지 않고 ‘미분류’로 이동합니다.
+      </p>
+    </article>
+  </div>
+
   <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle" aria-hidden="true" hidden>
     <div class="modal-backdrop" data-close="true"></div>
     <article class="modal-card">
@@ -874,12 +934,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=440"></script>
-  <script src="./js/auth.js?v=440"></script>
-  <script src="./js/storage.js?v=440"></script>
-  <script src="./js/ui.js?v=440"></script>
-  <script src="./js/app.js?v=440"></script>
-  <script src="./js/account.js?v=440"></script>
-  <script src="./js/pwa.js?v=440"></script>
+  <script src="./js/config.js?v=450"></script>
+  <script src="./js/auth.js?v=450"></script>
+  <script src="./js/storage.js?v=450"></script>
+  <script src="./js/ui.js?v=450"></script>
+  <script src="./js/app.js?v=450"></script>
+  <script src="./js/account.js?v=450"></script>
+  <script src="./js/pwa.js?v=450"></script>
 </body>
 </html>
