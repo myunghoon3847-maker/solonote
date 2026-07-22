@@ -6,7 +6,8 @@ let memoCategoryCache = [];
 let cloudMemoCategoriesLoaded = false;
 
 const DEFAULT_MEMO_CATEGORIES = Object.freeze(["업무", "아이디어", "일상"]);
-const COMPATIBILITY_MEMO_CATEGORIES = Object.freeze(["할 일", "보관"]);
+const LEGACY_TASK_MEMO_CATEGORY = "할 일";
+const COMPATIBILITY_MEMO_CATEGORIES = Object.freeze(["보관", "미분류"]);
 const FALLBACK_MEMO_CATEGORY = "미분류";
 const MAX_MEMO_CATEGORY_LENGTH = 20;
 const RESERVED_MEMO_CATEGORY_NAMES = new Set([
@@ -119,6 +120,11 @@ function normalizeCategory(category) {
   }
 
   const normalizedCategory = category.trim().slice(0, MAX_MEMO_CATEGORY_LENGTH);
+
+  if (normalizedCategory === LEGACY_TASK_MEMO_CATEGORY) {
+    return FALLBACK_MEMO_CATEGORY;
+  }
+
   return normalizedCategory || "업무";
 }
 

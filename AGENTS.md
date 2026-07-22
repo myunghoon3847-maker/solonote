@@ -25,10 +25,10 @@
 
 ## 현재 기준
 
-- 기준 버전: v4.5.1
+- 기준 버전: v4.5.2
 - 프런트엔드: HTML, CSS, JavaScript
 - 인증·DB: Supabase
 - 배포: GitHub Pages, PWA, PWABuilder TWA
 - Android 패키지명: `com.hooncompany.hoonnote`
-- 최신 테스트 문서: `TEST_CHECKLIST_v4.5.1.md`
-- 최신 배포 문서: `RELEASE_CHECKLIST_v4.5.1.md`
+- 최신 테스트 문서: `TEST_CHECKLIST_v4.5.2.md`
+- 최신 배포 문서: `RELEASE_CHECKLIST_v4.5.2.md`

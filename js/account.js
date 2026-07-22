@@ -270,7 +270,7 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.5.1",
+            "X-Client-Info": "hoonnote-v4.5.2",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({

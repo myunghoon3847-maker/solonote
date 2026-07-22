@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>훈노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=451" />
+  <link rel="manifest" href="./manifest.json?v=452" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="훈노트" />
   <meta name="apple-mobile-web-app-title" content="훈노트" />
@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=451" />
-  <link rel="stylesheet" href="./css/style.css?v=451" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=452" />
+  <link rel="stylesheet" href="./css/style.css?v=452" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -383,8 +383,8 @@
                   <option value="업무">업무</option>
                   <option value="아이디어">아이디어</option>
                   <option value="일상">일상</option>
-                  <option value="할 일">할 일</option>
                   <option value="보관">보관</option>
+                  <option value="미분류">미분류</option>
                 </select>
               </div>
             </div>
@@ -463,12 +463,12 @@
 
           <nav id="categoryTabs" class="category-tabs main-category-tabs" aria-label="메모 카테고리">
             <button type="button" class="category-tab active" data-category="전체">전체</button>
-            <button type="button" class="category-tab" data-category="중요">중요</button>
+            <button type="button" class="category-tab protected-category-tab" data-category="중요" title="삭제할 수 없는 기본 카테고리">중요</button>
             <button type="button" class="category-tab" data-category="업무">업무</button>
             <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
             <button type="button" class="category-tab" data-category="일상">일상</button>
-            <button type="button" class="category-tab" data-category="할 일">할 일</button>
-            <button type="button" class="category-tab" data-category="보관">보관</button>
+            <button type="button" class="category-tab protected-category-tab" data-category="보관" title="삭제할 수 없는 기본 카테고리">보관</button>
+            <button type="button" class="category-tab protected-category-tab" data-category="미분류" title="삭제할 수 없는 기본 카테고리">미분류</button>
           </nav>
         </section>
 
@@ -776,7 +776,7 @@
 
       <div class="menu-footer">
         <span>훈노트</span>
-        <span class="version-badge">v4.5.1</span>
+        <span class="version-badge">v4.5.2</span>
       </div>
     </aside>
 
@@ -913,7 +913,7 @@
       <div id="categoryManagerList" class="category-manager-list"></div>
 
       <p class="category-manager-note">
-        카테고리를 삭제해도 메모는 삭제되지 않고 ‘미분류’로 이동합니다.
+        중요·보관·미분류는 삭제할 수 없는 기본 카테고리입니다. 다른 카테고리를 삭제해도 메모는 삭제되지 않고 ‘미분류’로 이동합니다.
       </p>
     </article>
   </div>
@@ -941,12 +941,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=451"></script>
-  <script src="./js/auth.js?v=451"></script>
-  <script src="./js/storage.js?v=451"></script>
-  <script src="./js/ui.js?v=451"></script>
-  <script src="./js/app.js?v=451"></script>
-  <script src="./js/account.js?v=451"></script>
-  <script src="./js/pwa.js?v=451"></script>
+  <script src="./js/config.js?v=452"></script>
+  <script src="./js/auth.js?v=452"></script>
+  <script src="./js/storage.js?v=452"></script>
+  <script src="./js/ui.js?v=452"></script>
+  <script src="./js/app.js?v=452"></script>
+  <script src="./js/account.js?v=452"></script>
+  <script src="./js/pwa.js?v=452"></script>
 </body>
 </html>

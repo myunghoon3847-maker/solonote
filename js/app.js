@@ -99,6 +99,7 @@ let recoverableDraft = null;
 const DRAFT_STORAGE_PREFIX = "solonote_editor_draft_v4";
 const DRAFT_AUTO_SAVE_DELAY_MS = 700;
 const DRAFT_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
+const PROTECTED_MEMO_CATEGORY_NAMES = new Set(["중요", "보관", "미분류"]);
 
 let currentTaskHubView = "open";
 let currentAppView = "notes";
@@ -747,16 +748,7 @@ function getManagedMemoCategoryNames() {
 }
 
 function getCompatibilityMemoCategoryNames() {
-  const categoryNames = [...COMPATIBILITY_MEMO_CATEGORIES];
-  const hasUncategorizedMemo = getMemos().some(
-    (memo) => memo.category === FALLBACK_MEMO_CATEGORY
-  );
-
-  if (hasUncategorizedMemo || currentCategory === FALLBACK_MEMO_CATEGORY) {
-    categoryNames.push(FALLBACK_MEMO_CATEGORY);
-  }
-
-  return categoryNames;
+  return [...COMPATIBILITY_MEMO_CATEGORIES];
 }
 
 function createCategoryTabButton(category) {
@@ -765,6 +757,12 @@ function createCategoryTabButton(category) {
   button.className = "category-tab";
   button.dataset.category = category;
   button.textContent = category;
+
+  if (PROTECTED_MEMO_CATEGORY_NAMES.has(category)) {
+    button.classList.add("protected-category-tab");
+    button.title = "삭제할 수 없는 기본 카테고리";
+  }
+
   return button;
 }
 

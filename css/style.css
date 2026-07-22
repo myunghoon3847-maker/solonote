@@ -831,6 +831,23 @@ button:disabled {
   color: #ffffff;
 }
 
+.category-tab.protected-category-tab {
+  border-color: #bae6fd;
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.category-tab.protected-category-tab:hover {
+  border-color: #7dd3fc;
+  background: #bae6fd;
+}
+
+.category-tab.protected-category-tab.active {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: #ffffff;
+}
+
 .category-manage-button {
   flex: 0 0 auto;
   min-height: 34px;
