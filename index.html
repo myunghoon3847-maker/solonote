@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>훈노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=452" />
+  <link rel="manifest" href="./manifest.json?v=453" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="훈노트" />
   <meta name="apple-mobile-web-app-title" content="훈노트" />
@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=452" />
-  <link rel="stylesheet" href="./css/style.css?v=452" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=453" />
+  <link rel="stylesheet" href="./css/style.css?v=453" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -348,6 +348,7 @@
             <input
               id="titleInput"
               type="text"
+              maxlength="300"
               placeholder="메모 제목"
               autocomplete="off"
             />
@@ -356,6 +357,7 @@
             <textarea
               id="contentInput"
               rows="7"
+              maxlength="200000"
               placeholder="내용을 입력하세요."
             ></textarea>
 
@@ -365,6 +367,7 @@
                 <input
                   id="projectInput"
                   type="text"
+                  maxlength="100"
                   placeholder="선택 입력"
                   autocomplete="off"
                 />
@@ -398,6 +401,7 @@
                 <input
                   id="taskInput"
                   type="text"
+                  maxlength="500"
                   placeholder="할 일을 입력하세요."
                   autocomplete="off"
                 />
@@ -776,7 +780,7 @@
 
       <div class="menu-footer">
         <span>훈노트</span>
-        <span class="version-badge">v4.5.2</span>
+        <span class="version-badge">v4.5.3</span>
       </div>
     </aside>
 
@@ -941,12 +945,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=452"></script>
-  <script src="./js/auth.js?v=452"></script>
-  <script src="./js/storage.js?v=452"></script>
-  <script src="./js/ui.js?v=452"></script>
-  <script src="./js/app.js?v=452"></script>
-  <script src="./js/account.js?v=452"></script>
-  <script src="./js/pwa.js?v=452"></script>
+  <script src="./js/config.js?v=453"></script>
+  <script src="./js/auth.js?v=453"></script>
+  <script src="./js/storage.js?v=453"></script>
+  <script src="./js/ui.js?v=453"></script>
+  <script src="./js/app.js?v=453"></script>
+  <script src="./js/account.js?v=453"></script>
+  <script src="./js/pwa.js?v=453"></script>
 </body>
 </html>

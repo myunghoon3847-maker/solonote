@@ -10,6 +10,15 @@ const LEGACY_TASK_MEMO_CATEGORY = "할 일";
 const COMPATIBILITY_MEMO_CATEGORIES = Object.freeze(["보관", "미분류"]);
 const FALLBACK_MEMO_CATEGORY = "미분류";
 const MAX_MEMO_CATEGORY_LENGTH = 20;
+const MAX_MEMO_TITLE_LENGTH = 300;
+const MAX_MEMO_CONTENT_LENGTH = 200000;
+const MAX_MEMO_PROJECT_LENGTH = 100;
+const MAX_MEMO_TASK_TEXT_LENGTH = 500;
+const MAX_MEMO_TASKS = 200;
+const MAX_BACKUP_MEMOS = 5000;
+const MAX_BACKUP_CATEGORIES = 100;
+const MAX_BACKUP_TOTAL_TASKS = 20000;
+const MAX_BACKUP_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const RESERVED_MEMO_CATEGORY_NAMES = new Set([
   "전체",
   "중요",
@@ -89,8 +98,13 @@ function createSafeId(prefix) {
 }
 
 function normalizeTask(task) {
+  const providedId = task && task.id ? String(task.id) : "";
+  const safeId = /^[A-Za-z0-9_-]{1,128}$/.test(providedId)
+    ? providedId
+    : createSafeId("task");
+
   return {
-    id: task && task.id ? String(task.id) : createSafeId("task"),
+    id: safeId,
     text: task && typeof task.text === "string" ? task.text : "",
     done: Boolean(task && task.done),
   };
@@ -101,9 +115,24 @@ function normalizeTasks(tasks) {
     return [];
   }
 
+  const seenIds = new Set();
+
   return tasks
     .map(normalizeTask)
-    .filter((task) => task.text.trim().length > 0);
+    .filter((task) => task.text.trim().length > 0)
+    .map((task) => {
+      if (!seenIds.has(task.id)) {
+        seenIds.add(task.id);
+        return task;
+      }
+
+      const replacementTask = {
+        ...task,
+        id: createSafeId("task"),
+      };
+      seenIds.add(replacementTask.id);
+      return replacementTask;
+    });
 }
 
 function normalizeProject(project) {
@@ -553,7 +582,62 @@ async function deleteMemoCategory(categoryId) {
   };
 }
 
+function validateMemoForWrite(memoData) {
+  const stringFields = [
+    ["제목", memoData.title, MAX_MEMO_TITLE_LENGTH],
+    ["내용", memoData.content, MAX_MEMO_CONTENT_LENGTH],
+    ["프로젝트", memoData.project, MAX_MEMO_PROJECT_LENGTH],
+    ["카테고리", memoData.category, MAX_MEMO_CATEGORY_LENGTH],
+  ];
+
+  stringFields.forEach(([label, value, maxLength]) => {
+    if (value !== undefined && value !== null && typeof value !== "string") {
+      throw new Error(`${label} 형식이 올바르지 않습니다.`);
+    }
+
+    if (typeof value === "string" && value.length > maxLength) {
+      throw new Error(`${label}은 ${maxLength}자 이하로 입력해주세요.`);
+    }
+
+    if (typeof value === "string" && value.includes("\u0000")) {
+      throw new Error(`${label}에 사용할 수 없는 문자가 포함되어 있습니다.`);
+    }
+  });
+
+  if (memoData.tasks !== undefined && !Array.isArray(memoData.tasks)) {
+    throw new Error("체크리스트 형식이 올바르지 않습니다.");
+  }
+
+  const tasks = Array.isArray(memoData.tasks) ? memoData.tasks : [];
+
+  if (tasks.length > MAX_MEMO_TASKS) {
+    throw new Error(`체크리스트는 메모 하나에 ${MAX_MEMO_TASKS}개까지 저장할 수 있습니다.`);
+  }
+
+  tasks.forEach((task, index) => {
+    if (!task || typeof task !== "object" || Array.isArray(task)) {
+      throw new Error(`${index + 1}번째 체크리스트 형식이 올바르지 않습니다.`);
+    }
+
+    if (typeof task.text !== "string") {
+      throw new Error(`${index + 1}번째 체크리스트 내용 형식이 올바르지 않습니다.`);
+    }
+
+    if (task.text.length > MAX_MEMO_TASK_TEXT_LENGTH) {
+      throw new Error(
+        `체크리스트 내용은 ${MAX_MEMO_TASK_TEXT_LENGTH}자 이하로 입력해주세요.`
+      );
+    }
+
+    if (task.text.includes("\u0000")) {
+      throw new Error("체크리스트에 사용할 수 없는 문자가 포함되어 있습니다.");
+    }
+  });
+}
+
 function toDatabasePayload(memoData, userId) {
+  validateMemoForWrite(memoData);
+
   return {
     user_id: userId,
     title: typeof memoData.title === "string" ? memoData.title : "",
@@ -574,11 +658,12 @@ function sortCacheByUpdatedDate() {
 }
 
 async function loadMemosFromCloud() {
-  const { client } = await getCloudContext();
+  const { client, user } = await getCloudContext();
 
   const { data, error } = await client
     .from("memos")
     .select("*")
+    .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -593,7 +678,8 @@ async function loadMemosFromCloud() {
     const { error: migrationError } = await client
       .from("memos")
       .update({ category: "업무" })
-      .eq("category", "프로젝트");
+      .eq("category", "프로젝트")
+      .eq("user_id", user.id);
 
     if (migrationError) {
       console.warn("기존 프로젝트 카테고리를 업무로 변경하지 못했습니다.", migrationError);
@@ -797,7 +883,7 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "4.5.1",
+    backupVersion: "4.5.3",
     storage: "supabase",
     exportedAt: new Date().toISOString(),
     categories: getMemoCategories().map((category) => category.name),
@@ -828,6 +914,131 @@ function extractMemoCategoryNamesFromBackup(backupData) {
     )
     .map((name) => normalizeCategory(name))
     .filter((name) => !isReservedMemoCategoryName(name));
+}
+
+function validateBackupText(value, fieldLabel, maxLength, memoIndex) {
+  if (value === undefined || value === null) {
+    return;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 ${fieldLabel} 형식이 올바르지 않습니다.`);
+  }
+
+  if (value.length > maxLength) {
+    throw new Error(
+      `백업 파일의 ${memoIndex + 1}번째 메모 ${fieldLabel}이 허용 길이(${maxLength}자)를 초과합니다.`
+    );
+  }
+
+  if (value.includes("\u0000")) {
+    throw new Error(
+      `백업 파일의 ${memoIndex + 1}번째 메모 ${fieldLabel}에 사용할 수 없는 문자가 포함되어 있습니다.`
+    );
+  }
+}
+
+function validateBackupTimestamp(value, fieldLabel, memoIndex) {
+  if (value === undefined || value === null || value === "") {
+    return;
+  }
+
+  if (
+    typeof value !== "string" ||
+    value.length > 64 ||
+    Number.isNaN(new Date(value).getTime())
+  ) {
+    throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 ${fieldLabel} 형식이 올바르지 않습니다.`);
+  }
+}
+
+function validateBackupForImport(backupData, importedMemos) {
+  if (importedMemos.length > MAX_BACKUP_MEMOS) {
+    throw new Error(`백업 파일은 한 번에 메모 ${MAX_BACKUP_MEMOS}개까지 복원할 수 있습니다.`);
+  }
+
+  if (
+    backupData &&
+    Array.isArray(backupData.categories) &&
+    backupData.categories.length > MAX_BACKUP_CATEGORIES
+  ) {
+    throw new Error(`백업 파일은 카테고리 ${MAX_BACKUP_CATEGORIES}개까지 복원할 수 있습니다.`);
+  }
+
+  if (backupData && Array.isArray(backupData.categories)) {
+    backupData.categories.forEach((category, categoryIndex) => {
+      const name =
+        typeof category === "string"
+          ? category
+          : category && typeof category === "object"
+            ? category.name
+            : undefined;
+
+      if (typeof name !== "string" || !name.trim()) {
+        throw new Error(`백업 파일의 ${categoryIndex + 1}번째 카테고리 형식이 올바르지 않습니다.`);
+      }
+
+      if (name.trim().length > MAX_MEMO_CATEGORY_LENGTH || name.includes("\u0000")) {
+        throw new Error(`백업 파일의 ${categoryIndex + 1}번째 카테고리 이름이 올바르지 않습니다.`);
+      }
+    });
+  }
+
+  let totalTaskCount = 0;
+
+  importedMemos.forEach((memo, memoIndex) => {
+    if (!memo || typeof memo !== "object" || Array.isArray(memo)) {
+      throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 형식이 올바르지 않습니다.`);
+    }
+
+    validateBackupText(memo.title, "제목", MAX_MEMO_TITLE_LENGTH, memoIndex);
+    validateBackupText(memo.content, "내용", MAX_MEMO_CONTENT_LENGTH, memoIndex);
+    validateBackupText(memo.project, "프로젝트", MAX_MEMO_PROJECT_LENGTH, memoIndex);
+    validateBackupText(memo.category, "카테고리", MAX_MEMO_CATEGORY_LENGTH, memoIndex);
+    validateBackupTimestamp(
+      memo.updatedAt || memo.updated_at,
+      "수정 시각",
+      memoIndex
+    );
+    validateBackupTimestamp(
+      memo.createdAt || memo.created_at,
+      "생성 시각",
+      memoIndex
+    );
+
+    if (memo.tasks !== undefined && !Array.isArray(memo.tasks)) {
+      throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 체크리스트 형식이 올바르지 않습니다.`);
+    }
+
+    const tasks = Array.isArray(memo.tasks) ? memo.tasks : [];
+
+    if (tasks.length > MAX_MEMO_TASKS) {
+      throw new Error(
+        `백업 파일의 ${memoIndex + 1}번째 메모는 체크리스트 ${MAX_MEMO_TASKS}개까지 복원할 수 있습니다.`
+      );
+    }
+
+    totalTaskCount += tasks.length;
+
+    if (totalTaskCount > MAX_BACKUP_TOTAL_TASKS) {
+      throw new Error(`백업 파일은 체크리스트를 총 ${MAX_BACKUP_TOTAL_TASKS}개까지 복원할 수 있습니다.`);
+    }
+
+    tasks.forEach((task, taskIndex) => {
+      if (!task || typeof task !== "object" || Array.isArray(task)) {
+        throw new Error(
+          `백업 파일의 ${memoIndex + 1}번째 메모 ${taskIndex + 1}번째 체크리스트 형식이 올바르지 않습니다.`
+        );
+      }
+
+      validateBackupText(
+        task.text,
+        `${taskIndex + 1}번째 체크리스트`,
+        MAX_MEMO_TASK_TEXT_LENGTH,
+        memoIndex
+      );
+    });
+  });
 }
 
 async function importMemoCategoriesFromBackup(backupData, client, userId) {
@@ -898,7 +1109,9 @@ function createMemoSignature(memo) {
 }
 
 async function importMemosFromBackup(backupData) {
-  const importedMemos = extractMemosFromBackup(backupData).map(normalizeMemo);
+  const rawImportedMemos = extractMemosFromBackup(backupData);
+  validateBackupForImport(backupData, rawImportedMemos);
+  const importedMemos = rawImportedMemos.map(normalizeMemo);
   const { client, user } = await getCloudContext();
 
   await importMemoCategoriesFromBackup(backupData, client, user.id);

@@ -1964,7 +1964,7 @@ function renderTaskDraftList() {
       (task) => `
         <li class="task-draft-item">
           <span>${escapeHtml(task.text)}</span>
-          <button type="button" class="task-remove-button" data-task-id="${task.id}" aria-label="체크리스트 항목 삭제">삭제</button>
+          <button type="button" class="task-remove-button" data-task-id="${escapeHtml(task.id)}" aria-label="체크리스트 항목 삭제">삭제</button>
         </li>
       `
     )
@@ -1987,6 +1987,11 @@ function handleAddTask() {
   if (!text) {
     alert("추가할 할 일을 입력해주세요.");
     taskInput.focus();
+    return;
+  }
+
+  if (draftTasks.length >= MAX_MEMO_TASKS) {
+    alert(`체크리스트는 메모 하나에 ${MAX_MEMO_TASKS}개까지 추가할 수 있습니다.`);
     return;
   }
 
@@ -2529,6 +2534,12 @@ function handleRestoreButtonClick() {
 
     if (!file.name.toLowerCase().endsWith(".json")) {
       alert("JSON 백업 파일만 복원할 수 있습니다.");
+      fileInput.remove();
+      return;
+    }
+
+    if (file.size > MAX_BACKUP_FILE_SIZE_BYTES) {
+      alert("백업 파일은 10MB 이하만 복원할 수 있습니다.");
       fileInput.remove();
       return;
     }

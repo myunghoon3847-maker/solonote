@@ -55,8 +55,8 @@ function renderTaskChecklistHtml(memo) {
                 <button
                   type="button"
                   class="task-toggle-button"
-                  data-memo-id="${memo.id}"
-                  data-task-id="${task.id}"
+                  data-memo-id="${escapeHtml(memo.id)}"
+                  data-task-id="${escapeHtml(task.id)}"
                   aria-label="${task.done ? "미완료로 변경" : "완료 처리"}: ${escapeHtml(task.text)}"
                   aria-pressed="${task.done ? "true" : "false"}"
                 >
@@ -172,8 +172,8 @@ function renderTaskHub(items, view = "open") {
             type="button"
             class="task-hub-check-button"
             data-task-action="toggle"
-            data-memo-id="${item.memoId}"
-            data-task-id="${task.id}"
+            data-memo-id="${escapeHtml(item.memoId)}"
+            data-task-id="${escapeHtml(task.id)}"
             aria-label="${task.done ? "할 일 미완료로 변경" : "할 일 완료 처리"}: ${safeTaskText}"
             aria-pressed="${task.done ? "true" : "false"}"
           >
@@ -184,7 +184,7 @@ function renderTaskHub(items, view = "open") {
             type="button"
             class="task-hub-main-link"
             data-task-action="open-memo"
-            data-memo-id="${item.memoId}"
+            data-memo-id="${escapeHtml(item.memoId)}"
             aria-label="원본 메모 열기: ${safeMemoTitle}"
           >
             <span class="task-hub-task-text">${safeTaskText}</span>
@@ -237,7 +237,7 @@ function renderMemoList(memos) {
       const projectChip = safeProject ? `<span class="project-chip">${safeProject}</span>` : "";
 
       return `
-        <button type="button" class="memo-card" data-id="${memo.id}">
+        <button type="button" class="memo-card" data-id="${escapeHtml(memo.id)}">
           <div class="memo-card-top">
             <div class="memo-card-badges">
               <span class="category-chip">${safeCategory}</span>
@@ -290,11 +290,11 @@ function renderTrashList(memos) {
           : "";
 
       return `
-        <article class="trash-card" data-id="${memo.id}">
+        <article class="trash-card" data-id="${escapeHtml(memo.id)}">
           <button
             type="button"
             class="trash-card-main"
-            data-trash-open="${memo.id}"
+            data-trash-open="${escapeHtml(memo.id)}"
             aria-label="${safeTitle} 상세 보기"
           >
             <div class="trash-card-top">
@@ -313,7 +313,7 @@ function renderTrashList(memos) {
               type="button"
               class="secondary-button compact-button"
               data-trash-action="restore"
-              data-id="${memo.id}"
+              data-id="${escapeHtml(memo.id)}"
             >
               복원
             </button>
@@ -321,7 +321,7 @@ function renderTrashList(memos) {
               type="button"
               class="danger-button compact-button"
               data-trash-action="permanent-delete"
-              data-id="${memo.id}"
+              data-id="${escapeHtml(memo.id)}"
             >
               영구 삭제
             </button>
