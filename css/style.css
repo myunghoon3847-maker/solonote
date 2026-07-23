@@ -30,6 +30,8 @@
 html {
   color-scheme: light;
   background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -56,6 +58,7 @@ select {
 
 button {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 button:focus-visible,
@@ -341,22 +344,53 @@ button:disabled {
 
 .brand-block {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
   min-width: 0;
 }
 
-.brand-block h1 {
-  margin: 0;
-  font-size: 21px;
-  letter-spacing: -0.04em;
+.brand-home-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 4px 6px 4px 2px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.brand-block p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
+.brand-home-button:hover {
+  background: var(--surface-soft);
+}
+
+.brand-home-button:active {
+  transform: translateY(1px);
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.2);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -595,6 +629,26 @@ button:disabled {
   display: grid;
   align-content: start;
   gap: 7px;
+}
+
+.category-field-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.category-inline-manage-button {
+  min-height: 30px;
+  padding: 0 7px;
+  color: var(--primary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.category-inline-manage-button:hover {
+  background: var(--primary-soft);
+  color: #1d4ed8;
 }
 
 .checklist-editor {
@@ -985,12 +1039,6 @@ button:disabled {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 12px;
-}
-
-.trash-back-button {
-  justify-self: start;
-  padding-inline: 0;
-  color: var(--primary);
 }
 
 .trash-notice {
@@ -1828,12 +1876,15 @@ button:disabled {
     --header-height: 58px;
   }
 
-  .brand-block h1 {
-    font-size: 19px;
+  .brand-name {
+    font-size: 18px;
   }
 
-  .brand-block p {
-    display: none;
+  .brand-mark {
+    width: 29px;
+    height: 29px;
+    border-radius: 8px;
+    font-size: 13px;
   }
 
   .cloud-sync-status {
@@ -2220,5 +2271,121 @@ body[data-app-view="trash"] .primary-view-tabs {
 @media (max-width: 420px) {
   .legal-support-links {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* v4.5.5 모바일 확대 방지 및 입력 안정화 */
+@media (max-width: 720px) {
+  .login-form input,
+  .login-form textarea,
+  .memo-form input,
+  .memo-form textarea,
+  .memo-form select,
+  .filter-panel select,
+  .search-box input,
+  .category-create-row input {
+    font-size: 16px;
+  }
+}
+
+/* v4.5.6 로고 링크 및 모바일 가로 넘침 안정화 */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 0;
+}
+
+.app,
+.auth-screen,
+.app-header,
+.header-inner,
+.status-banner,
+.primary-view-tabs,
+.workspace,
+.app-view,
+.panel,
+.memo-form,
+.form-grid,
+.search-toolbar,
+.category-filter-section {
+  min-width: 0;
+  max-width: 100%;
+}
+
+img,
+svg,
+canvas,
+video,
+input,
+textarea,
+select {
+  max-width: 100%;
+}
+
+.brand-home-button {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  text-decoration: none;
+  user-select: none;
+}
+
+.brand-home-button:link,
+.brand-home-button:visited {
+  color: var(--text);
+}
+
+.brand-home-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.2);
+  outline-offset: 2px;
+}
+
+.header-actions {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.cloud-sync-status {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+@media (max-width: 520px) {
+  .category-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  .category-tab {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-inner {
+    width: calc(100% - 16px);
+  }
+
+  .brand-home-button {
+    gap: 7px;
+    padding-right: 3px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+  }
+
+  .cloud-sync-status {
+    max-width: 92px;
+    padding-inline: 8px;
   }
 }

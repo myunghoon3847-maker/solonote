@@ -185,6 +185,10 @@
   }
 
   function watchRegistration(registration) {
+    if (!registration) {
+      return;
+    }
+
     serviceWorkerRegistration = registration;
 
     if (registration.waiting && navigator.serviceWorker.controller) {
@@ -217,7 +221,7 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=454",
+        "./service-worker.js?v=456",
         { updateViaCache: "none" }
       );
 

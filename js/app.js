@@ -8,6 +8,7 @@ const titleInput = document.querySelector("#titleInput");
 const projectInput = document.querySelector("#projectInput");
 const contentInput = document.querySelector("#contentInput");
 const categoryInput = document.querySelector("#categoryInput");
+const editorCategoryManagerButton = document.querySelector("#editorCategoryManagerButton");
 const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
 const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
@@ -56,7 +57,7 @@ const trashView = document.querySelector("#trashView");
 const trashList = document.querySelector("#trashList");
 const trashViewCount = document.querySelector("#trashViewCount");
 const emptyTrashViewButton = document.querySelector("#emptyTrashViewButton");
-const backFromTrashButton = document.querySelector("#backFromTrashButton");
+const homeLogoButton = document.querySelector("#homeLogoButton");
 const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
@@ -749,6 +750,47 @@ function handleOpenTrashClick() {
       block: "start",
     });
   }, 280);
+}
+
+function handleHomeLogoClick(event) {
+  event?.preventDefault();
+  closeAppMenu({ skipHistory: true });
+  closeCategoryManager({ skipHistory: true });
+  closeDetailModal({ skipHistory: true });
+
+  let savedDraft = null;
+
+  if (isEditorOpen()) {
+    if (hasUnsavedEditorChanges()) {
+      saveLocalEditorDraft();
+      savedDraft = readLocalEditorDraft();
+
+      if (!savedDraft) {
+        const shouldLeaveEditor = window.confirm(
+          "작성 중인 내용을 자동 저장하지 못했습니다. 홈으로 이동하면 입력 내용이 사라질 수 있습니다. 그래도 이동할까요?"
+        );
+
+        if (!shouldLeaveEditor) {
+          return;
+        }
+      }
+    }
+
+    resetForm();
+    closeEditor({ skipHistory: true });
+  }
+
+  resetMemoFilters();
+  switchAppView("notes", {
+    historyMode: "replace",
+    scrollBehavior: "smooth",
+  });
+
+  if (savedDraft) {
+    showDraftRecoveryBanner(savedDraft);
+  }
+
+  window.setTimeout(() => homeLogoButton?.focus(), 0);
 }
 
 function switchAppView(view, options = {}) {
@@ -2409,10 +2451,6 @@ async function handleTrashListClick(event) {
   }
 }
 
-function handleBackFromTrashClick() {
-  switchAppView("notes", { historyMode: "replace" });
-}
-
 function handleCategoryClick(event) {
   const button = event.target.closest(".category-tab");
 
@@ -2701,6 +2739,7 @@ function handleGuideToggleClick() {
 function bindEvents() {
   categoryTabs?.addEventListener("click", handleCategoryClick);
   openCategoryManagerButton?.addEventListener("click", openCategoryManager);
+  editorCategoryManagerButton?.addEventListener("click", openCategoryManager);
   closeCategoryManagerButton?.addEventListener("click", closeCategoryManager);
   categoryCreateForm?.addEventListener("submit", (event) => {
     void handleCategoryCreateSubmit(event);
@@ -2732,7 +2771,6 @@ function bindEvents() {
   restoreButton.addEventListener("click", handleRestoreButtonClick);
   emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
   emptyTrashViewButton?.addEventListener("click", handleEmptyTrashClick);
-  backFromTrashButton?.addEventListener("click", handleBackFromTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
   cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
   migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);
@@ -2752,6 +2790,7 @@ function bindEvents() {
   });
 
   notesViewTab.parentElement.addEventListener("click", handlePrimaryViewClick);
+  homeLogoButton?.addEventListener("click", handleHomeLogoClick);
   appMenuButton.addEventListener("click", openAppMenu);
   appMenuCloseButton.addEventListener("click", closeAppMenu);
   appMenuBackdrop.addEventListener("click", closeAppMenu);

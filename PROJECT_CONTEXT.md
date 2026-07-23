@@ -17,7 +17,7 @@
 - `supabase/sql`: 데이터베이스 설정과 마이그레이션
 - `supabase/functions/delete-account`: 계정 삭제 Edge Function
 
-## v4.5.5 데이터 구조
+## v4.5.4 데이터 구조
 
 - `public.memos`: 메모, 프로젝트, 기존 카테고리 문자열, 중요·삭제 상태, 체크리스트
 - `public.memo_categories`: 사용자별 관리 가능한 카테고리 이름과 표시 순서
@@ -25,8 +25,17 @@
 
 카테고리 이름 변경·삭제는 RPC 함수에서 `memo_categories`와 `memos.category`를 한 트랜잭션으로 갱신합니다. 삭제된 카테고리의 메모는 `미분류`로 이동합니다.
 
-v4.5.5는 데이터베이스 구조를 변경하지 않습니다. 프로젝트 기능은 화면과 검색에서 제거했지만 기존 `memos.project` 값은 백업 호환과 데이터 보존을 위해 유지합니다. v4.5의 `05_create_memo_categories.sql`을 이미 실행했다면 추가 SQL은 없습니다. v4.5.3의 사용자별 클라우드 조회 조건과 백업 복원 검증도 유지합니다.
+v4.5.4는 데이터베이스 구조를 변경하지 않습니다. 프로젝트 기능은 화면과 검색에서 제거했지만 기존 `memos.project` 값은 백업 호환과 데이터 보존을 위해 유지합니다. v4.5의 `05_create_memo_categories.sql`을 이미 실행했다면 추가 SQL은 없습니다. v4.5.3의 사용자별 클라우드 조회 조건과 백업 복원 검증도 유지합니다.
 
 ## 배포 기준
 
 웹앱은 GitHub Pages의 `/solonote/` 경로를 사용합니다. Android 앱은 이 웹앱을 여는 TWA 구조이며, Digital Asset Links는 원본 도메인 루트의 `/.well-known/assetlinks.json`에서 검증되어야 합니다.
+
+
+## v4.5.6 UI·PWA 안정화
+
+- 로고는 `href="./"`를 가진 링크 요소이며 JavaScript 홈 이동 핸들러가 정상 동작할 때 이를 가로챕니다.
+- 모바일 카테고리 탭은 520px 이하에서 줄바꿈합니다.
+- `html`, `body` 및 주요 컨테이너는 가로 넘침을 차단합니다.
+- 서비스워커 등록과 정적 파일 캐시는 `v=456`, 캐시명은 `hoonnote-v4-5-6-cache`입니다.
+- DB와 RLS 구조는 v4.5.4/v4.5.5와 동일합니다.

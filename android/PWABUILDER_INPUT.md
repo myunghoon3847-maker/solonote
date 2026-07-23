@@ -1,8 +1,8 @@
-# PWABuilder 입력값 — 훈노트 v4.4
+# PWABuilder 입력값 — 훈노트 웹 v4.5.6
 
 ## 시작 전
 
-1. 이 v4.4 웹앱을 GitHub Pages에 먼저 배포합니다.
+1. 이 v4.5.6 웹앱을 GitHub Pages에 먼저 배포합니다.
 2. 아래 주소가 모두 정상인지 확인합니다.
    - 앱: https://myunghoon3847-maker.github.io/solonote/
    - Manifest: https://myunghoon3847-maker.github.io/solonote/manifest.json
@@ -33,3 +33,6 @@
 - 서명키, 키 비밀번호, 인증서 파일은 GitHub와 채팅에 올리지 않습니다.
 - PWABuilder가 만든 Android 프로젝트에서 `targetSdkVersion` 또는 `targetSdk`가 36인지 최종 확인합니다.
 - 최초 AAB 생성 후 Play Console의 앱 서명 인증서 SHA-256 지문을 확인한 뒤 Digital Asset Links를 완성합니다.
+
+
+> Google Play에 새 AAB를 올릴 때 Version code는 Play Console에 등록된 현재 값보다 큰 숫자로 직접 설정해야 합니다. 웹 버전 4.5.6만 배포하는 경우 새 AAB는 필수가 아닙니다.
