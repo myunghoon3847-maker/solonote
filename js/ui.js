@@ -73,56 +73,6 @@ function renderTaskChecklistHtml(memo) {
 }
 
 
-function renderQuickProjectButtons(projects) {
-  const quickProjectBox = document.querySelector("#quickProjectBox");
-  const quickProjectList = document.querySelector("#quickProjectList");
-
-  if (!quickProjectBox || !quickProjectList) {
-    return;
-  }
-
-  const safeProjects = Array.isArray(projects) ? projects.filter(Boolean) : [];
-
-  if (safeProjects.length === 0) {
-    quickProjectBox.classList.add("hidden");
-    quickProjectList.innerHTML = "";
-    return;
-  }
-
-  quickProjectBox.classList.remove("hidden");
-  quickProjectList.innerHTML = safeProjects
-    .map(
-      (project) => `
-        <button type="button" class="quick-project-button" data-project="${escapeHtml(project)}">
-          ${escapeHtml(project)}
-        </button>
-      `
-    )
-    .join("");
-}
-
-
-function renderProjectFilterOptions(projects, currentProject) {
-  const projectFilterInput = document.querySelector("#projectFilterInput");
-
-  if (!projectFilterInput) {
-    return;
-  }
-
-  const selectedValue = currentProject || "전체";
-  const options = [
-    `<option value="전체">전체</option>`,
-    `<option value="프로젝트 없음">프로젝트 없음</option>`,
-    ...projects.map((project) => `<option value="${escapeHtml(project)}">${escapeHtml(project)}</option>`),
-  ];
-
-  projectFilterInput.innerHTML = options.join("");
-
-  const hasSelectedValue = [...projectFilterInput.options].some((option) => option.value === selectedValue);
-  projectFilterInput.value = hasSelectedValue ? selectedValue : "전체";
-}
-
-
 function renderTaskHub(items, view = "open") {
   const taskHubList = document.querySelector("#taskHubList");
 
@@ -156,12 +106,10 @@ function renderTaskHub(items, view = "open") {
       const task = item.task;
       const safeTaskText = escapeHtml(task.text);
       const safeMemoTitle = escapeHtml(item.memoTitle);
-      const safeProject = item.project ? escapeHtml(item.project) : "";
       const safeCategory = escapeHtml(item.category);
       const date = formatDate(item.updatedAt || item.createdAt);
       const metaParts = [
         safeMemoTitle,
-        safeProject,
         safeCategory,
         date,
       ].filter(Boolean);
@@ -199,21 +147,15 @@ function renderTaskHub(items, view = "open") {
 
 function renderMemoList(memos) {
   const memoList = document.querySelector("#memoList");
-  const memoCount = document.querySelector("#memoCount");
-
-  memoCount.textContent = getActiveMemoCount();
 
   if (memos.length === 0) {
     memoList.innerHTML = `
       <div class="empty-state">
         <strong>표시할 메모가 없습니다.</strong>
-        <p>새 메모를 작성하거나 검색어, 프로젝트, 카테고리를 초기화해보세요.</p>
+        <p>새 메모를 작성하거나 검색어·카테고리를 확인해보세요.</p>
         <div class="empty-state-actions">
           <button type="button" class="primary-button compact-button" data-empty-action="create">
             새 메모 작성
-          </button>
-          <button type="button" class="ghost-button compact-button" data-empty-action="reset">
-            전체 메모 보기
           </button>
         </div>
       </div>
@@ -226,7 +168,6 @@ function renderMemoList(memos) {
       const safeTitle = escapeHtml(memo.title);
       const safeContent = escapeHtml(memo.content);
       const safeCategory = memo.isDeleted ? "휴지통" : escapeHtml(memo.category);
-      const safeProject = memo.project ? escapeHtml(memo.project) : "";
       const date = formatDate(memo.updatedAt || memo.createdAt);
       const importantMark = memo.isImportant ? '<span class="star-mark" aria-label="중요 메모">★</span>' : "";
       const progress = getTaskProgress(memo.tasks);
@@ -234,14 +175,12 @@ function renderMemoList(memos) {
         progress.total > 0
           ? `<span class="task-progress-chip">체크 ${progress.done}/${progress.total}</span>`
           : "";
-      const projectChip = safeProject ? `<span class="project-chip">${safeProject}</span>` : "";
 
       return `
         <button type="button" class="memo-card" data-id="${escapeHtml(memo.id)}">
           <div class="memo-card-top">
             <div class="memo-card-badges">
               <span class="category-chip">${safeCategory}</span>
-              ${projectChip}
               ${memo.isImportant ? '<span class="important-chip">중요</span>' : ""}
               ${taskChip}
             </div>
@@ -278,11 +217,7 @@ function renderTrashList(memos) {
       const safeTitle = escapeHtml(memo.title);
       const safeContent = escapeHtml(memo.content);
       const safeCategory = escapeHtml(memo.category || "업무");
-      const safeProject = memo.project ? escapeHtml(memo.project) : "";
       const date = formatDate(memo.updatedAt || memo.createdAt);
-      const projectChip = safeProject
-        ? `<span class="project-chip">${safeProject}</span>`
-        : "";
       const progress = getTaskProgress(memo.tasks);
       const taskChip =
         progress.total > 0
@@ -300,7 +235,6 @@ function renderTrashList(memos) {
             <div class="trash-card-top">
               <div class="memo-card-badges">
                 <span class="category-chip">${safeCategory}</span>
-                ${projectChip}
                 ${taskChip}
               </div>
               <span class="memo-date">${date}</span>
@@ -334,7 +268,7 @@ function renderTrashList(memos) {
 
 let detailModalPreviousFocus = null;
 
-function openDetailModal(memo) {
+function openDetailModal(memo, options = {}) {
   const modal = document.querySelector("#detailModal");
   const editButton = document.querySelector("#editMemoButton");
   const deleteButton = document.querySelector("#deleteMemoButton");
@@ -347,10 +281,6 @@ function openDetailModal(memo) {
   }
 
   detailParts.push(memo.isDeleted ? "휴지통" : memo.category);
-
-  if (memo.project) {
-    detailParts.push(memo.project);
-  }
 
   document.querySelector("#detailCategory").textContent = detailParts.join(" · ");
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
@@ -388,15 +318,28 @@ function openDetailModal(memo) {
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
 
+  if (!options.skipHistory) {
+    window.solonoteNavigation?.openLayer("detail", {
+      memoId: memo.id,
+    });
+  }
+
   window.requestAnimationFrame(() => {
     document.querySelector("#closeDetailButton")?.focus();
   });
 }
 
-function closeDetailModal() {
+function closeDetailModal(options = {}) {
   const modal = document.querySelector("#detailModal");
 
   if (!modal || modal.hidden || modal.classList.contains("hidden")) {
+    return;
+  }
+
+  if (
+    !options.skipHistory &&
+    window.solonoteNavigation?.closeLayer("detail")
+  ) {
     return;
   }
 
@@ -422,7 +365,7 @@ function setActiveCategory(category) {
   });
 }
 
-function openEditor() {
+function openEditor(options = {}) {
   const editorPanel = document.querySelector(".editor-panel");
   const toggleButton = document.querySelector("#editorToggleButton");
   const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
@@ -435,12 +378,23 @@ function openEditor() {
   if (mobileNewMemoButton) {
     mobileNewMemoButton.hidden = true;
   }
+
+  if (!options.skipHistory) {
+    window.solonoteNavigation?.openLayer("editor");
+  }
 }
 
-function closeEditor() {
+function closeEditor(options = {}) {
   const editorPanel = document.querySelector(".editor-panel");
   const toggleButton = document.querySelector("#editorToggleButton");
   const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
+
+  if (
+    !options.skipHistory &&
+    window.solonoteNavigation?.closeLayer("editor")
+  ) {
+    return;
+  }
 
   editorPanel.classList.add("collapsed");
   toggleButton.textContent = "+ 새 메모";

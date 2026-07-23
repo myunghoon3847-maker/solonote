@@ -1,7 +1,6 @@
 let currentCategory = "전체";
 let currentSearch = "";
 let currentSort = "updatedDesc";
-let currentProject = "전체";
 let draftTasks = [];
 
 const memoForm = document.querySelector("#memoForm");
@@ -14,9 +13,7 @@ const editingIdInput = document.querySelector("#editingId");
 const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
-const sortInput = document.querySelector("#sortInput");
-const projectFilterInput = document.querySelector("#projectFilterInput");
-const quickProjectList = document.querySelector("#quickProjectList");
+const sortOptions = document.querySelector("#sortOptions");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
 const totalMemoCount = document.querySelector("#totalMemoCount");
@@ -37,8 +34,6 @@ const legacyMigrationMessage = document.querySelector("#legacyMigrationMessage")
 const migrateLegacyButton = document.querySelector("#migrateLegacyButton");
 const cloudRefreshButton = document.querySelector("#cloudRefreshButton");
 const lastSyncTime = document.querySelector("#lastSyncTime");
-const showAllMemosButton = document.querySelector("#showAllMemosButton");
-const resultSummary = document.querySelector("#resultSummary");
 const dataManagementToggleButton = document.querySelector("#dataManagementToggleButton");
 const dataManagementContent = document.querySelector("#dataManagementContent");
 const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
@@ -62,15 +57,11 @@ const trashList = document.querySelector("#trashList");
 const trashViewCount = document.querySelector("#trashViewCount");
 const emptyTrashViewButton = document.querySelector("#emptyTrashViewButton");
 const backFromTrashButton = document.querySelector("#backFromTrashButton");
-const filterToggleButton = document.querySelector("#filterToggleButton");
-const filterPanel = document.querySelector("#filterPanel");
-const filterActiveCount = document.querySelector("#filterActiveCount");
 const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
-const menuTrashMemoCount = document.querySelector("#menuTrashMemoCount");
 const categoryManagerModal = document.querySelector("#categoryManagerModal");
 const openCategoryManagerButton = document.querySelector("#openCategoryManagerButton");
 const closeCategoryManagerButton = document.querySelector("#closeCategoryManagerButton");
@@ -103,6 +94,195 @@ const PROTECTED_MEMO_CATEGORY_NAMES = new Set(["중요", "보관", "미분류"])
 
 let currentTaskHubView = "open";
 let currentAppView = "notes";
+
+const APP_HISTORY_STATE_KEY = "hoonnoteNavigation";
+const APP_HISTORY_LAYERS = new Set([
+  "base",
+  "menu",
+  "editor",
+  "detail",
+  "categoryManager",
+  "accountDeletion",
+]);
+let appNavigationReady = false;
+let isApplyingAppHistory = false;
+let lastAppliedNavigationState = null;
+
+function createAppNavigationState(view = currentAppView, layer = "base", detail = {}) {
+  const safeView = ["notes", "tasks", "trash"].includes(view) ? view : "notes";
+  const safeLayer = APP_HISTORY_LAYERS.has(layer) ? layer : "base";
+
+  return {
+    view: safeView,
+    layer: safeLayer,
+    memoId: detail.memoId ? String(detail.memoId) : "",
+  };
+}
+
+function getAppNavigationState(historyState = window.history.state) {
+  const state = historyState?.[APP_HISTORY_STATE_KEY];
+  return state
+    ? createAppNavigationState(state.view, state.layer, state)
+    : null;
+}
+
+function writeAppNavigationState(nextState, mode = "push") {
+  const mergedState = {
+    ...(window.history.state || {}),
+    [APP_HISTORY_STATE_KEY]: nextState,
+  };
+  const method = mode === "replace" ? "replaceState" : "pushState";
+
+  window.history[method](mergedState, document.title);
+  lastAppliedNavigationState = nextState;
+}
+
+function openAppHistoryLayer(layer, detail = {}, options = {}) {
+  if (!appNavigationReady || isApplyingAppHistory) {
+    return false;
+  }
+
+  const currentState =
+    getAppNavigationState() ||
+    createAppNavigationState(currentAppView, "base");
+  const nextState = createAppNavigationState(currentAppView, layer, detail);
+  const shouldReplace =
+    Boolean(options.replace) ||
+    currentState.layer !== "base" ||
+    currentState.layer === layer;
+
+  writeAppNavigationState(nextState, shouldReplace ? "replace" : "push");
+  return true;
+}
+
+function closeAppHistoryLayer(layer) {
+  if (!appNavigationReady || isApplyingAppHistory) {
+    return false;
+  }
+
+  const currentState = getAppNavigationState();
+
+  if (!currentState || currentState.layer !== layer) {
+    return false;
+  }
+
+  window.history.back();
+  return true;
+}
+
+function syncAppViewHistory(view, mode = "auto") {
+  if (!appNavigationReady || isApplyingAppHistory || mode === "none") {
+    return;
+  }
+
+  const currentState =
+    getAppNavigationState() ||
+    createAppNavigationState(currentAppView, "base");
+  const nextState = createAppNavigationState(view, "base");
+  const shouldReplace = mode === "replace" || currentState.layer !== "base";
+
+  if (
+    currentState.view === nextState.view &&
+    currentState.layer === "base"
+  ) {
+    if (mode === "replace") {
+      writeAppNavigationState(nextState, "replace");
+    }
+    return;
+  }
+
+  writeAppNavigationState(nextState, shouldReplace ? "replace" : "push");
+}
+
+function applyAppNavigationState(state) {
+  const nextState = state || createAppNavigationState("notes", "base");
+  isApplyingAppHistory = true;
+
+  try {
+    closeAppMenu({ skipHistory: true });
+    closeCategoryManager({ skipHistory: true });
+    closeDetailModal({ skipHistory: true });
+
+    if (nextState.layer !== "editor") {
+      closeEditor({ skipHistory: true });
+    }
+
+    switchAppView(nextState.view, {
+      historyMode: "none",
+      scrollBehavior: "auto",
+    });
+
+    if (nextState.layer === "menu") {
+      openAppMenu({ skipHistory: true });
+    } else if (nextState.layer === "editor") {
+      openEditor({ skipHistory: true });
+    } else if (nextState.layer === "detail" && nextState.memoId) {
+      const memo = findMemoById(nextState.memoId);
+      if (memo) {
+        openDetailModal(memo, { skipHistory: true });
+      }
+    } else if (nextState.layer === "categoryManager") {
+      openCategoryManager({ skipHistory: true });
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("solonote-navigation-sync", {
+        detail: nextState,
+      })
+    );
+
+    lastAppliedNavigationState = nextState;
+  } finally {
+    isApplyingAppHistory = false;
+  }
+}
+
+function handleAppHistoryPopState(event) {
+  const nextState = getAppNavigationState(event.state);
+
+  if (!nextState) {
+    return;
+  }
+
+  if (
+    lastAppliedNavigationState?.layer === "editor" &&
+    nextState.layer !== "editor" &&
+    hasUnsavedEditorChanges()
+  ) {
+    const shouldClose = window.confirm(
+      "저장하지 않은 작성 내용이 있습니다. 작성창을 닫을까요? 내용은 자동 저장된 초안으로 남습니다."
+    );
+
+    if (!shouldClose) {
+      window.history.forward();
+      return;
+    }
+
+    saveLocalEditorDraft();
+  }
+
+  applyAppNavigationState(nextState);
+}
+
+function initializeAppNavigation() {
+  const initialState = createAppNavigationState("notes", "base");
+  writeAppNavigationState(initialState, "replace");
+  appNavigationReady = true;
+  window.addEventListener("popstate", handleAppHistoryPopState);
+
+  window.solonoteNavigation = {
+    openLayer: openAppHistoryLayer,
+    closeLayer: closeAppHistoryLayer,
+    dismissMenu() {
+      closeAppMenu({ skipHistory: true });
+    },
+    reset() {
+      const baseState = createAppNavigationState("notes", "base");
+      writeAppNavigationState(baseState, "replace");
+      applyAppNavigationState(baseState);
+    },
+  };
+}
 
 
 
@@ -462,57 +642,20 @@ function handleBeforeUnload(event) {
 function resetMemoFilters() {
   currentCategory = "전체";
   currentSearch = "";
-  currentProject = "전체";
   currentSort = "updatedDesc";
 
   searchInput.value = "";
-  projectFilterInput.value = "전체";
-  sortInput.value = "updatedDesc";
   setActiveCategory(currentCategory);
-  closeFilterPanel();
+  setActiveSort(currentSort);
   refreshScreen();
 }
 
-function updateFilterControls(filteredMemos) {
-  const hasSearch = Boolean(currentSearch.trim());
-  const hasCategoryView = currentCategory !== "전체";
-  const activeFilterCount = [
-    currentProject !== "전체",
-    currentSort !== "updatedDesc",
-  ].filter(Boolean).length;
-  const hasChangedView = hasSearch || hasCategoryView || activeFilterCount > 0;
-
-  if (showAllMemosButton) {
-    showAllMemosButton.hidden = !hasChangedView;
-  }
-
-  if (filterActiveCount) {
-    filterActiveCount.textContent = String(activeFilterCount);
-    filterActiveCount.hidden = activeFilterCount === 0;
-  }
-
-  if (filterToggleButton) {
-    filterToggleButton.classList.toggle("active", activeFilterCount > 0);
-  }
-
-  if (resultSummary) {
-    const visibleCount = Array.isArray(filteredMemos) ? filteredMemos.length : 0;
-    const parts = [`${visibleCount}개`];
-
-    if (currentCategory !== "전체") {
-      parts.push(currentCategory);
-    }
-
-    if (currentProject !== "전체") {
-      parts.push(currentProject);
-    }
-
-    if (hasSearch) {
-      parts.push(`“${currentSearch.trim()}”`);
-    }
-
-    resultSummary.textContent = parts.join(" · ");
-  }
+function setActiveSort(sort) {
+  sortOptions?.querySelectorAll("[data-sort]").forEach((button) => {
+    const isActive = button.dataset.sort === sort;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
 }
 
 
@@ -530,27 +673,15 @@ function syncMobileNewMemoButton() {
     currentAppView !== "notes" || isEditorOpen();
 }
 
-function closeFilterPanel() {
-  if (!filterPanel || !filterToggleButton) {
-    return;
-  }
-
-  filterPanel.hidden = true;
-  filterToggleButton.setAttribute("aria-expanded", "false");
-}
-
-function handleFilterToggle() {
-  if (!filterPanel || !filterToggleButton) {
-    return;
-  }
-
-  const willOpen = filterPanel.hidden;
-  filterPanel.hidden = !willOpen;
-  filterToggleButton.setAttribute("aria-expanded", String(willOpen));
-}
-
-function closeAppMenu() {
+function closeAppMenu(options = {}) {
   if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
+    return;
+  }
+
+  if (
+    !options.skipHistory &&
+    closeAppHistoryLayer("menu")
+  ) {
     return;
   }
 
@@ -573,9 +704,13 @@ function closeAppMenu() {
   }, 260);
 }
 
-function openAppMenu() {
+function openAppMenu(options = {}) {
   if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
     return;
+  }
+
+  if (!options.skipHistory) {
+    openAppHistoryLayer("menu");
   }
 
   isAppMenuOpen = true;
@@ -585,7 +720,6 @@ function openAppMenu() {
     appMenuCloseTimer = null;
   }
 
-  closeFilterPanel();
   appMenuPanel.hidden = false;
   appMenuBackdrop.hidden = false;
   appMenuPanel.setAttribute("aria-hidden", "false");
@@ -606,8 +740,8 @@ function openAppMenu() {
 }
 
 function handleOpenTrashClick() {
-  switchAppView("trash");
-  closeAppMenu();
+  switchAppView("trash", { historyMode: "replace" });
+  closeAppMenu({ skipHistory: true });
 
   window.setTimeout(() => {
     trashView?.scrollIntoView({
@@ -617,7 +751,7 @@ function handleOpenTrashClick() {
   }, 280);
 }
 
-function switchAppView(view) {
+function switchAppView(view, options = {}) {
   const allowedViews = ["notes", "tasks", "trash"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
 
@@ -635,10 +769,6 @@ function switchAppView(view) {
   notesViewTab.setAttribute("aria-selected", String(isNotes));
   tasksViewTab.setAttribute("aria-selected", String(isTasks));
 
-  if (!isNotes) {
-    closeFilterPanel();
-  }
-
   if (isTasks) {
     refreshTaskHub();
   }
@@ -648,7 +778,11 @@ function switchAppView(view) {
   }
 
   syncMobileNewMemoButton();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  syncAppViewHistory(currentAppView, options.historyMode || "auto");
+  window.scrollTo({
+    top: 0,
+    behavior: options.scrollBehavior || "smooth",
+  });
 }
 
 function handlePrimaryViewClick(event) {
@@ -870,7 +1004,7 @@ function renderCategoryManagerList() {
     .join("");
 }
 
-function openCategoryManager() {
+function openCategoryManager(options = {}) {
   if (!categoryManagerModal) {
     return;
   }
@@ -882,11 +1016,24 @@ function openCategoryManager() {
   categoryManagerModal.classList.remove("hidden");
   categoryManagerModal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
+
+  if (!options.skipHistory) {
+    openAppHistoryLayer("categoryManager");
+  }
+
   window.setTimeout(() => newCategoryInput?.focus(), 0);
 }
 
-function closeCategoryManager() {
+function closeCategoryManager(options = {}) {
   if (!categoryManagerModal) {
+    return;
+  }
+
+  if (
+    !categoryManagerModal.hidden &&
+    !options.skipHistory &&
+    closeAppHistoryLayer("categoryManager")
+  ) {
     return;
   }
 
@@ -1410,8 +1557,6 @@ async function loadCloudMemosForSession(session, options = {}) {
 
       if (!hasLoadedCloudMemos()) {
         clearMemoCache();
-        refreshProjectFilter();
-        refreshQuickProjects();
         refreshDataStats();
         showMemoListError(message);
       } else {
@@ -1490,7 +1635,6 @@ function getTaskHubItems(view = currentTaskHubView) {
         items.push({
           memoId: memo.id,
           memoTitle: memo.title,
-          project: memo.project,
           category: memo.category,
           createdAt: memo.createdAt,
           updatedAt: memo.updatedAt,
@@ -1697,18 +1841,6 @@ function sortMemos(memos) {
   });
 }
 
-function matchesProjectFilter(memo) {
-  if (currentProject === "전체") {
-    return true;
-  }
-
-  if (currentProject === "프로젝트 없음") {
-    return !memo.project;
-  }
-
-  return memo.project === currentProject;
-}
-
 function getFilteredMemos() {
   const search = currentSearch.trim().toLowerCase();
 
@@ -1723,10 +1855,6 @@ function getFilteredMemos() {
       return false;
     }
 
-    if (!matchesProjectFilter(memo)) {
-      return false;
-    }
-
     const matchesCategory =
       currentCategory === "전체" ||
       currentCategory === "중요" ||
@@ -1736,13 +1864,10 @@ function getFilteredMemos() {
       ? memo.tasks.map((task) => task.text).join(" ").toLowerCase()
       : "";
 
-    const projectText = memo.project ? memo.project.toLowerCase() : "";
-
     const matchesSearch =
       !search ||
       memo.title.toLowerCase().includes(search) ||
       memo.content.toLowerCase().includes(search) ||
-      projectText.includes(search) ||
       taskText.includes(search);
 
     return matchesCategory && matchesSearch;
@@ -1776,46 +1901,6 @@ function refreshTrashView() {
 }
 
 
-function getQuickProjectOptions(limit = 8) {
-  const projectMap = new Map();
-
-  getMemos()
-    .filter((memo) => !memo.isDeleted && memo.project)
-    .sort((a, b) => parseMemoDate(b.updatedAt || b.createdAt) - parseMemoDate(a.updatedAt || a.createdAt))
-    .forEach((memo) => {
-      if (!projectMap.has(memo.project)) {
-        projectMap.set(memo.project, memo.project);
-      }
-    });
-
-  return [...projectMap.values()].slice(0, limit);
-}
-
-function refreshQuickProjects() {
-  renderQuickProjectButtons(getQuickProjectOptions());
-}
-
-function handleQuickProjectClick(event) {
-  const button = event.target.closest(".quick-project-button");
-
-  if (!button) {
-    return;
-  }
-
-  projectInput.value = button.dataset.project || "";
-  projectInput.focus();
-}
-
-
-function refreshProjectFilter() {
-  renderProjectFilterOptions(getProjectOptions(), currentProject);
-
-  if (projectFilterInput.value !== currentProject) {
-    currentProject = projectFilterInput.value;
-  }
-}
-
-
 function refreshDataStats() {
   const stats = getDataStats();
 
@@ -1825,10 +1910,6 @@ function refreshDataStats() {
 
   if (trashMemoCount) {
     trashMemoCount.textContent = stats.trashCount;
-  }
-
-  if (menuTrashMemoCount) {
-    menuTrashMemoCount.textContent = stats.trashCount;
   }
 
   if (emptyTrashButton) {
@@ -1915,7 +1996,6 @@ async function handleResetAllDataClick() {
 
   currentCategory = "전체";
   currentSearch = "";
-  currentProject = "전체";
   searchInput.value = "";
   setActiveCategory(currentCategory);
   resetForm();
@@ -1928,14 +2008,12 @@ async function handleResetAllDataClick() {
 
 
 function refreshScreen() {
-  refreshProjectFilter();
-  refreshQuickProjects();
   refreshDataStats();
   refreshTaskHub();
 
   const filteredMemos = getFilteredMemos();
   renderMemoList(filteredMemos);
-  updateFilterControls(filteredMemos);
+  setActiveSort(currentSort);
   refreshTrashView();
 }
 
@@ -2047,7 +2125,7 @@ function loadLatestServerMemo(serverMemo) {
 
   const latestMemo = replaceMemoInCache(serverMemo);
   resetForm();
-  closeEditor();
+  closeEditor({ skipHistory: true });
   refreshScreen();
   openDetailModal(latestMemo);
   updateLastSyncTime();
@@ -2332,7 +2410,7 @@ async function handleTrashListClick(event) {
 }
 
 function handleBackFromTrashClick() {
-  switchAppView("notes");
+  switchAppView("notes", { historyMode: "replace" });
 }
 
 function handleCategoryClick(event) {
@@ -2347,13 +2425,15 @@ function handleCategoryClick(event) {
   refreshScreen();
 }
 
-function handleProjectFilterChange(event) {
-  currentProject = event.target.value;
-  refreshScreen();
-}
+function handleSortClick(event) {
+  const button = event.target.closest("[data-sort]");
 
-function handleSortChange(event) {
-  currentSort = event.target.value;
+  if (!button || !sortOptions?.contains(button)) {
+    return;
+  }
+
+  currentSort = button.dataset.sort || "updatedDesc";
+  setActiveSort(currentSort);
   refreshScreen();
 }
 
@@ -2573,7 +2653,6 @@ function handleRestoreButtonClick() {
 
         currentCategory = "전체";
         currentSearch = "";
-        currentProject = "전체";
         searchInput.value = "";
         setActiveCategory(currentCategory);
         refreshScreen();
@@ -2640,9 +2719,7 @@ function bindEvents() {
     void handleTrashListClick(event);
   });
   searchInput.addEventListener("input", handleSearchInput);
-  sortInput.addEventListener("change", handleSortChange);
-  projectFilterInput.addEventListener("change", handleProjectFilterChange);
-  quickProjectList.addEventListener("click", handleQuickProjectClick);
+  sortOptions?.addEventListener("click", handleSortClick);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
   document.querySelector("#resetButton").addEventListener("click", handleCancelEditorClick);
@@ -2661,7 +2738,6 @@ function bindEvents() {
   migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
-  showAllMemosButton.addEventListener("click", resetMemoFilters);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
   restoreDraftButton.addEventListener("click", restoreLocalEditorDraft);
@@ -2676,7 +2752,6 @@ function bindEvents() {
   });
 
   notesViewTab.parentElement.addEventListener("click", handlePrimaryViewClick);
-  filterToggleButton.addEventListener("click", handleFilterToggle);
   appMenuButton.addEventListener("click", openAppMenu);
   appMenuCloseButton.addEventListener("click", closeAppMenu);
   appMenuBackdrop.addEventListener("click", closeAppMenu);
@@ -2696,11 +2771,6 @@ function bindEvents() {
 
     if (!appMenuPanel.hidden) {
       closeAppMenu();
-      return;
-    }
-
-    if (!filterPanel.hidden) {
-      closeFilterPanel();
       return;
     }
 
@@ -2735,6 +2805,7 @@ function bindEvents() {
   });
 }
 
+initializeAppNavigation();
 bindEvents();
 renderTaskDraftList();
 markEditorClean();
@@ -2757,10 +2828,6 @@ if (dataManagementContent) {
   dataManagementContent.hidden = true;
 }
 
-if (filterPanel) {
-  filterPanel.hidden = true;
-}
-
 if (appMenuPanel && appMenuBackdrop) {
   appMenuPanel.classList.remove("is-open");
   appMenuBackdrop.classList.remove("is-open");
@@ -2768,7 +2835,10 @@ if (appMenuPanel && appMenuBackdrop) {
   appMenuBackdrop.hidden = true;
 }
 
-switchAppView("notes");
+switchAppView("notes", {
+  historyMode: "none",
+  scrollBehavior: "auto",
+});
 
 if (navigator.onLine === false) {
   setOfflineStatus();
@@ -2782,6 +2852,7 @@ window.addEventListener("solonote-auth-changed", (event) => {
   if (window.solonotePasswordRecoveryActive) {
     cloudLoadSequence += 1;
     currentCloudUserId = "";
+    window.solonoteNavigation?.reset();
     clearMemoCache();
     clearMemoCategoryCache();
     renderMemoCategoryControls();
@@ -2791,15 +2862,15 @@ window.addEventListener("solonote-auth-changed", (event) => {
   }
 
   if (!session) {
-    const previousUserId = currentCloudUserId;
     cloudLoadSequence += 1;
     currentCloudUserId = "";
     recoverableDraft = null;
     hideDraftRecoveryBanner();
     clearMemoCache();
     clearMemoCategoryCache();
-    closeDetailModal();
-    closeCategoryManager();
+    window.solonoteNavigation?.reset();
+    closeDetailModal({ skipHistory: true });
+    closeCategoryManager({ skipHistory: true });
     renderMemoCategoryControls();
     refreshScreen();
     setCloudStatus("로그인 필요", "error");

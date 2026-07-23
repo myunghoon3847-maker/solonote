@@ -171,18 +171,64 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.3", () => {
+test("release and cache versions are consistently set to v4.5.4", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.3/);
-  assert.doesNotMatch(indexHtml, /v=452/);
-  assert.match(serviceWorker, /hoonnote-v4-5-3-cache/);
-  assert.doesNotMatch(serviceWorker, /v=452/);
-  assert.match(accountSource, /clientVersion: "4\.5\.3"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.3"/);
+  assert.match(indexHtml, /version-badge">v4\.5\.4/);
+  assert.doesNotMatch(indexHtml, /v=453/);
+  assert.match(serviceWorker, /hoonnote-v4-5-4-cache/);
+  assert.doesNotMatch(serviceWorker, /v=453/);
+  assert.match(accountSource, /clientVersion: "4\.5\.4"/);
+  assert.match(storageSource, /backupVersion: "4\.5\.4"/);
+});
+
+test("v4.5.4 simplified UI contract is preserved", () => {
+  const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
+  const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
+  const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
+  const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
+
+  assert.doesNotMatch(indexHtml, /id="filterToggleButton"/);
+  assert.doesNotMatch(indexHtml, /id="projectFilterInput"/);
+  assert.doesNotMatch(indexHtml, /id="quickProjectBox"/);
+  assert.doesNotMatch(indexHtml, /id="memoCount"/);
+  assert.doesNotMatch(indexHtml, /id="resultSummary"/);
+  assert.match(indexHtml, /id="projectInput"\s*\/>/);
+  assert.match(indexHtml, /id="sortOptions"/);
+  assert.equal((indexHtml.match(/class="sort-option(?: active)?"/g) || []).length, 5);
+  assert.equal((indexHtml.match(/class="sort-separator"/g) || []).length, 4);
+  assert.match(indexHtml, /id="openTrashButton"\s+class="data-stat-button"/);
+  assert.doesNotMatch(indexHtml, /class="menu-section trash-menu-section"/);
+  assert.match(indexHtml, /id="contentInput"[\s\S]*?rows="11"/);
+
+  assert.doesNotMatch(uiSource, /전체 메모 보기/);
+  assert.doesNotMatch(uiSource, /projectChip/);
+  assert.doesNotMatch(appSource, /projectText\.includes\(search\)/);
+  assert.match(styleSource, /\.sort-options\s*\{[\s\S]*?flex-wrap:\s*wrap/);
+  assert.match(styleSource, /\.memo-form #contentInput\s*\{[\s\S]*?min-height:\s*230px/);
+});
+
+test("browser history navigation handles internal layers before app exit", () => {
+  const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
+  const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
+
+  for (const layer of [
+    "menu",
+    "editor",
+    "detail",
+    "categoryManager",
+    "accountDeletion",
+  ]) {
+    assert.match(appSource, new RegExp(`"${layer}"`));
+  }
+
+  assert.match(appSource, /window\.history\.back\(\)/);
+  assert.match(appSource, /window\.addEventListener\("popstate", handleAppHistoryPopState\)/);
+  assert.match(appSource, /hasUnsavedEditorChanges\(\)/);
+  assert.match(accountSource, /solonote-navigation-sync/);
 });
 
 test("local HTML and service-worker asset references exist", () => {

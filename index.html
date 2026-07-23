@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>훈노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=453" />
+  <link rel="manifest" href="./manifest.json?v=454" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="훈노트" />
   <meta name="apple-mobile-web-app-title" content="훈노트" />
@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=453" />
-  <link rel="stylesheet" href="./css/style.css?v=453" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=454" />
+  <link rel="stylesheet" href="./css/style.css?v=454" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -219,7 +219,6 @@
       <div class="header-inner">
         <div class="brand-block">
           <h1>훈노트</h1>
-          <p><span id="memoCount">0</span>개 메모</p>
         </div>
 
         <div class="header-actions">
@@ -312,7 +311,6 @@
         <div class="view-heading">
           <div>
             <h2 id="notesViewTitle">메모</h2>
-            <p id="resultSummary" aria-live="polite">메모를 불러오고 있습니다.</p>
           </div>
           <button
             type="button"
@@ -343,6 +341,7 @@
 
             <input type="hidden" id="editingId" />
             <input type="hidden" id="editingUpdatedAt" />
+            <input type="hidden" id="projectInput" />
 
             <label for="titleInput">제목</label>
             <input
@@ -356,30 +355,12 @@
             <label for="contentInput">내용</label>
             <textarea
               id="contentInput"
-              rows="7"
+              rows="11"
               maxlength="200000"
               placeholder="내용을 입력하세요."
             ></textarea>
 
             <div class="form-grid">
-              <div>
-                <label for="projectInput">프로젝트</label>
-                <input
-                  id="projectInput"
-                  type="text"
-                  maxlength="100"
-                  placeholder="선택 입력"
-                  autocomplete="off"
-                />
-
-                <div id="quickProjectBox" class="quick-project-box hidden">
-                  <div class="quick-project-header">
-                    <span>최근 프로젝트</span>
-                  </div>
-                  <div id="quickProjectList" class="quick-project-list"></div>
-                </div>
-              </div>
-
               <div>
                 <label for="categoryInput">카테고리</label>
                 <select id="categoryInput">
@@ -438,16 +419,6 @@
               aria-label="메모 검색"
             />
           </div>
-          <button
-            type="button"
-            id="filterToggleButton"
-            class="secondary-button filter-button"
-            aria-expanded="false"
-            aria-controls="filterPanel"
-          >
-            필터
-            <span id="filterActiveCount" class="filter-count" hidden>0</span>
-          </button>
         </div>
 
         <section class="category-filter-section" aria-labelledby="categoryFilterTitle">
@@ -476,36 +447,27 @@
           </nav>
         </section>
 
-        <section id="filterPanel" class="filter-panel" hidden aria-label="메모 필터">
-          <div class="filter-select-grid">
-            <label>
-              <span>프로젝트</span>
-              <select id="projectFilterInput">
-                <option value="전체">전체</option>
-              </select>
-            </label>
-
-            <label>
-              <span>정렬</span>
-              <select id="sortInput">
-                <option value="updatedDesc">최근 수정순</option>
-                <option value="createdDesc">최신 작성순</option>
-                <option value="createdAsc">오래된 작성순</option>
-                <option value="importantFirst">중요 먼저</option>
-                <option value="titleAsc">제목순</option>
-              </select>
-            </label>
-          </div>
-
-          <button
-            type="button"
-            id="showAllMemosButton"
-            class="text-button reset-filter-button"
-            hidden
-          >
-            전체 메모 보기
+        <nav id="sortOptions" class="sort-options" aria-label="메모 정렬">
+          <button type="button" class="sort-option active" data-sort="updatedDesc" aria-pressed="true">
+            최근 수정순
           </button>
-        </section>
+          <span class="sort-separator" aria-hidden="true">ㅣ</span>
+          <button type="button" class="sort-option" data-sort="createdDesc" aria-pressed="false">
+            최신 작성순
+          </button>
+          <span class="sort-separator" aria-hidden="true">ㅣ</span>
+          <button type="button" class="sort-option" data-sort="createdAsc" aria-pressed="false">
+            오래된 작성순
+          </button>
+          <span class="sort-separator" aria-hidden="true">ㅣ</span>
+          <button type="button" class="sort-option" data-sort="importantFirst" aria-pressed="false">
+            중요 먼저
+          </button>
+          <span class="sort-separator" aria-hidden="true">ㅣ</span>
+          <button type="button" class="sort-option" data-sort="titleAsc" aria-pressed="false">
+            제목순
+          </button>
+        </nav>
 
         <div id="memoList" class="memo-list"></div>
       </section>
@@ -611,12 +573,6 @@
       </div>
 
       <div class="menu-scroll">
-        <section class="menu-section trash-menu-section" aria-label="휴지통">
-          <button type="button" id="openTrashButton" class="menu-action-button menu-trash-button">
-            <span>휴지통</span>
-            <strong id="menuTrashMemoCount" class="menu-item-count">0</strong>
-          </button>
-        </section>
         <section class="menu-section account-management" aria-label="계정 관리">
           <div class="menu-section-heading">
             <div>
@@ -674,7 +630,10 @@
           <div id="dataManagementContent" class="data-management-content" hidden>
             <div class="data-stats">
               <span>메모 <strong id="totalMemoCount">0</strong></span>
-              <span>휴지통 <strong id="trashMemoCount">0</strong></span>
+              <button type="button" id="openTrashButton" class="data-stat-button">
+                <span>휴지통</span>
+                <strong id="trashMemoCount">0</strong>
+              </button>
               <span>동기화 <strong id="lastSyncTime">-</strong></span>
             </div>
 
@@ -780,7 +739,7 @@
 
       <div class="menu-footer">
         <span>훈노트</span>
-        <span class="version-badge">v4.5.3</span>
+        <span class="version-badge">v4.5.4</span>
       </div>
     </aside>
 
@@ -945,12 +904,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=453"></script>
-  <script src="./js/auth.js?v=453"></script>
-  <script src="./js/storage.js?v=453"></script>
-  <script src="./js/ui.js?v=453"></script>
-  <script src="./js/app.js?v=453"></script>
-  <script src="./js/account.js?v=453"></script>
-  <script src="./js/pwa.js?v=453"></script>
+  <script src="./js/config.js?v=454"></script>
+  <script src="./js/auth.js?v=454"></script>
+  <script src="./js/storage.js?v=454"></script>
+  <script src="./js/ui.js?v=454"></script>
+  <script src="./js/app.js?v=454"></script>
+  <script src="./js/account.js?v=454"></script>
+  <script src="./js/pwa.js?v=454"></script>
 </body>
 </html>

@@ -18,7 +18,6 @@
   const status = document.querySelector("#accountDeletionStatus");
   const backupButton = document.querySelector("#backupBeforeDeleteButton");
   const existingBackupButton = document.querySelector("#backupButton");
-  const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
 
   let isDeleting = false;
 
@@ -54,15 +53,28 @@
     updateConfirmButton();
   }
 
-  function openModal() {
-    appMenuCloseButton?.click();
+  function openModal(options = {}) {
+    if (!options.skipHistory) {
+      window.solonoteNavigation?.dismissMenu();
+      window.solonoteNavigation?.openLayer("accountDeletion", {}, {
+        replace: true,
+      });
+    }
+
     resetForm();
     setModalVisible(true);
     window.setTimeout(() => passwordInput?.focus(), 30);
   }
 
-  function closeModal() {
+  function closeModal(options = {}) {
     if (isDeleting) {
+      return;
+    }
+
+    if (
+      !options.skipHistory &&
+      window.solonoteNavigation?.closeLayer("accountDeletion")
+    ) {
       return;
     }
 
@@ -270,12 +282,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.5.3",
+            "X-Client-Info": "hoonnote-v4.5.4",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.5.3",
+            clientVersion: "4.5.4",
           }),
           cache: "no-store",
           signal: controller.signal,
@@ -464,6 +476,19 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && modal && !modal.hidden) {
       closeModal();
+    }
+  });
+
+  window.addEventListener("solonote-navigation-sync", (event) => {
+    const shouldBeOpen = event.detail?.layer === "accountDeletion";
+
+    if (shouldBeOpen && modal?.hidden) {
+      openModal({ skipHistory: true });
+      return;
+    }
+
+    if (!shouldBeOpen && modal && !modal.hidden) {
+      closeModal({ skipHistory: true });
     }
   });
 })();
