@@ -44,7 +44,6 @@ const openSettingsButton = document.querySelector("#openSettingsButton");
 const menuMainView = document.querySelector("#menuMainView");
 const menuSettingsView = document.querySelector("#menuSettingsView");
 const menuSettingsBackButton = document.querySelector("#menuSettingsBackButton");
-const menuSettingsLogoutButton = document.querySelector("#menuSettingsLogoutButton");
 const menuAccountManagementToggleButton = document.querySelector("#menuAccountManagementToggleButton");
 const menuAccountManagementContent = document.querySelector("#menuAccountManagementContent");
 const settingsBackButton = document.querySelector("#settingsBackButton");
@@ -2875,7 +2874,7 @@ function bindEvents() {
 
   backupButton.addEventListener("click", handleBackupClick);
   restoreButton.addEventListener("click", handleRestoreButtonClick);
-  emptyTrashButton.addEventListener("click", handleEmptyTrashClick);
+  emptyTrashButton?.addEventListener("click", handleEmptyTrashClick);
   emptyTrashViewButton?.addEventListener("click", handleEmptyTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
   cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
@@ -2887,7 +2886,6 @@ function bindEvents() {
   openSettingsButton?.addEventListener("click", handleOpenSettingsClick);
   menuSettingsBackButton?.addEventListener("click", handleMenuSettingsBackClick);
   menuAccountManagementToggleButton?.addEventListener("click", handleMenuAccountManagementToggle);
-  menuSettingsLogoutButton?.addEventListener("click", () => logoutButton?.click());
   settingsBackButton?.addEventListener("click", handleSettingsBackClick);
   editorBackButton?.addEventListener("click", handleEditorBackClick);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);

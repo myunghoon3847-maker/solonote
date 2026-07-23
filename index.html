@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>훈노트 - 1인 업무·아이디어 노트</title>
-<link href="./manifest.json?v=460" rel="manifest"/>
+<link href="./manifest.json?v=461" rel="manifest"/>
 <meta content="#2563eb" name="theme-color"/>
 <meta content="훈노트" name="application-name"/>
 <meta content="훈노트" name="apple-mobile-web-app-title"/>
@@ -12,9 +12,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=460" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=460" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=460" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=461" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=461" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=461" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -125,8 +125,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="훈노트 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="" aria-hidden="true" class="brand-mark" src="./icons/logo-mark.svg?v=460"/>
-<span class="brand-name">HOONNOTE</span>
+<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=461"/>
 </a>
 </div>
 <div class="header-actions">
@@ -366,7 +365,7 @@
 <span class="signed-in-email" id="signedInEmail">로그인됨</span>
 </div>
 <button aria-label="설정 열기" class="menu-header-settings-button" id="openSettingsButton" title="설정" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.svg?v=460"/>
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=461"/>
 </button>
 </div>
 <div class="menu-scroll">
@@ -380,9 +379,6 @@
             </button>
 <button class="menu-action-button" id="restoreButton" type="button">
               복원
-            </button>
-<button class="menu-action-button danger-text" id="logoutButton" type="button">
-              로그아웃
             </button>
 </div>
 </section>
@@ -400,8 +396,8 @@
 <div class="data-stats">
 <span>메모 <strong id="totalMemoCount">0</strong></span>
 <button class="data-stat-button" id="openTrashButton" type="button">
-<span>휴지통</span>
-<strong id="trashMemoCount">0</strong>
+<span class="data-stat-main"><span>휴지통</span><strong id="trashMemoCount">0</strong></span>
+<span class="data-stat-open-label">열기</span>
 </button>
 <span>동기화 <strong id="lastSyncTime">-</strong></span>
 </div>
@@ -421,9 +417,6 @@
 <div class="data-actions">
 <button class="secondary-button" id="cloudRefreshButton" type="button">
                 새로고침
-              </button>
-<button class="text-button" id="emptyTrashButton" type="button">
-                휴지통 비우기
               </button>
 <button class="danger-button" id="resetAllDataButton" type="button">
                 전체 데이터 삭제
@@ -508,7 +501,7 @@
 <span aria-hidden="true" class="settings-row-chevron">›</span>
 </button>
 <div class="account-management-content settings-row-content" hidden id="menuAccountManagementContent">
-<button class="menu-action-button" id="menuSettingsLogoutButton" type="button">로그아웃</button>
+<button class="menu-action-button" id="logoutButton" type="button">로그아웃</button>
 <button class="menu-action-button account-delete-menu-button danger-text" id="openAccountDeletionButton" type="button">계정 삭제</button>
 </div>
 </section>
@@ -522,7 +515,7 @@
 </div>
 <div class="menu-footer">
 <span>HOONNOTE</span>
-<span class="version-badge">v4.5.10</span>
+<span class="version-badge">v4.5.11</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -616,12 +609,12 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./js/config.js?v=460"></script>
-<script src="./js/auth.js?v=460"></script>
-<script src="./js/storage.js?v=460"></script>
-<script src="./js/ui.js?v=460"></script>
-<script src="./js/app.js?v=460"></script>
-<script src="./js/account.js?v=460"></script>
-<script src="./js/pwa.js?v=460"></script>
+<script src="./js/config.js?v=461"></script>
+<script src="./js/auth.js?v=461"></script>
+<script src="./js/storage.js?v=461"></script>
+<script src="./js/ui.js?v=461"></script>
+<script src="./js/app.js?v=461"></script>
+<script src="./js/account.js?v=461"></script>
+<script src="./js/pwa.js?v=461"></script>
 </body>
 </html>

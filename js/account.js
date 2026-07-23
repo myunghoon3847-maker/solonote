@@ -282,12 +282,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.5.10",
+            "X-Client-Info": "hoonnote-v4.5.11",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.5.10",
+            clientVersion: "4.5.11",
           }),
           cache: "no-store",
           signal: controller.signal,
@@ -455,7 +455,7 @@
     }
   }
 
-  openButton?.addEventListener("click", openModal);
+  openButtons.forEach((button) => button.addEventListener("click", openModal));
   closeButton?.addEventListener("click", closeModal);
   cancelButton?.addEventListener("click", closeModal);
   passwordInput?.addEventListener("input", updateConfirmButton);
