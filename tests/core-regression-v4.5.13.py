@@ -503,7 +503,7 @@ async def run():
         await page.click("#editorBackButton")
         await page.evaluate("checkForRecoverableDraft()")
         await page.click("#discardDraftButton")
-        assert await page.evaluate("window.localStorage.length === 0")
+        assert await page.evaluate("![...Array(localStorage.length).keys()].map(i => localStorage.key(i)).some(key => key && key.startsWith('solonote_editor_draft_v4:'))")
         passed.append("자동 초안 저장·복구·삭제")
 
         for width in [320, 360, 375, 390, 412, 430]:

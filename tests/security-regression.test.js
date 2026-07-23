@@ -171,27 +171,27 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.13", () => {
+test("release and cache versions are consistently set to v4.5.13.1", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.13/);
+  assert.match(indexHtml, /version-badge">v4\.5\.13\.1/);
   assert.doesNotMatch(indexHtml, /v=458/);
-  assert.match(serviceWorker, /hoonnote-v4-5-13-cache/);
+  assert.match(serviceWorker, /hoonnote-v4-5-13-1-cache/);
   assert.doesNotMatch(serviceWorker, /v=458/);
-  assert.match(accountSource, /clientVersion: "4\.5\.13"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.13"/);
+  assert.match(accountSource, /clientVersion: "4\.5\.13\.1"/);
+  assert.match(storageSource, /backupVersion: "4\.5\.13\.1"/);
 });
 
-test("v4.5.13 logo, menu and data management UI contract is preserved", () => {
+test("v4.5.13.1 logo, menu and data management UI contract is preserved", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
   const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
   const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
 
-  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=463/);
+  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=464/);
   assert.match(indexHtml, /<section[^>]*id="editorView"[^>]*>/);
   assert.match(indexHtml.match(/<section[^>]*id="editorView"[^>]*>/)[0], /hidden/);
   assert.match(indexHtml, /<section[^>]*id="settingsView"[^>]*>/);
@@ -215,7 +215,7 @@ test("v4.5.13 logo, menu and data management UI contract is preserved", () => {
   assert.match(indexHtml, /id="installAppButton"/);
   assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
   assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
-  assert.match(indexHtml, /icons\/settings-gear\.png\?v=463/);
+  assert.match(indexHtml, /icons\/settings-gear\.png\?v=464/);
   assert.doesNotMatch(indexHtml, /id="emptyTrashButton"/);
   assert.match(indexHtml, /class="data-stat-open-label">열기<\/span>/);
   assert.match(indexHtml, /id="logoutButton"/);
@@ -245,6 +245,20 @@ test("v4.5.13 logo, menu and data management UI contract is preserved", () => {
   assert.match(styleSource, /\.settings-row-button\s*\{/);
   assert.match(styleSource, /overflow-x:\s*hidden/);
   assert.match(styleSource, /font-size:\s*16px/);
+});
+
+
+test("password recovery is consumed once and reset-email requests are throttled locally", () => {
+  const authSource = fs.readFileSync(path.join(projectRoot, "js/auth.js"), "utf8");
+
+  assert.doesNotMatch(authSource, /const recoveryUrlHint/);
+  assert.match(authSource, /let recoveryFlowCompleted = false/);
+  assert.match(authSource, /function isPasswordRecoveryContext\(\)/);
+  assert.match(authSource, /recoveryFlowCompleted = true/);
+  assert.match(authSource, /window\.location\.replace\(getAuthRedirectUrl\(\)\)/);
+  assert.match(authSource, /RESET_REQUEST_COOLDOWN_MS = 60 \* 1000/);
+  assert.match(authSource, /over_email_send_rate_limit/);
+  assert.match(authSource, /최대 1시간 후 다시 시도하세요/);
 });
 
 test("browser history navigation handles internal layers before app exit", () => {

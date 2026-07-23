@@ -76,7 +76,7 @@ async def run():
         # menu gear -> settings subview inside the menu
         await page.locator('#appMenuButton').click(); await page.wait_for_timeout(280)
         assert await page.locator('#openSettingsButton').is_visible()
-        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=463'
+        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=464'
         menu=await page.locator('#appMenuPanel').bounding_box(); assert menu and abs(menu['width']-(width*0.8))<=3,(width,menu)
         assert await page.locator('#emptyTrashButton').count()==0
         assert await page.locator('#openTrashButton .data-stat-open-label').inner_text()=='열기'

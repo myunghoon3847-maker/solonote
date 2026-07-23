@@ -41,9 +41,13 @@
   let isPasswordRecovery = false;
   let pendingLoginMessage = "";
   let pendingLoginMessageType = "";
-  const recoveryUrlHint = hasPasswordRecoveryHint();
+  let recoveryFlowCompleted = false;
+  let resetRequestCooldownTimer = null;
+  let resetRequestCooldownUntil = 0;
   const signupConfirmationUrlHint = hasSignupConfirmationHint();
   const POST_AUTH_MESSAGE_KEY = "solonote_post_auth_message_v1";
+  const RESET_REQUEST_COOLDOWN_KEY = "hoonnote_password_reset_cooldown_until_v1";
+  const RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
 
   window.solonotePasswordRecoveryActive = false;
 
@@ -81,6 +85,124 @@
     }
   }
 
+
+function storePostAuthMessage(message, type = "info") {
+  try {
+    window.sessionStorage.setItem(
+      POST_AUTH_MESSAGE_KEY,
+      JSON.stringify({ message, type })
+    );
+  } catch (error) {
+    console.warn("로그인 안내 메시지를 저장하지 못했습니다.", error);
+  }
+}
+
+function getResetRequestCooldownUntil() {
+  try {
+    const value = Number(
+      window.localStorage.getItem(RESET_REQUEST_COOLDOWN_KEY) || 0
+    );
+    const storedValue = Number.isFinite(value) ? value : 0;
+    return Math.max(resetRequestCooldownUntil, storedValue);
+  } catch (error) {
+    return resetRequestCooldownUntil;
+  }
+}
+
+function setResetRequestCooldownUntil(timestamp) {
+  resetRequestCooldownUntil = timestamp > Date.now() ? timestamp : 0;
+
+  try {
+    if (timestamp > Date.now()) {
+      window.localStorage.setItem(
+        RESET_REQUEST_COOLDOWN_KEY,
+        String(timestamp)
+      );
+    } else {
+      window.localStorage.removeItem(RESET_REQUEST_COOLDOWN_KEY);
+    }
+  } catch (error) {
+    // 저장소를 사용할 수 없어도 인증 기능은 계속 동작해야 합니다.
+  }
+}
+
+function clearResetRequestCooldownTimer() {
+  if (resetRequestCooldownTimer) {
+    window.clearInterval(resetRequestCooldownTimer);
+    resetRequestCooldownTimer = null;
+  }
+}
+
+function syncResetRequestCooldown() {
+  if (!resetRequestButton) {
+    return 0;
+  }
+
+  const remainingMs = Math.max(0, getResetRequestCooldownUntil() - Date.now());
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+
+  if (remainingSeconds > 0) {
+    resetRequestButton.disabled = true;
+    resetRequestButton.textContent = `${remainingSeconds}초 후 다시 보내기`;
+  } else {
+    setResetRequestCooldownUntil(0);
+    resetRequestButton.disabled = false;
+    resetRequestButton.textContent = "재설정 이메일 보내기";
+    clearResetRequestCooldownTimer();
+  }
+
+  return remainingSeconds;
+}
+
+function resumeResetRequestCooldown() {
+  const remainingSeconds = syncResetRequestCooldown();
+
+  if (remainingSeconds > 0 && !resetRequestCooldownTimer) {
+    resetRequestCooldownTimer = window.setInterval(
+      syncResetRequestCooldown,
+      1000
+    );
+  }
+
+  return remainingSeconds;
+}
+
+function startResetRequestCooldown(durationMs = RESET_REQUEST_COOLDOWN_MS) {
+  const currentUntil = getResetRequestCooldownUntil();
+  const nextUntil = Math.max(currentUntil, Date.now() + durationMs);
+  setResetRequestCooldownUntil(nextUntil);
+  clearResetRequestCooldownTimer();
+  syncResetRequestCooldown();
+  resetRequestCooldownTimer = window.setInterval(
+    syncResetRequestCooldown,
+    1000
+  );
+}
+
+function isRateLimitError(error) {
+  const code = String(error?.code || "");
+  const message = String(error?.message || "");
+  return (
+    Number(error?.status) === 429 ||
+    /rate limit|too many requests|security purposes.*after/i.test(message) ||
+    /rate_limit|over_email_send_rate_limit/i.test(code)
+  );
+}
+
+function getRateLimitMessage(error) {
+  const code = String(error?.code || "");
+  const message = String(error?.message || "");
+
+  if (
+    /over_email_send_rate_limit/i.test(code) ||
+    /email rate limit/i.test(message)
+  ) {
+    return "재설정 이메일 발송 한도에 도달했습니다. 여러 번 요청했다면 최대 1시간 후 다시 시도하세요. 이미 받은 메일 중 가장 최근 링크를 먼저 확인해 주세요.";
+  }
+
+  return "보안을 위해 재설정 이메일은 연속으로 보낼 수 없습니다. 마지막 요청 후 1분 이상 기다린 뒤 다시 시도하세요.";
+}
+
   function getAuthUrlParams() {
     return {
       query: new URLSearchParams(window.location.search),
@@ -95,6 +217,15 @@
 
   function hasPasswordRecoveryHint() {
     return getAuthFlowType() === "recovery";
+  }
+
+  function isPasswordRecoveryContext() {
+    return (
+      !recoveryFlowCompleted &&
+      (isPasswordRecovery ||
+        window.solonotePasswordRecoveryActive ||
+        hasPasswordRecoveryHint())
+    );
   }
 
   function hasSignupConfirmationHint() {
@@ -300,11 +431,13 @@
     }
 
     setMessage("");
+    resumeResetRequestCooldown();
     resetEmail?.focus();
     notifyAuthChange(null);
   }
 
   function showPasswordRecoveryScreen(session, message = "") {
+    recoveryFlowCompleted = false;
     isPasswordRecovery = true;
     window.solonotePasswordRecoveryActive = true;
     window.solonoteCurrentSession = session || null;
@@ -333,7 +466,7 @@
   }
 
   function showApp(session) {
-    if (isPasswordRecovery || window.solonotePasswordRecoveryActive) {
+    if (isPasswordRecoveryContext()) {
       showPasswordRecoveryScreen(session);
       return;
     }
@@ -391,8 +524,8 @@
       return "올바른 이메일 주소를 입력하세요.";
     }
 
-    if (/rate limit|too many requests|email rate limit/i.test(message)) {
-      return "요청이 너무 많습니다. 잠시 후 다시 시도하세요.";
+    if (isRateLimitError(error)) {
+      return getRateLimitMessage(error);
     }
 
     if (/same password|different from the old password/i.test(message)) {
@@ -542,6 +675,14 @@
 
     const email = resetEmail?.value.trim() || "";
 
+    if (resumeResetRequestCooldown() > 0) {
+      setMessage(
+        "재설정 이메일을 방금 요청했습니다. 버튼에 표시된 시간이 지난 뒤 다시 시도하세요.",
+        "info"
+      );
+      return;
+    }
+
     if (!email) {
       setMessage("재설정 이메일을 받을 주소를 입력하세요.", "error");
       resetEmail?.focus();
@@ -565,19 +706,25 @@
         throw error;
       }
 
+      startResetRequestCooldown();
       setMessage(
-        "등록된 계정이라면 재설정 이메일을 보냈습니다. 받은 메일의 링크를 눌러주세요.",
+        "등록된 계정이라면 재설정 이메일을 보냈습니다. 여러 메일을 받았다면 가장 최근 링크를 사용하세요.",
         "success"
       );
     } catch (error) {
+      if (isRateLimitError(error)) {
+        startResetRequestCooldown();
+      }
       setMessage(translateAuthError(error), "error");
     } finally {
-      setButtonBusy(
-        resetRequestButton,
-        false,
-        "이메일 보내는 중...",
-        "재설정 이메일 보내기"
-      );
+      if (syncResetRequestCooldown() === 0) {
+        setButtonBusy(
+          resetRequestButton,
+          false,
+          "이메일 보내는 중...",
+          "재설정 이메일 보내기"
+        );
+      }
     }
   }
 
@@ -621,26 +768,25 @@
         throw error;
       }
 
-      cleanAuthParametersFromUrl();
+      recoveryFlowCompleted = true;
       isPasswordRecovery = false;
       window.solonotePasswordRecoveryActive = false;
-      pendingLoginMessage =
-        "비밀번호가 변경되었습니다. 새 비밀번호로 로그인하세요.";
-      pendingLoginMessageType = "success";
+      cleanAuthParametersFromUrl();
+      storePostAuthMessage(
+        "비밀번호가 변경되었습니다. 새 비밀번호로 로그인하세요.",
+        "success"
+      );
 
-      const { error: signOutError } = await client.auth.signOut();
+      const { error: signOutError } = await client.auth.signOut({
+        scope: "local",
+      });
 
       if (signOutError) {
-        throw signOutError;
+        console.warn("비밀번호 변경 후 로그아웃 정리 중 경고가 발생했습니다.", signOutError);
       }
 
-      if (pendingLoginMessage) {
-        const message = pendingLoginMessage;
-        const messageType = pendingLoginMessageType;
-        pendingLoginMessage = "";
-        pendingLoginMessageType = "";
-        showLoginScreen(message, messageType);
-      }
+      window.location.replace(getAuthRedirectUrl());
+      return;
     } catch (error) {
       setMessage(translateAuthError(error), "error");
     } finally {
@@ -735,7 +881,9 @@
 
     client.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        showPasswordRecoveryScreen(session);
+        if (!recoveryFlowCompleted) {
+          showPasswordRecoveryScreen(session);
+        }
         return;
       }
 
@@ -754,9 +902,7 @@
 
       if (session) {
         if (
-          isPasswordRecovery ||
-          window.solonotePasswordRecoveryActive ||
-          recoveryUrlHint
+          isPasswordRecoveryContext()
         ) {
           showPasswordRecoveryScreen(session);
         } else {
@@ -779,7 +925,7 @@
       }
 
       if (data.session) {
-        if (recoveryUrlHint) {
+        if (hasPasswordRecoveryHint()) {
           showPasswordRecoveryScreen(data.session);
         } else {
           if (signupConfirmationUrlHint) {
@@ -787,7 +933,7 @@
           }
           showApp(data.session);
         }
-      } else if (recoveryUrlHint || getRecoveryUrlError()) {
+      } else if (hasPasswordRecoveryHint() || getRecoveryUrlError()) {
         showLoginScreen(
           getRecoveryUrlError() ||
             "재설정 링크가 만료되었거나 올바르지 않습니다. 새 링크를 다시 요청하세요.",
