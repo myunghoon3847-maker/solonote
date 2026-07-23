@@ -367,13 +367,19 @@ function setActiveCategory(category) {
 
 function openEditor(options = {}) {
   const editorPanel = document.querySelector(".editor-panel");
-  const toggleButton = document.querySelector("#editorToggleButton");
+  const editorView = document.querySelector("#editorView");
+  const notesView = document.querySelector("#notesView");
   const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
+  if (!editorPanel || !editorView) {
+    return;
+  }
+
   editorPanel.classList.remove("collapsed");
-  toggleButton.textContent = "작성 닫기";
-  toggleButton.classList.remove("primary-button");
-  toggleButton.classList.add("secondary-button");
+  editorView.hidden = false;
+  editorView.setAttribute("aria-hidden", "false");
+  notesView && (notesView.hidden = true);
+  document.body.classList.add("editor-view-open");
 
   if (mobileNewMemoButton) {
     mobileNewMemoButton.hidden = true;
@@ -382,11 +388,13 @@ function openEditor(options = {}) {
   if (!options.skipHistory) {
     window.solonoteNavigation?.openLayer("editor");
   }
+
+  window.scrollTo({ top: 0, behavior: "auto" });
 }
 
 function closeEditor(options = {}) {
   const editorPanel = document.querySelector(".editor-panel");
-  const toggleButton = document.querySelector("#editorToggleButton");
+  const editorView = document.querySelector("#editorView");
   const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 
   if (
@@ -396,57 +404,58 @@ function closeEditor(options = {}) {
     return;
   }
 
-  editorPanel.classList.add("collapsed");
-  toggleButton.textContent = "+ 새 메모";
-  toggleButton.classList.remove("secondary-button", "ghost-button");
-  toggleButton.classList.add("primary-button");
+  editorPanel?.classList.add("collapsed");
+
+  if (editorView) {
+    editorView.hidden = true;
+    editorView.setAttribute("aria-hidden", "true");
+  }
+
+  document.body.classList.remove("editor-view-open");
+
+  const baseView = document.body.dataset.appView || "notes";
+  if (typeof switchAppView === "function") {
+    switchAppView(baseView, {
+      historyMode: "none",
+      scrollBehavior: "auto",
+    });
+  } else {
+    const notesView = document.querySelector("#notesView");
+    if (notesView && baseView === "notes") {
+      notesView.hidden = false;
+    }
+  }
 
   if (mobileNewMemoButton) {
-    mobileNewMemoButton.hidden = document.body.dataset.appView === "tasks";
+    mobileNewMemoButton.hidden = baseView !== "notes";
   }
 }
 
 function toggleEditor() {
   const editorPanel = document.querySelector(".editor-panel");
 
-  if (editorPanel.classList.contains("collapsed")) {
+  if (!editorPanel || editorPanel.classList.contains("collapsed")) {
     openEditor();
-    document.querySelector("#titleInput").focus();
-    return;
+    window.setTimeout(() => document.querySelector("#titleInput")?.focus(), 80);
   }
-
-  const isEditing = Boolean(document.querySelector("#editingId").value);
-  const hasTitle = Boolean(document.querySelector("#titleInput").value.trim());
-  const hasProject = Boolean(document.querySelector("#projectInput").value.trim());
-  const hasContent = Boolean(document.querySelector("#contentInput").value.trim());
-  const hasTasks = Boolean(document.querySelectorAll("#taskDraftList .task-draft-item").length);
-
-  if (isEditing || hasTitle || hasProject || hasContent || hasTasks) {
-    const shouldClose = confirm("작성 중인 내용이 있습니다. 작성 영역을 닫으시겠습니까?");
-
-    if (!shouldClose) {
-      return;
-    }
-
-    resetForm();
-  }
-
-  closeEditor();
 }
 
 function setEditorMode(mode) {
   const editorTitle = document.querySelector("#editorTitle");
+  const editorPageTitle = document.querySelector("#editorPageTitle");
   const saveButton = document.querySelector("#saveButton");
   const resetButton = document.querySelector("#resetButton");
 
   if (mode === "edit") {
     editorTitle.textContent = "메모 수정";
+    editorPageTitle && (editorPageTitle.textContent = "메모 수정");
     saveButton.textContent = "수정 완료";
     resetButton.classList.remove("hidden");
     return;
   }
 
   editorTitle.textContent = "새 메모 작성";
+  editorPageTitle && (editorPageTitle.textContent = "메모 작성");
   saveButton.textContent = "저장하기";
   resetButton.classList.add("hidden");
 }
@@ -494,8 +503,5 @@ function fillFormForEdit(memo) {
   openEditor();
   closeDetailModal();
 
-  document.querySelector(".editor-panel").scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
+  window.scrollTo({ top: 0, behavior: "auto" });
 }

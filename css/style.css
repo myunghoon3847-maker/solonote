@@ -2650,3 +2650,509 @@ body {
     width: 82vw;
   }
 }
+
+/* v4.5.8 category line, settings entry and shared app icon */
+.brand-mark {
+  display: block;
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+  background: transparent;
+  object-fit: contain;
+  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.2);
+}
+
+.notes-view-heading {
+  justify-content: flex-end;
+  min-height: 34px;
+}
+
+.category-filter-section {
+  min-width: 0;
+}
+
+.category-tabs-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+}
+
+.main-category-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  max-height: none;
+  padding: 1px 1px 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.main-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.main-category-tabs .category-tab {
+  flex: 0 0 auto;
+}
+
+.category-manage-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 48px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.category-more-button,
+.category-more-label,
+.category-more-arrow,
+.category-filter-header,
+.category-filter-actions {
+  display: none !important;
+}
+
+.settings-management {
+  padding-top: 5px;
+}
+
+.settings-menu-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-menu-button:hover,
+.settings-menu-button.is-open {
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+}
+
+.settings-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #ffffff;
+  color: var(--primary);
+  font-size: 18px;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.settings-menu-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.settings-menu-copy strong {
+  font-size: 13px;
+}
+
+.settings-menu-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-menu-chevron {
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.settings-menu-button.is-open .settings-menu-chevron {
+  transform: rotate(90deg);
+}
+
+.settings-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.settings-content[hidden] {
+  display: none !important;
+}
+
+.settings-content .menu-action-button {
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .main-category-tabs {
+    flex-wrap: nowrap;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .category-manage-button {
+    min-width: 46px;
+    padding-inline: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .category-tabs-shell {
+    gap: 5px;
+  }
+
+  .category-manage-button {
+    min-width: 44px;
+    padding-inline: 7px;
+  }
+}
+
+/* Keep the category filter line compact on narrow phones. */
+.main-category-tabs {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .notes-view-heading {
+    display: none;
+  }
+}
+
+/* A soft edge shows that the single-line category row can be swiped. */
+.main-category-tabs {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 12px), transparent 100%);
+}
+
+.settings-menu-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* v4.5.9: dedicated editor/settings screens and simplified mobile navigation */
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+}
+
+/* Main category filters wrap naturally; no hidden horizontal row or manage button. */
+.category-tabs-shell {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.main-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.main-category-tabs .category-tab {
+  flex: 0 0 auto;
+}
+
+/* Editor is a separate app screen rather than an expandable block in the list. */
+body.editor-view-open .primary-view-tabs,
+body[data-app-view="settings"] .primary-view-tabs {
+  display: none;
+}
+
+.editor-view,
+.settings-view {
+  min-width: 0;
+}
+
+.editor-page-heading,
+.settings-view-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 48px;
+}
+
+.editor-page-heading > div,
+.settings-view-heading > div {
+  min-width: 0;
+}
+
+.editor-page-heading h2,
+.settings-view-heading h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.035em;
+}
+
+.editor-page-heading p,
+.settings-view-heading p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.editor-back-button,
+.settings-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: #475569;
+  cursor: pointer;
+  font-size: 21px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.editor-back-button:hover,
+.settings-back-button:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-soft);
+}
+
+.editor-view .editor-panel {
+  width: 100%;
+  margin: 0;
+}
+
+.editor-view .editor-panel.collapsed {
+  display: none;
+}
+
+/* The gear replaces the menu X and opens a dedicated settings screen. */
+.menu-header-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-header-settings-button:hover,
+.menu-header-settings-button:focus-visible {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.menu-header-settings-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.settings-view {
+  gap: 12px;
+}
+
+.settings-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-row-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 68px;
+  padding: 12px 14px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-row-button:hover,
+.settings-row-button.is-open {
+  background: var(--surface-soft);
+}
+
+.settings-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #eef2f7;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.settings-row-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.settings-row-copy strong {
+  font-size: 14px;
+}
+
+.settings-row-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-row-chevron {
+  color: #94a3b8;
+  font-size: 23px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.settings-row-button.is-open .settings-row-chevron {
+  transform: rotate(90deg);
+}
+
+.settings-row-content {
+  margin: 0;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-soft);
+}
+
+.settings-row-content .menu-action-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.app-install-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+}
+
+.settings-panel-copy {
+  min-width: 0;
+}
+
+.settings-panel-copy strong {
+  font-size: 14px;
+}
+
+.settings-panel-copy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.app-install-settings > button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 520px) {
+  .brand-name {
+    font-size: 16px;
+    letter-spacing: 0.045em;
+  }
+
+  .main-category-tabs {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .editor-page-heading,
+  .settings-view-heading {
+    min-height: 44px;
+  }
+
+  .editor-view .editor-panel {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .app-install-settings {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-install-settings > button {
+    width: 100%;
+  }
+}
+
+.settings-row-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

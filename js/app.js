@@ -15,7 +15,6 @@ const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
 const categoryTabsShell = document.querySelector("#categoryTabsShell");
-const categoryMoreButton = document.querySelector("#categoryMoreButton");
 const sortOptions = document.querySelector("#sortOptions");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
@@ -41,6 +40,9 @@ const dataManagementToggleButton = document.querySelector("#dataManagementToggle
 const dataManagementContent = document.querySelector("#dataManagementContent");
 const accountManagementToggleButton = document.querySelector("#accountManagementToggleButton");
 const accountManagementContent = document.querySelector("#accountManagementContent");
+const openSettingsButton = document.querySelector("#openSettingsButton");
+const settingsBackButton = document.querySelector("#settingsBackButton");
+const editorBackButton = document.querySelector("#editorBackButton");
 const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 const draftRecoveryBanner = document.querySelector("#draftRecoveryBanner");
 const draftRecoveryDescription = document.querySelector("#draftRecoveryDescription");
@@ -56,7 +58,9 @@ const taskHubViewTabs = document.querySelector(".task-hub-view-tabs");
 const notesViewTab = document.querySelector("#notesViewTab");
 const tasksViewTab = document.querySelector("#tasksViewTab");
 const notesView = document.querySelector("#notesView");
+const editorView = document.querySelector("#editorView");
 const tasksView = document.querySelector("#tasksView");
+const settingsView = document.querySelector("#settingsView");
 const trashView = document.querySelector("#trashView");
 const trashList = document.querySelector("#trashList");
 const trashViewCount = document.querySelector("#trashViewCount");
@@ -64,7 +68,6 @@ const emptyTrashViewButton = document.querySelector("#emptyTrashViewButton");
 const homeLogoButton = document.querySelector("#homeLogoButton");
 const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
-const appMenuCloseButton = document.querySelector("#appMenuCloseButton");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
 const categoryManagerModal = document.querySelector("#categoryManagerModal");
@@ -84,9 +87,6 @@ let lastAutomaticSyncRequestAt = 0;
 let appMenuCloseTimer = null;
 let isAppMenuOpen = false;
 let categoryManagerPreviousFocus = null;
-let categoryTabsExpanded = false;
-let categoryOverflowFrame = null;
-let categoryTabsResizeObserver = null;
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
@@ -117,7 +117,7 @@ let isApplyingAppHistory = false;
 let lastAppliedNavigationState = null;
 
 function createAppNavigationState(view = currentAppView, layer = "base", detail = {}) {
-  const safeView = ["notes", "tasks", "trash"].includes(view) ? view : "notes";
+  const safeView = ["notes", "tasks", "trash", "settings"].includes(view) ? view : "notes";
   const safeLayer = APP_HISTORY_LAYERS.has(layer) ? layer : "base";
 
   return {
@@ -742,7 +742,7 @@ function openAppMenu(options = {}) {
 
       appMenuPanel.classList.add("is-open");
       appMenuBackdrop.classList.add("is-open");
-      appMenuCloseButton?.focus();
+      openSettingsButton?.focus();
     });
   });
 }
@@ -801,16 +801,21 @@ function handleHomeLogoClick(event) {
 }
 
 function switchAppView(view, options = {}) {
-  const allowedViews = ["notes", "tasks", "trash"];
+  const allowedViews = ["notes", "tasks", "trash", "settings"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
 
   const isNotes = currentAppView === "notes";
   const isTasks = currentAppView === "tasks";
   const isTrash = currentAppView === "trash";
+  const isSettings = currentAppView === "settings";
 
   document.body.dataset.appView = currentAppView;
+  document.body.classList.remove("editor-view-open");
+
   notesView.hidden = !isNotes;
+  editorView.hidden = true;
   tasksView.hidden = !isTasks;
+  settingsView.hidden = !isSettings;
   trashView.hidden = !isTrash;
 
   notesViewTab.classList.toggle("active", isNotes);
@@ -862,8 +867,45 @@ function handleAccountManagementToggle() {
 
   const willOpen = accountManagementContent.hidden;
   accountManagementContent.hidden = !willOpen;
-  accountManagementToggleButton.textContent = willOpen ? "닫기" : "열기";
+  accountManagementToggleButton.classList.toggle("is-open", willOpen);
   accountManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
+}
+
+function handleOpenSettingsClick() {
+  closeAppMenu({ skipHistory: true });
+  switchAppView("settings", {
+    historyMode: "replace",
+    scrollBehavior: "auto",
+  });
+  window.setTimeout(() => settingsBackButton?.focus(), 0);
+}
+
+function handleSettingsBackClick() {
+  const state = getAppNavigationState();
+
+  if (
+    currentAppView === "settings" &&
+    state?.view === "settings" &&
+    state.layer === "base" &&
+    window.history.length > 1
+  ) {
+    window.history.back();
+    return;
+  }
+
+  switchAppView("notes", {
+    historyMode: "replace",
+    scrollBehavior: "auto",
+  });
+}
+
+function handleEditorBackClick() {
+  if (hasUnsavedEditorChanges()) {
+    saveLocalEditorDraft();
+  }
+
+  resetForm();
+  closeEditor();
 }
 
 function handleMobileNewMemoClick() {
@@ -887,10 +929,7 @@ function handleMobileNewMemoClick() {
 
   resetForm();
   openEditor();
-  document.querySelector(".editor-panel")?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
+  window.scrollTo({ top: 0, behavior: "auto" });
   window.setTimeout(() => titleInput?.focus(), 250);
 }
 
@@ -960,53 +999,6 @@ function createCategoryTabButton(category) {
   return button;
 }
 
-function setCategoryTabsExpanded(expanded) {
-  if (!categoryTabsShell || !categoryMoreButton) {
-    return;
-  }
-
-  categoryTabsExpanded = Boolean(expanded);
-  categoryTabsShell.classList.toggle("is-expanded", categoryTabsExpanded);
-  categoryMoreButton.setAttribute("aria-expanded", String(categoryTabsExpanded));
-
-  const label = categoryMoreButton.querySelector(".category-more-label");
-  if (label) {
-    label.textContent = categoryTabsExpanded ? "접기" : "더보기";
-  }
-}
-
-function updateCategoryOverflow() {
-  if (!categoryTabs || !categoryTabsShell || !categoryMoreButton) {
-    return;
-  }
-
-  if (categoryOverflowFrame) {
-    window.cancelAnimationFrame(categoryOverflowFrame);
-  }
-
-  categoryOverflowFrame = window.requestAnimationFrame(() => {
-    categoryOverflowFrame = null;
-
-    const wasExpanded = categoryTabsExpanded;
-    categoryTabsShell.classList.remove("is-expanded");
-    categoryMoreButton.hidden = true;
-
-    const needsMore = categoryTabs.scrollHeight > categoryTabs.clientHeight + 1;
-    categoryMoreButton.hidden = !needsMore;
-
-    if (!needsMore) {
-      setCategoryTabsExpanded(false);
-      return;
-    }
-
-    setCategoryTabsExpanded(wasExpanded);
-  });
-}
-
-function handleCategoryMoreClick() {
-  setCategoryTabsExpanded(!categoryTabsExpanded);
-}
-
 function renderMemoCategoryControls() {
   if (!categoryInput || !categoryTabs) {
     return;
@@ -1046,7 +1038,6 @@ function renderMemoCategoryControls() {
   }
 
   setActiveCategory(currentCategory);
-  updateCategoryOverflow();
 }
 
 function setCategoryManagerStatus(message = "", state = "") {
@@ -2804,7 +2795,6 @@ function handleGuideToggleClick() {
 
 function bindEvents() {
   categoryTabs?.addEventListener("click", handleCategoryClick);
-  categoryMoreButton?.addEventListener("click", handleCategoryMoreClick);
   openCategoryManagerButton?.addEventListener("click", openCategoryManager);
   editorCategoryManagerButton?.addEventListener("click", openCategoryManager);
   closeCategoryManagerButton?.addEventListener("click", closeCategoryManager);
@@ -2845,6 +2835,9 @@ function bindEvents() {
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
   accountManagementToggleButton?.addEventListener("click", handleAccountManagementToggle);
+  openSettingsButton?.addEventListener("click", handleOpenSettingsClick);
+  settingsBackButton?.addEventListener("click", handleSettingsBackClick);
+  editorBackButton?.addEventListener("click", handleEditorBackClick);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
   restoreDraftButton.addEventListener("click", restoreLocalEditorDraft);
   discardDraftButton.addEventListener("click", discardLocalEditorDraft);
@@ -2860,7 +2853,6 @@ function bindEvents() {
   notesViewTab.parentElement.addEventListener("click", handlePrimaryViewClick);
   homeLogoButton?.addEventListener("click", handleHomeLogoClick);
   appMenuButton.addEventListener("click", openAppMenu);
-  appMenuCloseButton.addEventListener("click", closeAppMenu);
   appMenuBackdrop.addEventListener("click", closeAppMenu);
   openTrashButton?.addEventListener("click", handleOpenTrashClick);
   window.addEventListener("beforeunload", handleBeforeUnload);
@@ -2878,6 +2870,16 @@ function bindEvents() {
 
     if (!appMenuPanel.hidden) {
       closeAppMenu();
+      return;
+    }
+
+    if (isEditorOpen()) {
+      handleEditorBackClick();
+      return;
+    }
+
+    if (currentAppView === "settings") {
+      handleSettingsBackClick();
       return;
     }
 
@@ -2903,10 +2905,7 @@ function bindEvents() {
 
   window.addEventListener("focus", () => {
     scheduleAutomaticSync("앱 화면 복귀");
-    updateCategoryOverflow();
-  });
-
-  window.addEventListener("resize", updateCategoryOverflow);
+    });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
@@ -2940,7 +2939,7 @@ if (dataManagementContent) {
 
 if (accountManagementContent && accountManagementToggleButton) {
   accountManagementContent.hidden = true;
-  accountManagementToggleButton.textContent = "열기";
+  accountManagementToggleButton.classList.remove("is-open");
   accountManagementToggleButton.setAttribute("aria-expanded", "false");
 }
 
@@ -2955,13 +2954,6 @@ switchAppView("notes", {
   historyMode: "none",
   scrollBehavior: "auto",
 });
-updateCategoryOverflow();
-
-if (categoryTabs && "ResizeObserver" in window) {
-  categoryTabsResizeObserver = new ResizeObserver(updateCategoryOverflow);
-  categoryTabsResizeObserver.observe(categoryTabs);
-}
-
 if (navigator.onLine === false) {
   setOfflineStatus();
 } else {
@@ -2970,8 +2962,6 @@ if (navigator.onLine === false) {
 
 window.addEventListener("solonote-auth-changed", (event) => {
   const session = event.detail && event.detail.session;
-  window.setTimeout(updateCategoryOverflow, 0);
-
   if (window.solonotePasswordRecoveryActive) {
     cloudLoadSequence += 1;
     currentCloudUserId = "";
