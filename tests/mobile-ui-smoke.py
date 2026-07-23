@@ -29,7 +29,7 @@ async def visible_overflows(page):
     return await page.evaluate('''() => {const vw=document.documentElement.clientWidth;return [...document.body.querySelectorAll('*')].flatMap(el=>{const st=getComputedStyle(el); if(st.display==='none'||st.visibility==='hidden'||el.closest('[hidden]')) return []; const r=el.getBoundingClientRect(); if(r.width<=0||r.height<=0)return[]; if(r.right>vw+1||r.left<-1)return[{tag:el.tagName,id:el.id,cls:String(el.className),left:r.left,right:r.right,width:r.width,vw}];return[];});}''')
 
 async def run():
-  out = ROOT.parent / 'hoonnote_v4_5_9_testshots'; out.mkdir(exist_ok=True)
+  out = ROOT.parent / 'hoonnote_v4_5_11_testshots'; out.mkdir(exist_ok=True)
   async with async_playwright() as pw:
     browser=await pw.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
     try:
@@ -37,7 +37,7 @@ async def run():
         page=await browser.new_page(viewport={'width':width,'height':780})
         errors=[]; page.on('pageerror', lambda e: errors.append(str(e)))
         await load(page)
-        assert await page.locator('.brand-name').inner_text()=='HOONNOTE'
+        assert await page.locator('.brand-wordmark').is_visible()
         assert await page.locator('#openCategoryManagerButton').count()==0
         assert await page.locator('#appMenuCloseButton').count()==0
         layout=await page.evaluate('''()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,bw:document.body.scrollWidth})''')
@@ -67,27 +67,25 @@ async def run():
         assert await page.locator('#taskHubTitle').count()==0
         assert await page.locator('#taskHubResultText').count()==0
         await page.locator('#notesViewTab').click(); await page.wait_for_timeout(80)
-        # menu gear -> dedicated settings view
+        # menu gear -> settings subview inside the menu
         await page.locator('#appMenuButton').click(); await page.wait_for_timeout(280)
         assert await page.locator('#openSettingsButton').is_visible()
-        gear_color=await page.locator('#openSettingsButton').evaluate('el=>getComputedStyle(el).color')
-        assert gear_color in ('rgb(107, 114, 128)','rgb(71, 85, 105)'),gear_color
-        menu=await page.locator('#appMenuPanel').bounding_box(); assert menu and menu['width']<=width*.85+3,(width,menu)
-        await page.mouse.click(8, 300)
-        await page.wait_for_timeout(340)
-        assert await page.locator('#appMenuPanel').is_hidden()
-        await page.locator('#appMenuButton').click(); await page.wait_for_timeout(300)
-        await page.locator('#openSettingsButton').click(); await page.wait_for_timeout(320)
-        assert await page.locator('#appMenuPanel').is_hidden()
-        assert await page.locator('#settingsView').is_visible()
-        assert await page.locator('#accountManagementToggleButton').is_visible()
-        assert await page.locator('#menuCategorySettingsButton').count()==0
-        assert await page.locator('.primary-view-tabs').is_hidden()
-        await page.locator('#accountManagementToggleButton').click()
+        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=461'
+        menu=await page.locator('#appMenuPanel').bounding_box(); assert menu and menu['width']<=width-15+2,(width,menu)
+        assert await page.locator('#emptyTrashButton').count()==0
+        assert await page.locator('#openTrashButton .data-stat-open-label').inner_text()=='열기'
+        assert not await page.locator('#logoutButton').is_visible()
+        await page.locator('#openSettingsButton').click(); await page.wait_for_timeout(120)
+        assert await page.locator('#appMenuPanel').is_visible()
+        assert await page.locator('#menuSettingsView').is_visible()
+        assert await page.locator('#menuMainView').is_hidden()
+        await page.locator('#menuAccountManagementToggleButton').click()
+        assert await page.locator('#logoutButton').is_visible()
         assert await page.locator('#openAccountDeletionButton').is_visible()
         assert not await visible_overflows(page),(width,(await visible_overflows(page))[:5])
-        await page.locator('#settingsBackButton').click(); await page.wait_for_timeout(180)
-        assert await page.locator('#notesView').is_visible()
+        await page.locator('#menuSettingsBackButton').click(); await page.wait_for_timeout(80)
+        await page.mouse.click(5, 300); await page.wait_for_timeout(340)
+        assert await page.locator('#appMenuPanel').is_hidden()
         assert not errors,(width,errors)
         if width==390:
           await page.screenshot(path=str(out/'main-390.png'),full_page=True)
@@ -96,8 +94,9 @@ async def run():
           await page.locator('#editorBackButton').click(); await page.wait_for_timeout(150)
           await page.locator('#appMenuButton').click(); await page.wait_for_timeout(260)
           await page.screenshot(path=str(out/'menu-390.png'),full_page=False)
-          await page.locator('#openSettingsButton').click(); await page.wait_for_timeout(320)
-          await page.screenshot(path=str(out/'settings-390.png'),full_page=True)
+          await page.locator('#openSettingsButton').click(); await page.wait_for_timeout(120)
+          await page.locator('#menuAccountManagementToggleButton').click(); await page.wait_for_timeout(60)
+          await page.screenshot(path=str(out/'settings-390.png'),full_page=False)
         await page.close()
     finally:
       await browser.close()

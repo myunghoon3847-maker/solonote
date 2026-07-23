@@ -3314,3 +3314,71 @@ body[data-app-view="settings"] .primary-view-tabs {
     gap: 6px;
   }
 }
+
+
+/* v4.5.11 exact reference assets and menu cleanup */
+.brand-home-button {
+  min-height: 44px;
+  padding: 2px 4px 2px 0;
+}
+
+.brand-wordmark {
+  display: block;
+  width: 190px;
+  max-width: min(52vw, 190px);
+  height: auto;
+  object-fit: contain;
+}
+
+.app-menu-panel {
+  width: min(450px, calc(84vw + 50px), calc(100vw - 18px));
+}
+
+.menu-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.menu-header-settings-button img {
+  width: 25px;
+  height: 25px;
+}
+
+.data-stat-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.data-stat-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.data-stat-open-label {
+  flex: 0 0 auto;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .brand-wordmark {
+    width: 168px;
+    max-width: 50vw;
+  }
+
+  .app-menu-panel {
+    width: min(420px, calc(84vw + 50px), calc(100vw - 16px));
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-wordmark {
+    width: 154px;
+    max-width: 48vw;
+  }
+}
