@@ -14,6 +14,8 @@ const editingIdInput = document.querySelector("#editingId");
 const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
+const categoryTabsShell = document.querySelector("#categoryTabsShell");
+const categoryMoreButton = document.querySelector("#categoryMoreButton");
 const sortOptions = document.querySelector("#sortOptions");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
@@ -37,6 +39,8 @@ const cloudRefreshButton = document.querySelector("#cloudRefreshButton");
 const lastSyncTime = document.querySelector("#lastSyncTime");
 const dataManagementToggleButton = document.querySelector("#dataManagementToggleButton");
 const dataManagementContent = document.querySelector("#dataManagementContent");
+const accountManagementToggleButton = document.querySelector("#accountManagementToggleButton");
+const accountManagementContent = document.querySelector("#accountManagementContent");
 const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 const draftRecoveryBanner = document.querySelector("#draftRecoveryBanner");
 const draftRecoveryDescription = document.querySelector("#draftRecoveryDescription");
@@ -80,6 +84,9 @@ let lastAutomaticSyncRequestAt = 0;
 let appMenuCloseTimer = null;
 let isAppMenuOpen = false;
 let categoryManagerPreviousFocus = null;
+let categoryTabsExpanded = false;
+let categoryOverflowFrame = null;
+let categoryTabsResizeObserver = null;
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
@@ -848,6 +855,17 @@ function handleDataManagementToggle() {
   dataManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
 }
 
+function handleAccountManagementToggle() {
+  if (!accountManagementToggleButton || !accountManagementContent) {
+    return;
+  }
+
+  const willOpen = accountManagementContent.hidden;
+  accountManagementContent.hidden = !willOpen;
+  accountManagementToggleButton.textContent = willOpen ? "닫기" : "열기";
+  accountManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
+}
+
 function handleMobileNewMemoClick() {
   switchAppView("notes");
   if (!confirmDiscardEditorChanges()) {
@@ -942,6 +960,53 @@ function createCategoryTabButton(category) {
   return button;
 }
 
+function setCategoryTabsExpanded(expanded) {
+  if (!categoryTabsShell || !categoryMoreButton) {
+    return;
+  }
+
+  categoryTabsExpanded = Boolean(expanded);
+  categoryTabsShell.classList.toggle("is-expanded", categoryTabsExpanded);
+  categoryMoreButton.setAttribute("aria-expanded", String(categoryTabsExpanded));
+
+  const label = categoryMoreButton.querySelector(".category-more-label");
+  if (label) {
+    label.textContent = categoryTabsExpanded ? "접기" : "더보기";
+  }
+}
+
+function updateCategoryOverflow() {
+  if (!categoryTabs || !categoryTabsShell || !categoryMoreButton) {
+    return;
+  }
+
+  if (categoryOverflowFrame) {
+    window.cancelAnimationFrame(categoryOverflowFrame);
+  }
+
+  categoryOverflowFrame = window.requestAnimationFrame(() => {
+    categoryOverflowFrame = null;
+
+    const wasExpanded = categoryTabsExpanded;
+    categoryTabsShell.classList.remove("is-expanded");
+    categoryMoreButton.hidden = true;
+
+    const needsMore = categoryTabs.scrollHeight > categoryTabs.clientHeight + 1;
+    categoryMoreButton.hidden = !needsMore;
+
+    if (!needsMore) {
+      setCategoryTabsExpanded(false);
+      return;
+    }
+
+    setCategoryTabsExpanded(wasExpanded);
+  });
+}
+
+function handleCategoryMoreClick() {
+  setCategoryTabsExpanded(!categoryTabsExpanded);
+}
+
 function renderMemoCategoryControls() {
   if (!categoryInput || !categoryTabs) {
     return;
@@ -981,6 +1046,7 @@ function renderMemoCategoryControls() {
   }
 
   setActiveCategory(currentCategory);
+  updateCategoryOverflow();
 }
 
 function setCategoryManagerStatus(message = "", state = "") {
@@ -2738,6 +2804,7 @@ function handleGuideToggleClick() {
 
 function bindEvents() {
   categoryTabs?.addEventListener("click", handleCategoryClick);
+  categoryMoreButton?.addEventListener("click", handleCategoryMoreClick);
   openCategoryManagerButton?.addEventListener("click", openCategoryManager);
   editorCategoryManagerButton?.addEventListener("click", openCategoryManager);
   closeCategoryManagerButton?.addEventListener("click", closeCategoryManager);
@@ -2777,6 +2844,7 @@ function bindEvents() {
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
+  accountManagementToggleButton?.addEventListener("click", handleAccountManagementToggle);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
   restoreDraftButton.addEventListener("click", restoreLocalEditorDraft);
   discardDraftButton.addEventListener("click", discardLocalEditorDraft);
@@ -2835,7 +2903,10 @@ function bindEvents() {
 
   window.addEventListener("focus", () => {
     scheduleAutomaticSync("앱 화면 복귀");
+    updateCategoryOverflow();
   });
+
+  window.addEventListener("resize", updateCategoryOverflow);
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
@@ -2867,6 +2938,12 @@ if (dataManagementContent) {
   dataManagementContent.hidden = true;
 }
 
+if (accountManagementContent && accountManagementToggleButton) {
+  accountManagementContent.hidden = true;
+  accountManagementToggleButton.textContent = "열기";
+  accountManagementToggleButton.setAttribute("aria-expanded", "false");
+}
+
 if (appMenuPanel && appMenuBackdrop) {
   appMenuPanel.classList.remove("is-open");
   appMenuBackdrop.classList.remove("is-open");
@@ -2878,6 +2955,12 @@ switchAppView("notes", {
   historyMode: "none",
   scrollBehavior: "auto",
 });
+updateCategoryOverflow();
+
+if (categoryTabs && "ResizeObserver" in window) {
+  categoryTabsResizeObserver = new ResizeObserver(updateCategoryOverflow);
+  categoryTabsResizeObserver.observe(categoryTabs);
+}
 
 if (navigator.onLine === false) {
   setOfflineStatus();
@@ -2887,6 +2970,7 @@ if (navigator.onLine === false) {
 
 window.addEventListener("solonote-auth-changed", (event) => {
   const session = event.detail && event.detail.session;
+  window.setTimeout(updateCategoryOverflow, 0);
 
   if (window.solonotePasswordRecoveryActive) {
     cloudLoadSequence += 1;

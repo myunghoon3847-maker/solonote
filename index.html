@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>훈노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=456" />
+  <link rel="manifest" href="./manifest.json?v=457" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="훈노트" />
   <meta name="apple-mobile-web-app-title" content="훈노트" />
@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=456" />
-  <link rel="stylesheet" href="./css/style.css?v=456" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=457" />
+  <link rel="stylesheet" href="./css/style.css?v=457" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -370,20 +370,8 @@
             ></textarea>
 
             <div class="form-grid">
-              <div class="category-field">
-                <div class="category-field-heading">
-                  <label for="categoryInput">카테고리</label>
-                  <button
-                    type="button"
-                    id="editorCategoryManagerButton"
-                    class="text-button category-inline-manage-button"
-                    aria-label="카테고리 추가 및 삭제"
-                    aria-haspopup="dialog"
-                    aria-controls="categoryManagerModal"
-                  >
-                    추가·삭제
-                  </button>
-                </div>
+              <div class="category-field editor-category-panel">
+                <label for="categoryInput">카테고리</label>
                 <select id="categoryInput">
                   <option value="업무">업무</option>
                   <option value="아이디어">아이디어</option>
@@ -391,6 +379,16 @@
                   <option value="보관">보관</option>
                   <option value="미분류">미분류</option>
                 </select>
+                <button
+                  type="button"
+                  id="editorCategoryManagerButton"
+                  class="secondary-button editor-category-manage-button"
+                  aria-label="카테고리 추가 및 관리"
+                  aria-haspopup="dialog"
+                  aria-controls="categoryManagerModal"
+                >
+                  카테고리 추가·관리
+                </button>
               </div>
             </div>
 
@@ -445,6 +443,32 @@
         <section class="category-filter-section" aria-labelledby="categoryFilterTitle">
           <div class="category-filter-header">
             <span id="categoryFilterTitle" class="category-filter-label">카테고리</span>
+          </div>
+
+          <div id="categoryTabsShell" class="category-tabs-shell">
+            <nav id="categoryTabs" class="category-tabs main-category-tabs" aria-label="메모 카테고리">
+              <button type="button" class="category-tab active" data-category="전체">전체</button>
+              <button type="button" class="category-tab protected-category-tab" data-category="중요" title="삭제할 수 없는 기본 카테고리">중요</button>
+              <button type="button" class="category-tab" data-category="업무">업무</button>
+              <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
+              <button type="button" class="category-tab" data-category="일상">일상</button>
+              <button type="button" class="category-tab protected-category-tab" data-category="보관" title="삭제할 수 없는 기본 카테고리">보관</button>
+              <button type="button" class="category-tab protected-category-tab" data-category="미분류" title="삭제할 수 없는 기본 카테고리">미분류</button>
+            </nav>
+            <button
+              type="button"
+              id="categoryMoreButton"
+              class="category-more-button"
+              aria-expanded="false"
+              aria-controls="categoryTabs"
+              hidden
+            >
+              <span class="category-more-label">더보기</span>
+              <span class="category-more-arrow" aria-hidden="true">⌄</span>
+            </button>
+          </div>
+
+          <div class="category-filter-actions">
             <button
               type="button"
               id="openCategoryManagerButton"
@@ -453,19 +477,9 @@
               aria-haspopup="dialog"
               aria-controls="categoryManagerModal"
             >
-              관리
+              카테고리 관리
             </button>
           </div>
-
-          <nav id="categoryTabs" class="category-tabs main-category-tabs" aria-label="메모 카테고리">
-            <button type="button" class="category-tab active" data-category="전체">전체</button>
-            <button type="button" class="category-tab protected-category-tab" data-category="중요" title="삭제할 수 없는 기본 카테고리">중요</button>
-            <button type="button" class="category-tab" data-category="업무">업무</button>
-            <button type="button" class="category-tab" data-category="아이디어">아이디어</button>
-            <button type="button" class="category-tab" data-category="일상">일상</button>
-            <button type="button" class="category-tab protected-category-tab" data-category="보관" title="삭제할 수 없는 기본 카테고리">보관</button>
-            <button type="button" class="category-tab protected-category-tab" data-category="미분류" title="삭제할 수 없는 기본 카테고리">미분류</button>
-          </nav>
         </section>
 
         <nav id="sortOptions" class="sort-options" aria-label="메모 정렬">
@@ -592,14 +606,25 @@
               <h3>계정 관리</h3>
               <p>계정과 클라우드 데이터를 관리합니다.</p>
             </div>
+            <button
+              type="button"
+              id="accountManagementToggleButton"
+              class="text-button compact-button"
+              aria-expanded="false"
+              aria-controls="accountManagementContent"
+            >
+              열기
+            </button>
           </div>
-          <button
-            type="button"
-            id="openAccountDeletionButton"
-            class="menu-action-button account-delete-menu-button danger-text"
-          >
-            계정 삭제
-          </button>
+          <div id="accountManagementContent" class="account-management-content" hidden>
+            <button
+              type="button"
+              id="openAccountDeletionButton"
+              class="menu-action-button account-delete-menu-button danger-text"
+            >
+              계정 삭제
+            </button>
+          </div>
         </section>
         <section class="menu-section">
           <h3>빠른 작업</h3>
@@ -752,7 +777,7 @@
 
       <div class="menu-footer">
         <span>훈노트</span>
-        <span class="version-badge">v4.5.6</span>
+        <span class="version-badge">v4.5.7</span>
       </div>
     </aside>
 
@@ -917,12 +942,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=456"></script>
-  <script src="./js/auth.js?v=456"></script>
-  <script src="./js/storage.js?v=456"></script>
-  <script src="./js/ui.js?v=456"></script>
-  <script src="./js/app.js?v=456"></script>
-  <script src="./js/account.js?v=456"></script>
-  <script src="./js/pwa.js?v=456"></script>
+  <script src="./js/config.js?v=457"></script>
+  <script src="./js/auth.js?v=457"></script>
+  <script src="./js/storage.js?v=457"></script>
+  <script src="./js/ui.js?v=457"></script>
+  <script src="./js/app.js?v=457"></script>
+  <script src="./js/account.js?v=457"></script>
+  <script src="./js/pwa.js?v=457"></script>
 </body>
 </html>

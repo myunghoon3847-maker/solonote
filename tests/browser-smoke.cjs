@@ -5,7 +5,7 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 
 const projectRoot = path.resolve(__dirname, "..");
-const screenshotDirectory = "/tmp/hoonnote-v4.5.4-browser-smoke";
+const screenshotDirectory = "/tmp/hoonnote-v4.5.7-browser-smoke";
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -121,10 +121,14 @@ async function run() {
     await page.goBack();
     assert.equal(await page.locator(".editor-panel").isVisible(), false);
 
-    await page.locator("#openCategoryManagerButton").click();
+    await page.locator("#mobileNewMemoButton").click();
+    await page.locator("#editorCategoryManagerButton").click();
     assert.equal(await page.locator("#categoryManagerModal").isVisible(), true);
     await page.goBack();
     assert.equal(await page.locator("#categoryManagerModal").isVisible(), false);
+    await page.locator("#homeLogoButton").click();
+    assert.equal(await page.locator("#notesView").isVisible(), true);
+    assert.equal(await page.locator(".editor-panel").isVisible(), false);
 
     await page.locator("#appMenuButton").click();
     await page.locator("#dataManagementToggleButton").click();
@@ -143,7 +147,8 @@ async function run() {
     await page.locator("#openTrashButton").click();
     await page.waitForTimeout(320);
     assert.equal(await page.locator("#trashView").isVisible(), true);
-    await page.locator("#backFromTrashButton").click();
+    assert.equal(await page.locator("#backFromTrashButton").count(), 0);
+    await page.locator("#homeLogoButton").click();
     assert.equal(await page.locator("#notesView").isVisible(), true);
 
     await page.setViewportSize({ width: 1280, height: 900 });
