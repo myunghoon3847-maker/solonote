@@ -1,6 +1,6 @@
-# 훈노트 v4.5.9
+# 훈노트 v4.5.10
 
-훈노트 v4.5.9는 메인 목록, 메모 작성, 설정 화면의 역할을 분리한 모바일 UI·UX 구조 안정화 버전입니다.
+훈노트 v4.5.10는 메인 목록, 메모 작성, 설정 화면의 역할을 분리한 모바일 UI·UX 구조 안정화 버전입니다.
 
 ## 핵심 변경
 
@@ -14,20 +14,20 @@
 ## 로고 적용 상태
 
 새 사용자 로고 원본이 현재 대화 파일에서 확인되지 않아 기존 H 로고를 유지했습니다.
-자세한 내용은 `LOGO_REPLACEMENT_PENDING_v4.5.9.md`를 확인하세요.
+자세한 내용은 `LOGO_REPLACEMENT_PENDING_v4.5.10.md`를 확인하세요.
 
 ## 배포
 
 1. 이 폴더의 전체 파일을 GitHub 저장소 배포 경로에 덮어씁니다.
 2. 일부 파일만 교체하지 말고 전체 파일을 반영합니다.
 3. GitHub Pages 배포 완료 후 `?v=459`를 붙여 접속합니다.
-4. 메뉴 하단에서 `v4.5.9`를 확인합니다.
+4. 메뉴 하단에서 `v4.5.10`를 확인합니다.
 5. 설치 앱에서 업데이트를 적용한 후 앱을 완전히 종료하고 다시 실행합니다.
 
 ## 문서
 
-- `CHANGES_v4.5.9.md`
-- `VALIDATION_REPORT_v4.5.9.md`
-- `TEST_CHECKLIST_v4.5.9.md`
-- `RELEASE_CHECKLIST_v4.5.9.md`
-- `LOGO_REPLACEMENT_PENDING_v4.5.9.md`
+- `CHANGES_v4.5.10.md`
+- `VALIDATION_REPORT_v4.5.10.md`
+- `TEST_CHECKLIST_v4.5.10.md`
+- `RELEASE_CHECKLIST_v4.5.10.md`
+- `LOGO_REPLACEMENT_PENDING_v4.5.10.md`

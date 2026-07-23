@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "훈노트 - 1인 업무·아이디어 노트",
-  "short_name": "훈노트",
+  "name": "HOONNOTE - 1인 업무·아이디어 노트",
+  "short_name": "HOONNOTE",
   "description": "1인 개발자, 프리랜서, 창작자를 위한 업무·아이디어·할 일 노트",
   "start_url": "./",
   "scope": "./",
@@ -20,31 +20,31 @@
   ],
   "icons": [
     {
-      "src": "./icons/icon-192.png?v=459",
+      "src": "./icons/icon-192.png?v=460",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icons/icon-512.png?v=459",
+      "src": "./icons/icon-512.png?v=460",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icons/icon-maskable-192.png?v=459",
+      "src": "./icons/icon-maskable-192.png?v=460",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "./icons/icon-maskable-512.png?v=459",
+      "src": "./icons/icon-maskable-512.png?v=460",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "./icons/icon-monochrome-512.png?v=459",
+      "src": "./icons/icon-monochrome-512.png?v=460",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "monochrome"

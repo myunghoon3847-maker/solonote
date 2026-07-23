@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>훈노트 - 1인 업무·아이디어 노트</title>
-<link href="./manifest.json?v=459" rel="manifest"/>
+<link href="./manifest.json?v=460" rel="manifest"/>
 <meta content="#2563eb" name="theme-color"/>
 <meta content="훈노트" name="application-name"/>
 <meta content="훈노트" name="apple-mobile-web-app-title"/>
@@ -12,9 +12,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=459" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=459" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=459" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=460" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=460" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=460" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -125,7 +125,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="훈노트 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="" aria-hidden="true" class="brand-mark" src="./icons/logo-mark.svg?v=459"/>
+<img alt="" aria-hidden="true" class="brand-mark" src="./icons/logo-mark.svg?v=460"/>
 <span class="brand-name">HOONNOTE</span>
 </a>
 </div>
@@ -330,7 +330,7 @@
 <span aria-hidden="true" class="settings-row-chevron">›</span>
 </button>
 <div class="account-management-content settings-row-content" hidden="" id="accountManagementContent">
-<button class="menu-action-button account-delete-menu-button danger-text" id="openAccountDeletionButton" type="button">계정 삭제</button>
+<button class="menu-action-button account-delete-menu-button danger-text" id="legacyOpenAccountDeletionButton" type="button">계정 삭제</button>
 </div>
 </section>
 <section aria-label="앱 설치" class="panel settings-panel app-install-settings">
@@ -365,15 +365,12 @@
 <strong>메뉴</strong>
 <span class="signed-in-email" id="signedInEmail">로그인됨</span>
 </div>
-<button aria-label="설정 화면 열기" class="menu-header-settings-button" id="openSettingsButton" title="설정" type="button">
-<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-<path d="M12 15.4a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z"></path>
-<path d="M19.1 13.2c.05-.4.05-.8 0-1.2l1.55-1.2-1.8-3.1-1.9.77a7.2 7.2 0 0 0-1.03-.6L15.65 5.8h-3.6l-.28 2.06c-.36.17-.7.37-1.03.6l-1.9-.77-1.8 3.1L8.6 12c-.05.4-.05.8 0 1.2l-1.55 1.2 1.8 3.1 1.9-.77c.32.23.67.43 1.03.6l.28 2.06h3.6l.28-2.06c.36-.17.7-.37 1.03-.6l1.9.77 1.8-3.1-1.56-1.2Z"></path>
-</svg>
+<button aria-label="설정 열기" class="menu-header-settings-button" id="openSettingsButton" title="설정" type="button">
+<img alt="" aria-hidden="true" src="./icons/settings-gear.svg?v=460"/>
 </button>
 </div>
 <div class="menu-scroll">
-
+<div class="menu-subview menu-subview-main" id="menuMainView">
 
 <section class="menu-section">
 <h3>빠른 작업</h3>
@@ -488,11 +485,44 @@
 <p>메뉴의 백업 버튼으로 JSON 파일을 저장할 수 있습니다.</p>
 </div>
 </div>
+
 </section>
+</div>
+<div aria-label="설정 메뉴" class="menu-subview menu-subview-settings" hidden id="menuSettingsView">
+<section class="menu-section menu-settings-overview">
+<div class="menu-section-heading menu-subview-heading">
+<div>
+<h3>설정</h3>
+<p>계정과 앱 관련 메뉴</p>
+</div>
+<button class="text-button compact-button menu-settings-back-button" id="menuSettingsBackButton" type="button">메뉴로</button>
+</div>
+</section>
+<section aria-label="계정 관리" class="menu-section settings-panel account-settings-panel menu-settings-panel">
+<button aria-controls="menuAccountManagementContent" aria-expanded="false" class="settings-row-button" id="menuAccountManagementToggleButton" type="button">
+<span aria-hidden="true" class="settings-row-icon"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19c.7-3.3 3.1-5.2 6.5-5.2s5.8 1.9 6.5 5.2"></path></svg></span>
+<span class="settings-row-copy">
+<strong>계정 관리</strong>
+<small>로그아웃과 계정 삭제 메뉴</small>
+</span>
+<span aria-hidden="true" class="settings-row-chevron">›</span>
+</button>
+<div class="account-management-content settings-row-content" hidden id="menuAccountManagementContent">
+<button class="menu-action-button" id="menuSettingsLogoutButton" type="button">로그아웃</button>
+<button class="menu-action-button account-delete-menu-button danger-text" id="openAccountDeletionButton" type="button">계정 삭제</button>
+</div>
+</section>
+<section aria-label="앱 정보" class="menu-section settings-panel menu-settings-panel">
+<div class="settings-panel-copy menu-settings-copy-block">
+<strong>앱 정보</strong>
+<p>HOONNOTE는 혼자 쓰는 업무·아이디어·할 일 노트입니다.</p>
+</div>
+</section>
+</div>
 </div>
 <div class="menu-footer">
 <span>HOONNOTE</span>
-<span class="version-badge">v4.5.9</span>
+<span class="version-badge">v4.5.10</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -586,12 +616,12 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./js/config.js?v=459"></script>
-<script src="./js/auth.js?v=459"></script>
-<script src="./js/storage.js?v=459"></script>
-<script src="./js/ui.js?v=459"></script>
-<script src="./js/app.js?v=459"></script>
-<script src="./js/account.js?v=459"></script>
-<script src="./js/pwa.js?v=459"></script>
+<script src="./js/config.js?v=460"></script>
+<script src="./js/auth.js?v=460"></script>
+<script src="./js/storage.js?v=460"></script>
+<script src="./js/ui.js?v=460"></script>
+<script src="./js/app.js?v=460"></script>
+<script src="./js/account.js?v=460"></script>
+<script src="./js/pwa.js?v=460"></script>
 </body>
 </html>
