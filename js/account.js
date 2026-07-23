@@ -7,7 +7,7 @@
   const DELETE_REQUEST_TIMEOUT_MS = 45000;
   const DELETE_STATUS_RECHECK_DELAYS_MS = [0, 1200, 2500];
 
-  const openButton = document.querySelector("#openAccountDeletionButton");
+  const openButtons = Array.from(document.querySelectorAll("#openAccountDeletionButton"));
   const modal = document.querySelector("#accountDeletionModal");
   const closeButton = document.querySelector("#closeAccountDeletionButton");
   const cancelButton = document.querySelector("#cancelAccountDeletionButton");
@@ -80,7 +80,7 @@
 
     setModalVisible(false);
     resetForm();
-    openButton?.focus();
+    openButtons[0]?.focus();
   }
 
   function updateConfirmButton() {
@@ -282,12 +282,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.5.9",
+            "X-Client-Info": "hoonnote-v4.5.10",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.5.9",
+            clientVersion: "4.5.10",
           }),
           cache: "no-store",
           signal: controller.signal,

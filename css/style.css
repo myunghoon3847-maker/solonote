@@ -3156,3 +3156,161 @@ body[data-app-view="settings"] .primary-view-tabs {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+
+/* v4.5.10 brand refresh, menu settings subview and tighter notes spacing */
+.brand-home-button {
+  gap: 10px;
+  padding: 3px 6px 3px 0;
+}
+
+.brand-mark {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  background: transparent;
+  object-fit: contain;
+  box-shadow: none;
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.035em;
+}
+
+.primary-view-tabs {
+  margin-top: 14px;
+}
+
+.workspace {
+  margin-top: 14px;
+}
+
+#notesView {
+  gap: 10px;
+}
+
+.notes-view-heading {
+  min-height: 32px;
+}
+
+.search-toolbar {
+  margin-top: 0;
+}
+
+.category-filter-section {
+  margin-top: 0;
+}
+
+.category-tabs-shell {
+  display: block;
+  width: 100%;
+}
+
+.main-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 6px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0;
+  overflow: visible;
+}
+
+.main-category-tabs .category-tab {
+  flex: 0 0 auto;
+}
+
+.sort-options {
+  gap: 2px 0;
+  margin: 0;
+}
+
+.memo-list {
+  margin-top: 1px;
+}
+
+.menu-header-settings-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.menu-header-settings-button:hover,
+.menu-header-settings-button:focus-visible {
+  background: var(--surface-soft);
+}
+
+.menu-header-settings-button img {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.menu-subview {
+  display: block;
+}
+
+.menu-subview[hidden] {
+  display: none !important;
+}
+
+.menu-subview-heading {
+  align-items: center;
+}
+
+.menu-settings-back-button {
+  flex: 0 0 auto;
+}
+
+.menu-settings-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.menu-settings-copy-block {
+  padding: 14px;
+}
+
+.menu-settings-copy-block strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 520px) {
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+    letter-spacing: 0.045em;
+  }
+
+  .primary-view-tabs {
+    margin-top: 10px;
+  }
+
+  .workspace {
+    margin-top: 11px;
+  }
+
+  #notesView {
+    gap: 9px;
+  }
+
+  .notes-view-heading {
+    min-height: 30px;
+  }
+
+  .main-category-tabs {
+    gap: 6px;
+  }
+}

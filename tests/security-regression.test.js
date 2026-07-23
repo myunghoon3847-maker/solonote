@@ -212,7 +212,7 @@ test("v4.5.9 dedicated editor, settings and category UI contract is preserved", 
   assert.match(indexHtml, /id="installAppButton"/);
   assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
   assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
-  assert.match(indexHtml, /icons\/logo-mark\.svg\?v=459/);
+  assert.match(indexHtml, /icons\/logo-mark\.svg\?v=460/);
   assert.match(indexHtml, /maximum-scale=1, user-scalable=no, viewport-fit=cover/);
 
   const editorPosition = indexHtml.indexOf('id="editorView"');

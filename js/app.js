@@ -41,6 +41,12 @@ const dataManagementContent = document.querySelector("#dataManagementContent");
 const accountManagementToggleButton = document.querySelector("#accountManagementToggleButton");
 const accountManagementContent = document.querySelector("#accountManagementContent");
 const openSettingsButton = document.querySelector("#openSettingsButton");
+const menuMainView = document.querySelector("#menuMainView");
+const menuSettingsView = document.querySelector("#menuSettingsView");
+const menuSettingsBackButton = document.querySelector("#menuSettingsBackButton");
+const menuSettingsLogoutButton = document.querySelector("#menuSettingsLogoutButton");
+const menuAccountManagementToggleButton = document.querySelector("#menuAccountManagementToggleButton");
+const menuAccountManagementContent = document.querySelector("#menuAccountManagementContent");
 const settingsBackButton = document.querySelector("#settingsBackButton");
 const editorBackButton = document.querySelector("#editorBackButton");
 const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
@@ -694,6 +700,7 @@ function closeAppMenu(options = {}) {
   }
 
   isAppMenuOpen = false;
+  showMenuSubview("main");
 
   if (appMenuCloseTimer) {
     window.clearTimeout(appMenuCloseTimer);
@@ -712,6 +719,29 @@ function closeAppMenu(options = {}) {
   }, 260);
 }
 
+
+function showMenuSubview(view = "main") {
+  const isSettings = view === "settings";
+
+  if (menuMainView) {
+    menuMainView.hidden = isSettings;
+  }
+
+  if (menuSettingsView) {
+    menuSettingsView.hidden = !isSettings;
+  }
+
+  if (openSettingsButton) {
+    openSettingsButton.setAttribute("aria-pressed", String(isSettings));
+  }
+
+  if (!isSettings && menuAccountManagementContent && menuAccountManagementToggleButton) {
+    menuAccountManagementContent.hidden = true;
+    menuAccountManagementToggleButton.classList.remove("is-open");
+    menuAccountManagementToggleButton.setAttribute("aria-expanded", "false");
+  }
+}
+
 function openAppMenu(options = {}) {
   if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
     return;
@@ -727,6 +757,8 @@ function openAppMenu(options = {}) {
     window.clearTimeout(appMenuCloseTimer);
     appMenuCloseTimer = null;
   }
+
+  showMenuSubview("main");
 
   appMenuPanel.hidden = false;
   appMenuBackdrop.hidden = false;
@@ -871,13 +903,30 @@ function handleAccountManagementToggle() {
   accountManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
 }
 
+
 function handleOpenSettingsClick() {
-  closeAppMenu({ skipHistory: true });
-  switchAppView("settings", {
-    historyMode: "replace",
-    scrollBehavior: "auto",
-  });
-  window.setTimeout(() => settingsBackButton?.focus(), 0);
+  if (!isAppMenuOpen) {
+    openAppMenu({ skipHistory: true });
+  }
+
+  showMenuSubview("settings");
+  window.setTimeout(() => menuSettingsBackButton?.focus(), 0);
+}
+
+function handleMenuSettingsBackClick() {
+  showMenuSubview("main");
+  window.setTimeout(() => openSettingsButton?.focus(), 0);
+}
+
+function handleMenuAccountManagementToggle() {
+  if (!menuAccountManagementToggleButton || !menuAccountManagementContent) {
+    return;
+  }
+
+  const willOpen = menuAccountManagementContent.hidden;
+  menuAccountManagementContent.hidden = !willOpen;
+  menuAccountManagementToggleButton.classList.toggle("is-open", willOpen);
+  menuAccountManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
 }
 
 function handleSettingsBackClick() {
@@ -2836,6 +2885,9 @@ function bindEvents() {
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
   accountManagementToggleButton?.addEventListener("click", handleAccountManagementToggle);
   openSettingsButton?.addEventListener("click", handleOpenSettingsClick);
+  menuSettingsBackButton?.addEventListener("click", handleMenuSettingsBackClick);
+  menuAccountManagementToggleButton?.addEventListener("click", handleMenuAccountManagementToggle);
+  menuSettingsLogoutButton?.addEventListener("click", () => logoutButton?.click());
   settingsBackButton?.addEventListener("click", handleSettingsBackClick);
   editorBackButton?.addEventListener("click", handleEditorBackClick);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
@@ -2942,6 +2994,8 @@ if (accountManagementContent && accountManagementToggleButton) {
   accountManagementToggleButton.classList.remove("is-open");
   accountManagementToggleButton.setAttribute("aria-expanded", "false");
 }
+
+showMenuSubview("main");
 
 if (appMenuPanel && appMenuBackdrop) {
   appMenuPanel.classList.remove("is-open");
