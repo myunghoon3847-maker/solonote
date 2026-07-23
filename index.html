@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>훈노트 - 1인 업무·아이디어 노트</title>
-<link href="./manifest.json?v=461" rel="manifest"/>
+<link href="./manifest.json?v=462" rel="manifest"/>
 <meta content="#2563eb" name="theme-color"/>
 <meta content="훈노트" name="application-name"/>
 <meta content="훈노트" name="apple-mobile-web-app-title"/>
@@ -12,9 +12,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=461" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=461" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=461" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=462" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=462" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=462" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -125,7 +125,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="훈노트 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=461"/>
+<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=462"/>
 </a>
 </div>
 <div class="header-actions">
@@ -257,14 +257,21 @@
 <textarea id="contentInput" maxlength="200000" placeholder="내용을 입력하세요." rows="11"></textarea>
 <div class="form-grid">
 <div class="category-field editor-category-panel">
-<label for="categoryInput">카테고리</label>
-<select id="categoryInput">
+<label id="categoryPickerLabel">카테고리</label>
+<div class="category-picker" id="categoryPicker">
+<button aria-controls="categoryPickerMenu" aria-expanded="false" aria-labelledby="categoryPickerLabel categoryPickerValue" class="category-picker-button" id="categoryPickerButton" type="button">
+<span id="categoryPickerValue">업무</span>
+<svg aria-hidden="true" class="category-picker-chevron" focusable="false" viewBox="0 0 20 20"><path d="m5.5 7.5 4.5 4.5 4.5-4.5"></path></svg>
+</button>
+<div aria-labelledby="categoryPickerLabel" class="category-picker-menu" hidden id="categoryPickerMenu" role="listbox"></div>
+<select aria-hidden="true" class="category-native-select" id="categoryInput" tabindex="-1">
 <option value="업무">업무</option>
 <option value="아이디어">아이디어</option>
 <option value="일상">일상</option>
 <option value="보관">보관</option>
 <option value="미분류">미분류</option>
 </select>
+</div>
 <button aria-controls="categoryManagerModal" aria-haspopup="dialog" aria-label="카테고리 추가 및 관리" class="secondary-button editor-category-manage-button" id="editorCategoryManagerButton" type="button">
                   카테고리 추가·관리
                 </button>
@@ -361,16 +368,23 @@
 <aside aria-hidden="true" aria-label="앱 메뉴" class="app-menu-panel" hidden="" id="appMenuPanel">
 <div class="menu-header">
 <div>
-<strong>메뉴</strong>
+<strong id="menuHeaderTitle">메뉴</strong>
 <span class="signed-in-email" id="signedInEmail">로그인됨</span>
 </div>
-<button aria-label="설정 열기" class="menu-header-settings-button" id="openSettingsButton" title="설정" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=461"/>
+<button aria-label="메뉴 목록으로 돌아가기" class="menu-header-back-button" hidden id="menuSettingsBackButton" title="뒤로가기" type="button">
+<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"></path></svg>
 </button>
 </div>
 <div class="menu-scroll">
 <div class="menu-subview menu-subview-main" id="menuMainView">
 
+<section aria-label="설정" class="menu-section menu-settings-entry-section">
+<button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=462"/>
+<span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
+<span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
+</button>
+</section>
 <section class="menu-section">
 <h3>빠른 작업</h3>
 <div class="menu-action-grid">
@@ -488,7 +502,6 @@
 <h3>설정</h3>
 <p>계정과 앱 관련 메뉴</p>
 </div>
-<button class="text-button compact-button menu-settings-back-button" id="menuSettingsBackButton" type="button">메뉴로</button>
 </div>
 </section>
 <section aria-label="계정 관리" class="menu-section settings-panel account-settings-panel menu-settings-panel">
@@ -500,9 +513,17 @@
 </span>
 <span aria-hidden="true" class="settings-row-chevron">›</span>
 </button>
-<div class="account-management-content settings-row-content" hidden id="menuAccountManagementContent">
-<button class="menu-action-button" id="logoutButton" type="button">로그아웃</button>
-<button class="menu-action-button account-delete-menu-button danger-text" id="openAccountDeletionButton" type="button">계정 삭제</button>
+<div class="account-management-content settings-row-content account-action-list" hidden id="menuAccountManagementContent">
+<button class="account-action-button" id="logoutButton" type="button">
+<span aria-hidden="true" class="account-action-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10"></path><path d="m14 8 4 4-4 4"></path><path d="M9 12h9"></path></svg></span>
+<span class="account-action-copy"><strong>로그아웃</strong><small>현재 기기에서 계정을 종료합니다.</small></span>
+<span aria-hidden="true" class="account-action-chevron">›</span>
+</button>
+<button class="account-action-button account-action-button-danger" id="openAccountDeletionButton" type="button">
+<span aria-hidden="true" class="account-action-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M4.5 7h15"></path><path d="M9 7V4.8h6V7"></path><path d="m7 7 .8 12h8.4L17 7"></path><path d="M10 10.5v5"></path><path d="M14 10.5v5"></path></svg></span>
+<span class="account-action-copy"><strong>계정 삭제</strong><small>모든 계정 데이터가 영구 삭제됩니다.</small></span>
+<span aria-hidden="true" class="account-action-chevron">›</span>
+</button>
 </div>
 </section>
 <section aria-label="앱 정보" class="menu-section settings-panel menu-settings-panel">
@@ -515,7 +536,7 @@
 </div>
 <div class="menu-footer">
 <span>HOONNOTE</span>
-<span class="version-badge">v4.5.11</span>
+<span class="version-badge">v4.5.12</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -609,12 +630,12 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./js/config.js?v=461"></script>
-<script src="./js/auth.js?v=461"></script>
-<script src="./js/storage.js?v=461"></script>
-<script src="./js/ui.js?v=461"></script>
-<script src="./js/app.js?v=461"></script>
-<script src="./js/account.js?v=461"></script>
-<script src="./js/pwa.js?v=461"></script>
+<script src="./js/config.js?v=462"></script>
+<script src="./js/auth.js?v=462"></script>
+<script src="./js/storage.js?v=462"></script>
+<script src="./js/ui.js?v=462"></script>
+<script src="./js/app.js?v=462"></script>
+<script src="./js/account.js?v=462"></script>
+<script src="./js/pwa.js?v=462"></script>
 </body>
 </html>
