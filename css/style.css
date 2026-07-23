@@ -3316,7 +3316,7 @@ body[data-app-view="settings"] .primary-view-tabs {
 }
 
 
-/* v4.5.11 exact reference assets and menu cleanup */
+/* v4.5.12 exact reference assets and menu cleanup */
 .brand-home-button {
   min-height: 44px;
   padding: 2px 4px 2px 0;
@@ -3380,5 +3380,318 @@ body[data-app-view="settings"] .primary-view-tabs {
   .brand-wordmark {
     width: 154px;
     max-width: 48vw;
+  }
+}
+
+
+/* v4.5.12 centered brand mark, custom category picker and 80% mobile menu */
+.brand-wordmark {
+  display: block;
+  object-position: center;
+}
+
+.brand-home-button {
+  align-items: center;
+}
+
+.category-native-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.category-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.category-picker-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.category-picker-button:hover {
+  border-color: var(--primary-line);
+}
+
+.category-picker-button[aria-expanded="true"],
+.category-picker-button:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .14);
+  outline: none;
+}
+
+.category-picker-chevron {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .16s ease;
+}
+
+.category-picker-button[aria-expanded="true"] .category-picker-chevron {
+  transform: rotate(180deg);
+}
+
+.category-picker-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  display: grid;
+  max-height: min(320px, 48dvh);
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
+  overscroll-behavior: contain;
+}
+
+.category-picker-menu[hidden] {
+  display: none !important;
+}
+
+.category-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.category-picker-option:hover,
+.category-picker-option:focus-visible {
+  background: var(--surface-soft);
+  outline: none;
+}
+
+.category-picker-option[aria-selected="true"] {
+  background: var(--primary-soft);
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+.category-picker-option[aria-selected="true"]::after {
+  content: "✓";
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.menu-header-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+}
+
+.menu-header-back-button[hidden] {
+  display: none !important;
+}
+
+.menu-header-back-button:hover,
+.menu-header-back-button:focus-visible {
+  background: var(--surface-soft);
+  outline: none;
+}
+
+.menu-header-back-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.menu-settings-entry-section {
+  padding: 0;
+  overflow: hidden;
+}
+
+.menu-settings-entry-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 62px;
+  padding: 10px 12px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-settings-entry-button:hover,
+.menu-settings-entry-button:focus-visible {
+  background: var(--surface-soft);
+  outline: none;
+}
+
+.menu-settings-entry-button img {
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+}
+
+.menu-settings-entry-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.menu-settings-entry-copy strong {
+  font-size: 14px;
+}
+
+.menu-settings-entry-copy small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.menu-settings-entry-chevron,
+.account-action-chevron {
+  color: #94a3b8;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.account-action-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.account-action-button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.account-action-button:hover,
+.account-action-button:focus-visible {
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+  outline: none;
+}
+
+.account-action-button-danger {
+  border-color: #fecaca;
+  background: #fffafa;
+  color: #b91c1c;
+}
+
+.account-action-button-danger:hover,
+.account-action-button-danger:focus-visible {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.account-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: #64748b;
+}
+
+.account-action-button-danger .account-action-icon {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.account-action-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.account-action-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-action-copy strong {
+  font-size: 13px;
+}
+
+.account-action-copy small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.account-action-button-danger .account-action-copy small {
+  color: #991b1b;
+}
+
+@media (max-width: 720px) {
+  .app-menu-panel {
+    width: 80vw;
+    max-width: 420px;
   }
 }

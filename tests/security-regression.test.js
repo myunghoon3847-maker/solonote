@@ -171,27 +171,27 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.11", () => {
+test("release and cache versions are consistently set to v4.5.12", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.11/);
+  assert.match(indexHtml, /version-badge">v4\.5\.12/);
   assert.doesNotMatch(indexHtml, /v=458/);
-  assert.match(serviceWorker, /hoonnote-v4-5-11-cache/);
+  assert.match(serviceWorker, /hoonnote-v4-5-12-cache/);
   assert.doesNotMatch(serviceWorker, /v=458/);
-  assert.match(accountSource, /clientVersion: "4\.5\.11"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.11"/);
+  assert.match(accountSource, /clientVersion: "4\.5\.12"/);
+  assert.match(storageSource, /backupVersion: "4\.5\.12"/);
 });
 
-test("v4.5.11 logo, menu and data management UI contract is preserved", () => {
+test("v4.5.12 logo, menu and data management UI contract is preserved", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
   const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
   const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
 
-  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=461/);
+  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=462/);
   assert.match(indexHtml, /<section[^>]*id="editorView"[^>]*>/);
   assert.match(indexHtml.match(/<section[^>]*id="editorView"[^>]*>/)[0], /hidden/);
   assert.match(indexHtml, /<section[^>]*id="settingsView"[^>]*>/);
@@ -199,7 +199,10 @@ test("v4.5.11 logo, menu and data management UI contract is preserved", () => {
   assert.match(indexHtml, /id="editorBackButton"/);
   assert.match(indexHtml, /id="settingsBackButton"/);
   assert.match(indexHtml, /id="openSettingsButton"/);
-  assert.match(indexHtml, /class="menu-header-settings-button"/);
+  assert.match(indexHtml, /id="categoryPickerButton"/);
+  assert.match(indexHtml, /id="categoryPickerMenu"/);
+  assert.match(indexHtml, /id="menuSettingsBackButton"/);
+  assert.match(indexHtml, /class="menu-header-back-button"/);
   assert.doesNotMatch(indexHtml, /id="appMenuCloseButton"/);
   assert.doesNotMatch(indexHtml, /id="settingsToggleButton"/);
   assert.doesNotMatch(indexHtml, /id="settingsContent"/);
@@ -212,7 +215,7 @@ test("v4.5.11 logo, menu and data management UI contract is preserved", () => {
   assert.match(indexHtml, /id="installAppButton"/);
   assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
   assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
-  assert.match(indexHtml, /icons\/settings-gear\.png\?v=461/);
+  assert.match(indexHtml, /icons\/settings-gear\.png\?v=462/);
   assert.doesNotMatch(indexHtml, /id="emptyTrashButton"/);
   assert.match(indexHtml, /class="data-stat-open-label">열기<\/span>/);
   assert.match(indexHtml, /id="logoutButton"/);
@@ -238,7 +241,7 @@ test("v4.5.11 logo, menu and data management UI contract is preserved", () => {
   assert.match(styleSource, /\.main-category-tabs\s*\{[\s\S]*?overflow:\s*visible/);
   assert.match(styleSource, /body\.editor-view-open \.primary-view-tabs/);
   assert.match(styleSource, /body\[data-app-view="settings"\] \.primary-view-tabs/);
-  assert.match(styleSource, /\.menu-header-settings-button\s*\{/);
+  assert.match(styleSource, /\.menu-header-back-button\s*\{/);
   assert.match(styleSource, /\.settings-row-button\s*\{/);
   assert.match(styleSource, /overflow-x:\s*hidden/);
   assert.match(styleSource, /font-size:\s*16px/);

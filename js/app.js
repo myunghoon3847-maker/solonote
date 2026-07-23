@@ -8,6 +8,10 @@ const titleInput = document.querySelector("#titleInput");
 const projectInput = document.querySelector("#projectInput");
 const contentInput = document.querySelector("#contentInput");
 const categoryInput = document.querySelector("#categoryInput");
+const categoryPicker = document.querySelector("#categoryPicker");
+const categoryPickerButton = document.querySelector("#categoryPickerButton");
+const categoryPickerValue = document.querySelector("#categoryPickerValue");
+const categoryPickerMenu = document.querySelector("#categoryPickerMenu");
 const editorCategoryManagerButton = document.querySelector("#editorCategoryManagerButton");
 const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
@@ -44,6 +48,7 @@ const openSettingsButton = document.querySelector("#openSettingsButton");
 const menuMainView = document.querySelector("#menuMainView");
 const menuSettingsView = document.querySelector("#menuSettingsView");
 const menuSettingsBackButton = document.querySelector("#menuSettingsBackButton");
+const menuHeaderTitle = document.querySelector("#menuHeaderTitle");
 const menuAccountManagementToggleButton = document.querySelector("#menuAccountManagementToggleButton");
 const menuAccountManagementContent = document.querySelector("#menuAccountManagementContent");
 const settingsBackButton = document.querySelector("#settingsBackButton");
@@ -569,6 +574,8 @@ function restoreLocalEditorDraft() {
   }
 
   importantInput.checked = Boolean(draft.isImportant);
+  syncCategoryPicker();
+
   editingIdInput.value = originalMemoExists ? draft.editingId || "" : "";
   editingUpdatedAtInput.value = originalMemoExists
     ? draft.editingUpdatedAt || ""
@@ -719,6 +726,7 @@ function closeAppMenu(options = {}) {
 }
 
 
+
 function showMenuSubview(view = "main") {
   const isSettings = view === "settings";
 
@@ -728,6 +736,14 @@ function showMenuSubview(view = "main") {
 
   if (menuSettingsView) {
     menuSettingsView.hidden = !isSettings;
+  }
+
+  if (menuHeaderTitle) {
+    menuHeaderTitle.textContent = isSettings ? "설정" : "메뉴";
+  }
+
+  if (menuSettingsBackButton) {
+    menuSettingsBackButton.hidden = !isSettings;
   }
 
   if (openSettingsButton) {
@@ -791,6 +807,7 @@ function handleOpenTrashClick() {
 }
 
 function handleHomeLogoClick(event) {
+  closeCategoryPicker();
   event?.preventDefault();
   closeAppMenu({ skipHistory: true });
   closeCategoryManager({ skipHistory: true });
@@ -948,6 +965,7 @@ function handleSettingsBackClick() {
 }
 
 function handleEditorBackClick() {
+  closeCategoryPicker();
   if (hasUnsavedEditorChanges()) {
     saveLocalEditorDraft();
   }
@@ -982,6 +1000,7 @@ function handleMobileNewMemoClick() {
 }
 
 function handleCancelEditorClick() {
+  closeCategoryPicker();
   if (
     !confirmDiscardEditorChanges(
       "저장하지 않은 수정 내용이 있습니다. 수정을 취소하시겠습니까?"
@@ -1020,6 +1039,101 @@ function setCloudStatus(message, state = "ready") {
 }
 
 
+
+
+function closeCategoryPicker(options = {}) {
+  if (!categoryPickerButton || !categoryPickerMenu) {
+    return;
+  }
+
+  categoryPickerMenu.hidden = true;
+  categoryPickerButton.setAttribute("aria-expanded", "false");
+
+  if (options.restoreFocus) {
+    categoryPickerButton.focus();
+  }
+}
+
+function syncCategoryPicker() {
+  if (!categoryInput || !categoryPickerMenu || !categoryPickerValue) {
+    return;
+  }
+
+  const options = [...categoryInput.options];
+  const selectedValue = categoryInput.value || options[0]?.value || "";
+  categoryPickerValue.textContent = selectedValue || "카테고리 선택";
+
+  const optionButtons = options.map((option) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "category-picker-option";
+    button.dataset.value = option.value;
+    button.setAttribute("role", "option");
+    button.setAttribute("aria-selected", String(option.value === selectedValue));
+    button.textContent = option.textContent || option.value;
+    return button;
+  });
+
+  categoryPickerMenu.replaceChildren(...optionButtons);
+}
+
+function toggleCategoryPicker() {
+  if (!categoryPickerButton || !categoryPickerMenu) {
+    return;
+  }
+
+  const willOpen = categoryPickerMenu.hidden;
+  categoryPickerMenu.hidden = !willOpen;
+  categoryPickerButton.setAttribute("aria-expanded", String(willOpen));
+
+  if (willOpen) {
+    syncCategoryPicker();
+    window.requestAnimationFrame(() => {
+      categoryPickerMenu
+        ?.querySelector('[aria-selected="true"]')
+        ?.focus();
+    });
+  }
+}
+
+function handleCategoryPickerMenuClick(event) {
+  const optionButton = event.target.closest(".category-picker-option");
+
+  if (!optionButton || !categoryPickerMenu?.contains(optionButton) || !categoryInput) {
+    return;
+  }
+
+  categoryInput.value = optionButton.dataset.value || "";
+  categoryInput.dispatchEvent(new Event("change", { bubbles: true }));
+  syncCategoryPicker();
+  closeCategoryPicker({ restoreFocus: true });
+}
+
+function handleCategoryPickerKeydown(event) {
+  if (event.key === "Escape") {
+    closeCategoryPicker({ restoreFocus: true });
+    return;
+  }
+
+  const optionButtons = [...categoryPickerMenu?.querySelectorAll(".category-picker-option") || []];
+  const currentIndex = optionButtons.indexOf(document.activeElement);
+
+  if (event.key === "ArrowDown" && optionButtons.length > 0) {
+    event.preventDefault();
+    optionButtons[(currentIndex + 1 + optionButtons.length) % optionButtons.length].focus();
+  } else if (event.key === "ArrowUp" && optionButtons.length > 0) {
+    event.preventDefault();
+    optionButtons[(currentIndex - 1 + optionButtons.length) % optionButtons.length].focus();
+  }
+}
+
+function handleDocumentCategoryPickerClick(event) {
+  if (!categoryPicker || categoryPicker.contains(event.target)) {
+    return;
+  }
+
+  closeCategoryPicker();
+}
 
 function getManagedMemoCategoryNames() {
   const cloudCategories = getMemoCategories().map((category) => category.name);
@@ -1073,6 +1187,7 @@ function renderMemoCategoryControls() {
   categoryInput.value = selectableNames.includes(preferredEditorCategory)
     ? preferredEditorCategory
     : managedNames[0] || FALLBACK_MEMO_CATEGORY;
+  syncCategoryPicker();
 
   const filterNames = ["전체", "중요", ...managedNames, ...compatibilityNames];
   const categoryButtons = [...new Set(filterNames)].map(createCategoryTabButton);
@@ -2843,6 +2958,11 @@ function handleGuideToggleClick() {
 
 function bindEvents() {
   categoryTabs?.addEventListener("click", handleCategoryClick);
+  categoryPickerButton?.addEventListener("click", toggleCategoryPicker);
+  categoryPickerMenu?.addEventListener("click", handleCategoryPickerMenuClick);
+  categoryPickerMenu?.addEventListener("keydown", handleCategoryPickerKeydown);
+  categoryInput?.addEventListener("change", syncCategoryPicker);
+  document.addEventListener("click", handleDocumentCategoryPickerClick);
   openCategoryManagerButton?.addEventListener("click", openCategoryManager);
   editorCategoryManagerButton?.addEventListener("click", openCategoryManager);
   closeCategoryManagerButton?.addEventListener("click", closeCategoryManager);
@@ -2975,6 +3095,7 @@ setDraftSaveStatus(
 clearMemoCache();
 clearMemoCategoryCache();
 renderMemoCategoryControls();
+syncCategoryPicker();
 refreshScreen();
 refreshLegacyMigrationPanel();
 

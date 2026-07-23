@@ -462,6 +462,7 @@ function setEditorMode(mode) {
 
 function resetForm() {
   document.querySelector("#memoForm").reset();
+  document.querySelector("#categoryInput")?.dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#editingId").value = "";
 
   const editingUpdatedAt = document.querySelector("#editingUpdatedAt");
@@ -497,6 +498,7 @@ function fillFormForEdit(memo) {
   document.querySelector("#projectInput").value = memo.project || "";
   document.querySelector("#contentInput").value = memo.content;
   document.querySelector("#categoryInput").value = memo.category;
+  document.querySelector("#categoryInput").dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);
 
   setEditorMode("edit");
