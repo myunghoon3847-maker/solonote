@@ -2,9 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>훈노트 - 1인 업무·아이디어 노트</title>
-  <link rel="manifest" href="./manifest.json?v=454" />
+  <link rel="manifest" href="./manifest.json?v=455" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="훈노트" />
   <meta name="apple-mobile-web-app-title" content="훈노트" />
@@ -12,8 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=454" />
-  <link rel="stylesheet" href="./css/style.css?v=454" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png?v=455" />
+  <link rel="stylesheet" href="./css/style.css?v=455" />
 </head>
 <body class="auth-pending auth-logged-out">
   <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
@@ -218,7 +218,16 @@
     <header class="app-header">
       <div class="header-inner">
         <div class="brand-block">
-          <h1>훈노트</h1>
+          <button
+            type="button"
+            id="homeLogoButton"
+            class="brand-home-button"
+            aria-label="훈노트 홈으로 이동"
+            title="홈으로 이동"
+          >
+            <span class="brand-mark" aria-hidden="true">H</span>
+            <span class="brand-name">훈노트</span>
+          </button>
         </div>
 
         <div class="header-actions">
@@ -361,8 +370,20 @@
             ></textarea>
 
             <div class="form-grid">
-              <div>
-                <label for="categoryInput">카테고리</label>
+              <div class="category-field">
+                <div class="category-field-heading">
+                  <label for="categoryInput">카테고리</label>
+                  <button
+                    type="button"
+                    id="editorCategoryManagerButton"
+                    class="text-button category-inline-manage-button"
+                    aria-label="카테고리 추가 및 삭제"
+                    aria-haspopup="dialog"
+                    aria-controls="categoryManagerModal"
+                  >
+                    추가·삭제
+                  </button>
+                </div>
                 <select id="categoryInput">
                   <option value="업무">업무</option>
                   <option value="아이디어">아이디어</option>
@@ -518,14 +539,6 @@
       >
         <div class="trash-view-heading">
           <div class="trash-heading-main">
-            <button
-              type="button"
-              id="backFromTrashButton"
-              class="text-button trash-back-button"
-              aria-label="메모 화면으로 돌아가기"
-            >
-              ← 메모로 돌아가기
-            </button>
             <div>
               <h2 id="trashViewTitle">휴지통</h2>
               <p><span id="trashViewCount">0</span>개의 삭제된 메모</p>
@@ -739,7 +752,7 @@
 
       <div class="menu-footer">
         <span>훈노트</span>
-        <span class="version-badge">v4.5.4</span>
+        <span class="version-badge">v4.5.5</span>
       </div>
     </aside>
 
@@ -904,12 +917,12 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=454"></script>
-  <script src="./js/auth.js?v=454"></script>
-  <script src="./js/storage.js?v=454"></script>
-  <script src="./js/ui.js?v=454"></script>
-  <script src="./js/app.js?v=454"></script>
-  <script src="./js/account.js?v=454"></script>
-  <script src="./js/pwa.js?v=454"></script>
+  <script src="./js/config.js?v=455"></script>
+  <script src="./js/auth.js?v=455"></script>
+  <script src="./js/storage.js?v=455"></script>
+  <script src="./js/ui.js?v=455"></script>
+  <script src="./js/app.js?v=455"></script>
+  <script src="./js/account.js?v=455"></script>
+  <script src="./js/pwa.js?v=455"></script>
 </body>
 </html>
