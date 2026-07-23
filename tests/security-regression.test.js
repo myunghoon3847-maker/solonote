@@ -171,63 +171,74 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.7", () => {
+test("release and cache versions are consistently set to v4.5.9", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.7/);
-  assert.doesNotMatch(indexHtml, /v=456/);
-  assert.match(serviceWorker, /hoonnote-v4-5-7-cache/);
-  assert.doesNotMatch(serviceWorker, /v=456/);
-  assert.match(accountSource, /clientVersion: "4\.5\.7"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.7"/);
+  assert.match(indexHtml, /version-badge">v4\.5\.9/);
+  assert.doesNotMatch(indexHtml, /v=458/);
+  assert.match(serviceWorker, /hoonnote-v4-5-9-cache/);
+  assert.doesNotMatch(serviceWorker, /v=458/);
+  assert.match(accountSource, /clientVersion: "4\.5\.9"/);
+  assert.match(storageSource, /backupVersion: "4\.5\.9"/);
 });
 
-test("v4.5.7 home, mobile and category UI contract is preserved", () => {
+test("v4.5.9 dedicated editor, settings and category UI contract is preserved", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
   const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
   const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
 
-  assert.doesNotMatch(indexHtml, /id="filterToggleButton"/);
-  assert.doesNotMatch(indexHtml, /id="projectFilterInput"/);
-  assert.doesNotMatch(indexHtml, /id="quickProjectBox"/);
-  assert.doesNotMatch(indexHtml, /id="memoCount"/);
-  assert.doesNotMatch(indexHtml, /id="resultSummary"/);
-  assert.match(indexHtml, /id="projectInput"\s*\/>/);
-  assert.match(indexHtml, /id="sortOptions"/);
-  assert.equal((indexHtml.match(/class="sort-option(?: active)?"/g) || []).length, 5);
-  assert.equal((indexHtml.match(/class="sort-separator"/g) || []).length, 4);
-  assert.match(indexHtml, /id="openTrashButton"\s+class="data-stat-button"/);
-  assert.doesNotMatch(indexHtml, /class="menu-section trash-menu-section"/);
-  assert.match(indexHtml, /id="contentInput"[\s\S]*?rows="11"/);
-  assert.match(indexHtml, /<a[\s\S]*?href="\.\/"[\s\S]*?id="homeLogoButton"/);
+  assert.match(indexHtml, /class="brand-name">HOONNOTE<\/span>/);
+  assert.match(indexHtml, /<section[^>]*id="editorView"[^>]*>/);
+  assert.match(indexHtml.match(/<section[^>]*id="editorView"[^>]*>/)[0], /hidden/);
+  assert.match(indexHtml, /<section[^>]*id="settingsView"[^>]*>/);
+  assert.match(indexHtml.match(/<section[^>]*id="settingsView"[^>]*>/)[0], /hidden/);
+  assert.match(indexHtml, /id="editorBackButton"/);
+  assert.match(indexHtml, /id="settingsBackButton"/);
+  assert.match(indexHtml, /id="openSettingsButton"/);
+  assert.match(indexHtml, /class="menu-header-settings-button"/);
+  assert.doesNotMatch(indexHtml, /id="appMenuCloseButton"/);
+  assert.doesNotMatch(indexHtml, /id="settingsToggleButton"/);
+  assert.doesNotMatch(indexHtml, /id="settingsContent"/);
+  assert.doesNotMatch(indexHtml, /id="menuCategorySettingsButton"/);
+  assert.doesNotMatch(indexHtml, /id="openCategoryManagerButton"/);
   assert.match(indexHtml, /id="editorCategoryManagerButton"/);
-  assert.match(indexHtml, /id="categoryMoreButton"/);
   assert.match(indexHtml, /id="accountManagementToggleButton"/);
-  assert.match(indexHtml, /id="accountManagementContent"[^>]*hidden/);
-  assert.doesNotMatch(indexHtml, /category-field-heading[\s\S]*?editorCategoryManagerButton/);
-  assert.doesNotMatch(indexHtml, /id="backFromTrashButton"/);
+  assert.match(indexHtml, /<div[^>]*id="accountManagementContent"[^>]*>/);
+  assert.match(indexHtml.match(/<div[^>]*id="accountManagementContent"[^>]*>/)[0], /hidden/);
+  assert.match(indexHtml, /id="installAppButton"/);
+  assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
+  assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
+  assert.match(indexHtml, /icons\/logo-mark\.svg\?v=459/);
   assert.match(indexHtml, /maximum-scale=1, user-scalable=no, viewport-fit=cover/);
-  assert.match(appSource, /function handleHomeLogoClick\(event\)/);
-  assert.match(appSource, /editorCategoryManagerButton\?\.addEventListener/);
-  assert.match(appSource, /function handleCategoryMoreClick\(\)/);
-  assert.match(appSource, /function handleAccountManagementToggle\(\)/);
-  assert.match(styleSource, /\.brand-home-button\s*\{/);
-  assert.match(styleSource, /appearance:\s*none/);
-  assert.match(styleSource, /overflow-x:\s*hidden/);
-  assert.match(styleSource, /\.category-tabs-shell\s*\{/);
-  assert.match(styleSource, /\.main-category-tabs\s*\{[\s\S]*?max-height:\s*34px/);
-  assert.match(styleSource, /\.app-menu-panel\s*\{[\s\S]*?84vw/);
-  assert.match(styleSource, /font-size:\s*16px/);
 
-  assert.doesNotMatch(uiSource, /전체 메모 보기/);
-  assert.doesNotMatch(uiSource, /projectChip/);
-  assert.doesNotMatch(appSource, /projectText\.includes\(search\)/);
-  assert.match(styleSource, /\.sort-options\s*\{[\s\S]*?flex-wrap:\s*wrap/);
-  assert.match(styleSource, /\.memo-form #contentInput\s*\{[\s\S]*?min-height:\s*230px/);
+  const editorPosition = indexHtml.indexOf('id="editorView"');
+  const notesPosition = indexHtml.indexOf('id="notesView"');
+  const tasksPosition = indexHtml.indexOf('id="tasksView"');
+  assert.ok(editorPosition > notesPosition && editorPosition < tasksPosition);
+
+  assert.match(appSource, /const allowedViews = \["notes", "tasks", "trash", "settings"\]/);
+  assert.match(appSource, /function handleOpenSettingsClick\(\)/);
+  assert.match(appSource, /function handleSettingsBackClick\(\)/);
+  assert.match(appSource, /function handleEditorBackClick\(\)/);
+  assert.match(appSource, /openSettingsButton\?\.addEventListener/);
+  assert.match(appSource, /editorBackButton\?\.addEventListener/);
+  assert.doesNotMatch(appSource, /function handleSettingsToggle\(\)/);
+  assert.match(uiSource, /document\.querySelector\("#editorView"\)/);
+  assert.match(uiSource, /document\.body\.classList\.add\("editor-view-open"\)/);
+
+  assert.match(styleSource, /\.main-category-tabs\s*\{[\s\S]*?flex-wrap:\s*wrap/);
+  assert.match(styleSource, /\.main-category-tabs\s*\{[\s\S]*?overflow:\s*visible/);
+  assert.match(styleSource, /body\.editor-view-open \.primary-view-tabs/);
+  assert.match(styleSource, /body\[data-app-view="settings"\] \.primary-view-tabs/);
+  assert.match(styleSource, /\.menu-header-settings-button\s*\{/);
+  assert.match(styleSource, /color:\s*#6b7280/);
+  assert.match(styleSource, /\.settings-row-button\s*\{/);
+  assert.match(styleSource, /overflow-x:\s*hidden/);
+  assert.match(styleSource, /font-size:\s*16px/);
 });
 
 test("browser history navigation handles internal layers before app exit", () => {

@@ -5,7 +5,7 @@ const path = require("node:path");
 const { chromium } = require("playwright");
 
 const projectRoot = path.resolve(__dirname, "..");
-const screenshotDirectory = "/tmp/hoonnote-v4.5.7-browser-smoke";
+const screenshotDirectory = "/tmp/hoonnote-v4.5.8-browser-smoke";
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -46,7 +46,7 @@ function startServer() {
 
 async function showApp(page) {
   await page.evaluate(() => {
-    document.querySelector("#authView").hidden = true;
+    document.querySelector("#authScreen").hidden = true;
     document.querySelector("#appShell").hidden = false;
   });
 }
@@ -89,6 +89,10 @@ async function run() {
     assert.equal(await page.locator("#resultSummary").count(), 0);
     assert.equal(await page.locator(".sort-option").count(), 5);
     assert.equal(await page.locator(".sort-separator").count(), 4);
+    assert.equal(await page.locator("#categoryMoreButton").count(), 0);
+    assert.equal((await page.locator("#openCategoryManagerButton").innerText()).trim(), "관리");
+    assert.equal(await page.locator("#notesViewTitle").count(), 0);
+    assert.equal(await page.locator("#homeLogoButton .brand-mark").getAttribute("src"), "./icons/logo-mark.svg?v=458");
 
     const layout = await page.evaluate(() => {
       const textarea = document.querySelector("#contentInput");
@@ -107,6 +111,10 @@ async function run() {
 
     await page.locator("#appMenuButton").click();
     assert.equal(await page.locator("#appMenuPanel").getAttribute("aria-hidden"), "false");
+    assert.equal(await page.locator("#settingsToggleButton").count(), 1);
+    assert.equal(await page.locator("#settingsToggleButton .settings-menu-icon svg").count(), 1);
+    await page.locator("#settingsToggleButton").click();
+    assert.equal(await page.locator("#menuCategorySettingsButton").isVisible(), true);
     await page.goBack();
     await page.waitForTimeout(320);
     assert.equal(await page.locator("#appMenuPanel").getAttribute("aria-hidden"), "true");
