@@ -3695,3 +3695,39 @@ body[data-app-view="settings"] .primary-view-tabs {
     max-width: 420px;
   }
 }
+
+
+/* v4.5.13.2: restore the earlier inline memo editor layout */
+.inline-editor-view {
+  display: block;
+  min-width: 0;
+}
+
+.inline-editor-view[hidden] {
+  display: none !important;
+}
+
+.inline-editor-view .editor-panel {
+  width: 100%;
+  margin: 0;
+}
+
+.inline-editor-view .editor-panel.collapsed {
+  display: none;
+}
+
+body.editor-view-open .primary-view-tabs {
+  display: grid;
+}
+
+@media (max-width: 720px) {
+  .inline-editor-view .editor-panel {
+    padding: 14px;
+    border-radius: 16px;
+  }
+}
+
+.inline-editor-view,
+.inline-editor-view .editor-panel {
+  scroll-margin-top: calc(var(--header-height) + 12px);
+}

@@ -221,7 +221,7 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=464",
+        "./service-worker.js?v=465",
         { updateViaCache: "none" }
       );
 

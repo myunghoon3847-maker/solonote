@@ -861,7 +861,6 @@ function switchAppView(view, options = {}) {
   document.body.classList.remove("editor-view-open");
 
   notesView.hidden = !isNotes;
-  editorView.hidden = true;
   tasksView.hidden = !isTasks;
   settingsView.hidden = !isSettings;
   trashView.hidden = !isTrash;
@@ -995,7 +994,10 @@ function handleMobileNewMemoClick() {
 
   resetForm();
   openEditor();
-  window.scrollTo({ top: 0, behavior: "auto" });
+  document.querySelector(".editor-panel")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
   window.setTimeout(() => titleInput?.focus(), 250);
 }
 

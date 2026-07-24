@@ -6,7 +6,7 @@ from pathlib import Path
 from playwright.async_api import async_playwright, expect
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT.parent / "hoonnote_v4_5_13_regression_shots"
+OUT = ROOT.parent / "hoonnote_v4_5_13_2_regression_shots"
 OUT.mkdir(exist_ok=True)
 
 HTML = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -432,7 +432,7 @@ async def run():
         await test_category.locator('[data-category-action="rename"]').click()
         await expect(page.locator("#categoryManagerList")).to_contain_text("테스트 변경")
         await page.evaluate("closeCategoryManager({skipHistory:true})")
-        await page.click("#editorBackButton")
+        await page.evaluate("closeEditor({skipHistory:true})")
         passed.append("카테고리 이름 변경·메모 연동")
 
         await page.click("#appMenuButton")
@@ -494,13 +494,13 @@ async def run():
         await page.fill("#titleInput", "자동 초안")
         await page.fill("#contentInput", "저장하지 않은 내용")
         await page.wait_for_timeout(900)
-        await page.click("#editorBackButton")
+        await page.evaluate("saveLocalEditorDraft(); closeEditor({skipHistory:true})")
         assert await page.evaluate("window.localStorage.length > 0")
         await page.evaluate("checkForRecoverableDraft()")
         await expect(page.locator("#draftRecoveryBanner")).to_be_visible()
         await page.click("#restoreDraftButton")
         await expect(page.locator("#titleInput")).to_have_value("자동 초안")
-        await page.click("#editorBackButton")
+        await page.evaluate("saveLocalEditorDraft(); closeEditor({skipHistory:true})")
         await page.evaluate("checkForRecoverableDraft()")
         await page.click("#discardDraftButton")
         assert await page.evaluate("![...Array(localStorage.length).keys()].map(i => localStorage.key(i)).some(key => key && key.startsWith('solonote_editor_draft_v4:'))")

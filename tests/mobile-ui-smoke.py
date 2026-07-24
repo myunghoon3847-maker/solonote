@@ -29,7 +29,7 @@ async def visible_overflows(page):
     return await page.evaluate('''() => {const vw=document.documentElement.clientWidth;return [...document.body.querySelectorAll('*')].flatMap(el=>{const st=getComputedStyle(el); if(st.display==='none'||st.visibility==='hidden'||el.closest('[hidden]')) return []; const r=el.getBoundingClientRect(); if(r.width<=0||r.height<=0)return[]; if(r.right>vw+1||r.left<-1)return[{tag:el.tagName,id:el.id,cls:String(el.className),left:r.left,right:r.right,width:r.width,vw}];return[];});}''')
 
 async def run():
-  out = ROOT.parent / 'hoonnote_v4_5_13_testshots'; out.mkdir(exist_ok=True)
+  out = ROOT.parent / 'hoonnote_v4_5_13_2_testshots'; out.mkdir(exist_ok=True)
   async with async_playwright() as pw:
     browser=await pw.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
     try:
@@ -50,12 +50,12 @@ async def run():
         assert cm['h']>34,(width,cm)
         assert cm['sw']<=cm['cw']+1,(width,cm)
         assert cm['wrap']=='wrap',(width,cm)
-        # dedicated editor screen
+        # restored inline editor panel
         await page.locator('#mobileNewMemoButton').click()
         await page.wait_for_timeout(100)
         assert await page.locator('#editorView').is_visible()
-        assert await page.locator('#notesView').is_hidden()
-        assert await page.locator('.primary-view-tabs').is_hidden()
+        assert await page.locator('#notesView').is_visible()
+        assert await page.locator('.primary-view-tabs').is_visible()
         assert await page.locator('#editorCategoryManagerButton').is_visible()
         assert await page.locator('#categoryPickerButton').is_visible()
         await page.locator('#categoryPickerButton').click(); await page.wait_for_timeout(60)
@@ -64,8 +64,8 @@ async def run():
         await page.locator('#categoryPickerMenu .category-picker-option').nth(1).click(); await page.wait_for_timeout(40)
         assert await page.locator('#categoryPickerMenu').is_hidden()
         assert not await visible_overflows(page),(width,(await visible_overflows(page))[:5])
-        await page.locator('#editorBackButton').click()
-        await page.wait_for_timeout(180)
+        await page.evaluate('closeEditor({skipHistory:true})'); await page.wait_for_timeout(120)
+        assert await page.locator('#editorView').is_hidden()
         assert await page.locator('#notesView').is_visible()
         # task duplicate heading removed
         await page.locator('#tasksViewTab').click(); await page.wait_for_timeout(80)
@@ -76,7 +76,7 @@ async def run():
         # menu gear -> settings subview inside the menu
         await page.locator('#appMenuButton').click(); await page.wait_for_timeout(280)
         assert await page.locator('#openSettingsButton').is_visible()
-        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=464'
+        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=465'
         menu=await page.locator('#appMenuPanel').bounding_box(); assert menu and abs(menu['width']-(width*0.8))<=3,(width,menu)
         assert await page.locator('#emptyTrashButton').count()==0
         assert await page.locator('#openTrashButton .data-stat-open-label').inner_text()=='열기'
@@ -99,7 +99,7 @@ async def run():
           await page.screenshot(path=str(out/'main-390.png'),full_page=True)
           await page.locator('#mobileNewMemoButton').click(); await page.wait_for_timeout(80)
           await page.screenshot(path=str(out/'editor-390.png'),full_page=True)
-          await page.locator('#editorBackButton').click(); await page.wait_for_timeout(150)
+          await page.evaluate('closeEditor({skipHistory:true})'); await page.wait_for_timeout(120)
           await page.locator('#appMenuButton').click(); await page.wait_for_timeout(260)
           await page.screenshot(path=str(out/'menu-390.png'),full_page=False)
           await page.locator('#openSettingsButton').click(); await page.wait_for_timeout(120)
