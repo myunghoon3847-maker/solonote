@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>훈노트 - 1인 업무·아이디어 노트</title>
-<link href="./manifest.json?v=464" rel="manifest"/>
+<link href="./manifest.json?v=465" rel="manifest"/>
 <meta content="#2563eb" name="theme-color"/>
 <meta content="훈노트" name="application-name"/>
 <meta content="훈노트" name="apple-mobile-web-app-title"/>
@@ -12,9 +12,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=464" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=464" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=464" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=465" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=465" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=465" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -125,7 +125,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="훈노트 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=464"/>
+<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=465"/>
 </a>
 </div>
 <div class="header-actions">
@@ -182,60 +182,7 @@
             + 새 메모
           </button>
 </div>
-
-<div class="search-toolbar">
-<div class="search-box">
-<span aria-hidden="true" class="search-icon">⌕</span>
-<input aria-label="메모 검색" id="searchInput" placeholder="메모 검색" type="search"/>
-</div>
-</div>
-<section aria-label="카테고리 필터" class="category-filter-section">
-<div class="category-tabs-shell" id="categoryTabsShell">
-<nav aria-label="메모 카테고리" class="category-tabs main-category-tabs" id="categoryTabs">
-<button class="category-tab active" data-category="전체" type="button">전체</button>
-<button class="category-tab protected-category-tab" data-category="중요" title="삭제할 수 없는 기본 카테고리" type="button">중요</button>
-<button class="category-tab" data-category="업무" type="button">업무</button>
-<button class="category-tab" data-category="아이디어" type="button">아이디어</button>
-<button class="category-tab" data-category="일상" type="button">일상</button>
-<button class="category-tab protected-category-tab" data-category="보관" title="삭제할 수 없는 기본 카테고리" type="button">보관</button>
-<button class="category-tab protected-category-tab" data-category="미분류" title="삭제할 수 없는 기본 카테고리" type="button">미분류</button>
-</nav>
-
-</div>
-</section>
-<nav aria-label="메모 정렬" class="sort-options" id="sortOptions">
-<button aria-pressed="true" class="sort-option active" data-sort="updatedDesc" type="button">
-            최근 수정순
-          </button>
-<span aria-hidden="true" class="sort-separator">ㅣ</span>
-<button aria-pressed="false" class="sort-option" data-sort="createdDesc" type="button">
-            최신 작성순
-          </button>
-<span aria-hidden="true" class="sort-separator">ㅣ</span>
-<button aria-pressed="false" class="sort-option" data-sort="createdAsc" type="button">
-            오래된 작성순
-          </button>
-<span aria-hidden="true" class="sort-separator">ㅣ</span>
-<button aria-pressed="false" class="sort-option" data-sort="importantFirst" type="button">
-            중요 먼저
-          </button>
-<span aria-hidden="true" class="sort-separator">ㅣ</span>
-<button aria-pressed="false" class="sort-option" data-sort="titleAsc" type="button">
-            제목순
-          </button>
-</nav>
-<div class="memo-list" id="memoList"></div>
-</section>
-<section aria-labelledby="editorPageTitle" class="app-view editor-view" hidden="" id="editorView">
-<div class="editor-page-heading">
-<button aria-label="메모 목록으로 돌아가기" class="editor-back-button" id="editorBackButton" type="button">
-<span aria-hidden="true">←</span>
-</button>
-<div>
-<h2 id="editorPageTitle">메모 작성</h2>
-<p>작성 내용은 자동으로 임시 저장됩니다.</p>
-</div>
-</div>
+<section aria-hidden="true" class="inline-editor-view" hidden="" id="editorView">
 <section aria-labelledby="editorTitle" class="panel editor-panel collapsed">
 <div class="editor-heading">
 <h2 id="editorTitle">새 메모 작성</h2>
@@ -300,7 +247,54 @@
               </button>
 </div>
 </form>
-</section></section><section aria-label="할 일" class="app-view" hidden="" id="tasksView">
+</section>
+</section>
+
+
+<div class="search-toolbar">
+<div class="search-box">
+<span aria-hidden="true" class="search-icon">⌕</span>
+<input aria-label="메모 검색" id="searchInput" placeholder="메모 검색" type="search"/>
+</div>
+</div>
+<section aria-label="카테고리 필터" class="category-filter-section">
+<div class="category-tabs-shell" id="categoryTabsShell">
+<nav aria-label="메모 카테고리" class="category-tabs main-category-tabs" id="categoryTabs">
+<button class="category-tab active" data-category="전체" type="button">전체</button>
+<button class="category-tab protected-category-tab" data-category="중요" title="삭제할 수 없는 기본 카테고리" type="button">중요</button>
+<button class="category-tab" data-category="업무" type="button">업무</button>
+<button class="category-tab" data-category="아이디어" type="button">아이디어</button>
+<button class="category-tab" data-category="일상" type="button">일상</button>
+<button class="category-tab protected-category-tab" data-category="보관" title="삭제할 수 없는 기본 카테고리" type="button">보관</button>
+<button class="category-tab protected-category-tab" data-category="미분류" title="삭제할 수 없는 기본 카테고리" type="button">미분류</button>
+</nav>
+
+</div>
+</section>
+<nav aria-label="메모 정렬" class="sort-options" id="sortOptions">
+<button aria-pressed="true" class="sort-option active" data-sort="updatedDesc" type="button">
+            최근 수정순
+          </button>
+<span aria-hidden="true" class="sort-separator">ㅣ</span>
+<button aria-pressed="false" class="sort-option" data-sort="createdDesc" type="button">
+            최신 작성순
+          </button>
+<span aria-hidden="true" class="sort-separator">ㅣ</span>
+<button aria-pressed="false" class="sort-option" data-sort="createdAsc" type="button">
+            오래된 작성순
+          </button>
+<span aria-hidden="true" class="sort-separator">ㅣ</span>
+<button aria-pressed="false" class="sort-option" data-sort="importantFirst" type="button">
+            중요 먼저
+          </button>
+<span aria-hidden="true" class="sort-separator">ㅣ</span>
+<button aria-pressed="false" class="sort-option" data-sort="titleAsc" type="button">
+            제목순
+          </button>
+</nav>
+<div class="memo-list" id="memoList"></div>
+</section>
+<section aria-label="할 일" class="app-view" hidden="" id="tasksView">
 
 <div class="task-hub-content" id="taskHubContent">
 <div class="task-hub-toolbar">
@@ -380,7 +374,7 @@
 
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=464"/>
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=465"/>
 <span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
 <span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
 </button>
@@ -536,7 +530,7 @@
 </div>
 <div class="menu-footer">
 <span>HOONNOTE</span>
-<span class="version-badge">v4.5.13.1</span>
+<span class="version-badge">v4.5.13.2</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -630,12 +624,12 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./js/config.js?v=464"></script>
-<script src="./js/auth.js?v=464"></script>
-<script src="./js/storage.js?v=464"></script>
-<script src="./js/ui.js?v=464"></script>
-<script src="./js/app.js?v=464"></script>
-<script src="./js/account.js?v=464"></script>
-<script src="./js/pwa.js?v=464"></script>
+<script src="./js/config.js?v=465"></script>
+<script src="./js/auth.js?v=465"></script>
+<script src="./js/storage.js?v=465"></script>
+<script src="./js/ui.js?v=465"></script>
+<script src="./js/app.js?v=465"></script>
+<script src="./js/account.js?v=465"></script>
+<script src="./js/pwa.js?v=465"></script>
 </body>
 </html>
